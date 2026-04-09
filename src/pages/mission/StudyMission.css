@@ -1,0 +1,124 @@
+.mission-container {
+    font-family: 'Pretendard', -apple-system, sans-serif;
+    background-color: #ffffff;
+    min-height: 100vh;
+}
+
+/* --- 상단 네비게이션 바 & 레이아웃 (StudyStep과 완벽 동일) --- */
+.step-navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 40px;
+    border-bottom: 1px solid #eaeaea;
+}
+.step-nav-left { display: flex; align-items: center; gap: 20px; }
+.back-arrow-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #333; }
+.nav-divider { width: 1px; height: 24px; background-color: #e0e0e0; }
+.logo-text { font-size: 24px; font-weight: 700; color: #87d8a3; margin-right: 10px; }
+.step-nav-title { font-size: 16px; font-weight: 600; color: #87d8a3; }
+.step-nav-right { display: flex; gap: 12px; }
+.login-btn { padding: 8px 16px; border-radius: 20px; border: 1px solid #ddd; background: white; cursor: pointer; }
+.start-btn { padding: 8px 16px; border-radius: 20px; border: none; background-color: #87d8a3; color: white; font-weight: bold; cursor: pointer; }
+
+.step-main-content {
+    display: flex;
+    max-width: 1100px; /* 카드가 2개 들어가니 살짝 넓게 */
+    margin: 0 auto;
+    padding: 40px 20px;
+    gap: 40px;
+}
+
+.step-sidebar {
+    width: 150px;
+    border-right: 2px solid #87d8a3;
+    position: relative;
+}
+.graphics-placeholder { width: 100%; height: 100%; }
+
+/* --- 🔥 우측 미션 카드 그리드 (이곳이 핵심!) --- */
+.mission-grid-section {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 2칸씩 나누기! */
+    gap: 20px; /* 카드 사이 간격 */
+}
+
+.mission-card {
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    border-radius: 8px;
+    background-color: #ffffff;
+}
+
+.mission-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.mission-card-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+    color: #333;
+}
+
+.mission-card-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.mission-card-level {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    color: #666;
+    font-weight: 500;
+}
+
+.level-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+.mission-action-btn {
+    padding: 8px 24px;
+    border-radius: 20px;
+    border: none;
+    color: white;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.mission-action-btn:hover { opacity: 0.8; }
+
+/* 이미지 박스 */
+.mission-card-image-box {
+    width: 100%;
+    height: 220px; /* 사진 높이 고정 */
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.mission-card-image-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* 사진이 비율 깨지지 않고 꽉 차게 */
+}
+
+/* --- 테마 컬러 (초록색 / 보라색) --- */
+.card-green { border: 2px solid #8fd3b2; }
+.btn-green { background-color: #8fd3b2; }
+.dot-green { background-color: #8fd3b2; }
+
+.card-purple { border: 2px solid #b8a1f8; }
+.btn-purple { background-color: #b8a1f8; }
+.dot-purple { background-color: #b8a1f8; }

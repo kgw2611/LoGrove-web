@@ -1,0 +1,181 @@
+/* 로그인 & 회원가입 컨테이너 */
+.auth-container {
+    font-family: 'Pretendard', -apple-system, sans-serif;
+    padding: 20px 40px;
+    background-color: #ffffff;
+    min-height: 100vh;
+}
+
+/* 폼 영역 가운데 정렬 */
+.auth-wrapper {
+    max-width: 400px;
+    margin: 60px auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.auth-title {
+    font-size: 32px;
+    font-weight: bold;
+    color: #111;
+    margin-bottom: 8px;
+}
+
+.auth-subtitle {
+    font-size: 15px;
+    color: #666;
+    margin-bottom: 30px;
+}
+
+/* 소셜 로그인 버튼들 */
+.social-login {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+    justify-content: center;
+    margin-bottom: 30px;
+}
+
+.social-btn {
+    width: 60px;
+    height: 40px;
+    border-radius: 8px;
+    border: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.btn-google { background: #fff; border: 1px solid #ddd; color: #EA4335; }
+.btn-apple { background: #000; color: #fff; font-size: 20px; }
+.btn-naver { background: #03C75A; color: #fff; }
+.btn-kakao { background: #FEE500; color: #000; font-size: 12px;}
+
+/* '또는' 구분선 */
+.divider {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    color: #999;
+    font-size: 13px;
+    margin-bottom: 30px;
+}
+.divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #eee;
+}
+.divider::before { margin-right: 15px; }
+.divider::after { margin-left: 15px; }
+
+/* 입력 폼 공통 */
+.auth-form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.input-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+}
+
+.input-group label span {
+    color: #EA4335; /* 필수 입력 빨간 별표 */
+}
+
+/* 일반 입력창 */
+.auth-input {
+    width: 100%;
+    padding: 14px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    box-sizing: border-box; /* 패딩 포함해서 크기 계산 */
+}
+
+/* 버튼이 옆에 있는 입력창 (중복확인, 인증하기) */
+.input-with-btn {
+    display: flex;
+    gap: 8px;
+}
+
+.input-with-btn .auth-input {
+    flex: 1;
+}
+
+.side-btn {
+    padding: 0 16px;
+    background: white;
+    border: 1px solid #66cdaa;
+    color: #66cdaa;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+/* 기억하기 & 비밀번호 찾기 줄 */
+.auth-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: #666;
+    margin-top: -5px;
+}
+
+.auth-options label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.auth-options a {
+    color: #666;
+    text-decoration: none;
+}
+
+/* 메인 제출 버튼 (초록색) */
+.submit-btn {
+    background: #6f9c84; /* 피그마의 차분한 초록색 */
+    color: white;
+    border: none;
+    padding: 16px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+/* 하단 링크들 */
+.auth-footer {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 13px;
+    color: #666;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.auth-footer a {
+    color: #666;
+    text-decoration: underline;
+    margin-left: 5px;
+}

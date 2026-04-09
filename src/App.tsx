@@ -1,121 +1,53 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Layout from './app/Layout.tsx';
+import Home from './pages/home/Home.tsx';
+import Login from './pages/auth/Login.tsx';
+import Signup from './pages/auth/Signup.tsx';
+import MyPage from './pages/user/MyPage.tsx';
+import Community from './pages/post/Community.tsx';
+import WritePost from './pages/post/WritePost.tsx';
+import CommunityDetail from './pages/post/CommunityDetail.tsx';
+import Gallery from './pages/post/Gallery.tsx';
+import GalleryWrite from './pages/post/GalleryWrite.tsx';
+import Forum from './pages/post/Forum.tsx';
+import ForumWrite from './pages/post/ForumWrite.tsx';
+import ForumDetail from './pages/post/ForumDetail.tsx';
+import Study from './pages/mission/Study.tsx';
+import StudyStep from './pages/mission/StudyStep.tsx';
+import StudyMission from './pages/mission/StudyMission.tsx';
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+    return (
+        <BrowserRouter>
+            <Routes>
+                {/* 🟢 [Layout 안쪽] 기본 공통 헤더가 나오는 페이지들 */}
+                <Route element={<Layout />}>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/signup" element={<Signup />} />
+                    <Route path="/mypage" element={<MyPage />} />
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+                    {/* 커뮤니티 관련 라우트 */}
+                    <Route path="/community" element={<Community />} />
+                    <Route path="/community/write" element={<WritePost />} />
+                    <Route path="/community/:id" element={<CommunityDetail />} />
 
-      <div className="ticks"></div>
+                    {/* 갤러리 관련 라우트 */}
+                    <Route path="/gallery" element={<Gallery />} />
+                    <Route path="/gallery/write" element={<GalleryWrite />} />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+                    {/* 포럼 관련 라우트 */}
+                    <Route path="/forum" element={<Forum />} />
+                    <Route path="/forum/write" element={<ForumWrite />} />
+                    {/* 🔥 여기에 포럼 게시글 상세 페이지 라우트 추가! */}
+                    <Route path="/forum/:id" element={<ForumDetail />} />
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+                    {/* 학습 관련 라우트 */}
+                    <Route path="/study" element={<Study />} />
+                    <Route path="/study/step" element={<StudyStep />} />
+                    <Route path="/study/mission" element={<StudyMission />} />
+                </Route>
+            </Routes>
+        </BrowserRouter>
+    );
 }
-
-export default App
