@@ -1,7 +1,7 @@
 import { useState, type ChangeEvent } from 'react'; // 🔥 type 키워드 사용 및 ChangeEvent 추가
 import { useNavigate } from 'react-router-dom'; // 🔥 사용하지 않는 Link 제거
 import '../home/Home.css';
-import './WritePost.css'; // 커뮤니티 글쓰기 디자인 완벽 재사용!
+import './PostWrite.css'; // 커뮤니티 글쓰기 디자인 완벽 재사용!
 
 // 타입 정의
 interface Toggles {

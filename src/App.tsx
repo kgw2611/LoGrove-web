@@ -5,7 +5,7 @@ import Login from './pages/auth/Login.tsx';
 import Signup from './pages/auth/Signup.tsx';
 import MyPage from './pages/user/MyPage.tsx';
 import Community from './pages/post/Community.tsx';
-import WritePost from './pages/post/WritePost.tsx';
+import PostWrite from './pages/post/PostWrite.tsx';
 import CommunityDetail from './pages/post/CommunityDetail.tsx';
 import Gallery from './pages/post/Gallery.tsx';
 import GalleryWrite from './pages/post/GalleryWrite.tsx';
@@ -29,7 +29,7 @@ export default function App() {
 
                     {/* 커뮤니티 관련 라우트 */}
                     <Route path="/community" element={<Community />} />
-                    <Route path="/community/write" element={<WritePost />} />
+                    <Route path="/community/write" element={<PostWrite />} />
                     <Route path="/community/:id" element={<CommunityDetail />} />
 
                     {/* 갤러리 관련 라우트 */}

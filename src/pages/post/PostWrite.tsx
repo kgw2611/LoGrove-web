@@ -1,7 +1,7 @@
 import { useState, type ChangeEvent } from 'react'; // 🔥 type 키워드 사용 및 필요한 타입 추가
 import { useNavigate } from 'react-router-dom'; // 🔥 사용하지 않는 Link 제거
 import '../home/Home.css';
-import './WritePost.css';
+import './PostWrite.css';
 
 // 타입 정의
 interface Toggles {
@@ -21,7 +21,7 @@ interface CommunityPostType {
     views: number;
 }
 
-export default function WritePost() {
+export default function PostWrite() {
     const navigate = useNavigate();
 
     // 🔥 1. 사용자가 입력할 제목, 내용, 카테고리를 저장할 상태(State)

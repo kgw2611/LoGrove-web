@@ -7,11 +7,11 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        target: 'http://43.200.183.163:8080',
         changeOrigin: true,
       },
       '/images/posts': {
-        target: 'http://localhost:8080',
+        target: 'http://43.200.183.163:8080',
         changeOrigin: true,
       },
     },
