@@ -1,0 +1,87 @@
+.study-container {
+    font-family: 'Pretendard', -apple-system, sans-serif;
+    background-color: #fcfcf9;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.study-main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    padding-bottom: 80px;
+}
+
+.study-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 50px;
+}
+
+.study-cards-wrapper {
+    display: flex;
+    gap: 30px;
+}
+
+/* 개별 카드 스타일: 피그마 수치(396px)에 딱 맞춤 */
+.study-card {
+    width: 396px;
+    height: 320px;
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    text-decoration: none;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.study-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+}
+
+.study-card-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-top: 40px;
+    margin-bottom: 20px;
+}
+
+/* 🔥 이미지 담는 껍데기: 기준점(relative)을 잡아줍니다 */
+.study-card-image {
+    width: 100%;
+    flex: 1;
+    position: relative; /* 바닥 이미지를 카드 안쪽 맨 밑에 묶어두기 위한 감옥 역할 */
+    display: flex;
+    justify-content: center; /* 캐릭터 가로 중앙 정렬 */
+    align-items: flex-end; /* 캐릭터가 너무 공중에 안 뜨게 아래쪽으로 배치 */
+}
+
+/* 🔥 바닥 이미지: 무조건 카드 맨 밑바닥에 가로 꽉 차게 깔림 */
+.floor-img {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+    z-index: 1; /* 순서를 1번으로 해서 캐릭터 뒤로 감추기 */
+    display: block;
+}
+
+/* 🔥 캐릭터 일러스트: 바닥 위에 예쁘게 서 있도록 설정 */
+.character-img {
+    position: relative;
+    z-index: 2; /* 순서를 2번으로 해서 바닥보다 앞으로 튀어나오게 하기! */
+    max-height: 200px; /* 피그마 사이즈 고려, 카드 위로 안 삐져나가게 높이 제한 */
+    width: auto;
+    margin-bottom: 25px; /* 캐릭터 다리가 바닥에 자연스럽게 닿도록 아래 여백 주기 */
+}

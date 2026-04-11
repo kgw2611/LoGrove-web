@@ -1,0 +1,325 @@
+.write-container {
+    font-family: 'Pretendard', -apple-system, sans-serif;
+    padding: 20px 40px;
+    background-color: #ffffff;
+    min-height: 100vh;
+}
+
+/* --- 글쓰기 헤더 바 --- */
+.write-header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+    border-bottom: 2px solid #333;
+    margin-bottom: 30px;
+}
+
+.write-header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.back-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #333;
+}
+
+.write-header-title {
+    font-size: 20px;
+    font-weight: 500;
+    color: #333;
+}
+
+.write-header-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.temp-save {
+    font-size: 14px;
+    color: #555;
+    cursor: pointer;
+}
+
+.temp-count {
+    font-weight: bold;
+}
+
+.submit-post-btn {
+    background-color: #c7e5d3;
+    color: #2f6b4a;
+    border: none;
+    padding: 8px 24px;
+    border-radius: 20px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* --- 메인 레이아웃 (좌/우) --- */
+.write-content {
+    display: flex;
+    gap: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.write-main {
+    flex: 7.5;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- 왼쪽 에디터 영역 --- */
+.editor-top {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.board-select {
+    border: none;
+    font-size: 15px;
+    color: #333;
+    outline: none;
+    width: 100%;
+}
+
+.title-input {
+    border: none;
+    background-color: #f5f5f5;
+    padding: 16px;
+    border-radius: 8px;
+    font-size: 16px;
+    outline: none;
+}
+
+.editor-toolbar {
+    border: 1px solid #ddd;
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    background-color: #f5f5f5;
+}
+
+.toolbar-icons {
+    display: flex;
+    gap: 20px;
+    padding: 12px 20px;
+    border-bottom: 1px solid #ddd;
+}
+
+.toolbar-icons button {
+    background: none;
+    border: none;
+    font-size: 13px;
+    color: #555;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.toolbar-text-options {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 20px;
+}
+
+.toolbar-text-options select, .toolbar-text-options button {
+    background: none;
+    border: none;
+    font-size: 13px;
+    color: #555;
+    cursor: pointer;
+}
+
+.divider-vertical {
+    width: 1px;
+    height: 16px;
+    background-color: #ddd;
+    margin: 0 8px;
+}
+
+.content-textarea {
+    width: 100%;
+    height: 400px;
+    border: 1px solid #ddd;
+    border-top: none;
+    padding: 20px;
+    font-size: 15px;
+    resize: none;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.editor-bottom-tags {
+    border: 1px solid #ddd;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.tag-input-wrapper {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 12px 16px;
+}
+
+.tag-count {
+    font-size: 12px;
+    color: #777;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.tag-input-row {
+    display: flex;
+    justify-content: space-between;
+}
+
+.tag-input-row input {
+    border: none;
+    outline: none;
+    font-size: 14px;
+    width: 90%;
+}
+
+.tag-chips-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.tag-chip {
+    background-color: #c7e5d3;
+    color: #333;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.tag-recommend-btn {
+    background-color: #87d8a3;
+    color: white;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+/* --- 오른쪽 사이드바 영역 --- */
+.write-sidebar {
+    flex: 2.5;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.gray-box {
+    background-color: #f0f0f0;
+    border-radius: 8px;
+    padding: 24px;
+}
+
+.setting-title {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 16px;
+    color: #333;
+}
+
+.setting-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.setting-list label {
+    font-size: 14px;
+    color: #555;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.toggle-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.toggle-row:last-child {
+    margin-bottom: 0;
+}
+
+.toggle-label {
+    font-size: 14px;
+    color: #333;
+}
+
+/* 🔥 예쁜 토글 스위치 CSS (아이폰 스타일) */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+}
+
+input:checked + .slider {
+    background-color: #87d8a3;
+}
+
+input:checked + .slider:before {
+    transform: translateX(20px);
+}
+
+.slider.round {
+    border-radius: 24px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}

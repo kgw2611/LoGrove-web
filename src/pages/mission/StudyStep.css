@@ -1,0 +1,173 @@
+.step-container {
+    font-family: 'Pretendard', -apple-system, sans-serif;
+    background-color: #ffffff;
+    min-height: 100vh;
+}
+
+/* --- 상단 네비게이션 바 --- */
+.step-navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 40px;
+    border-bottom: 1px solid #eaeaea;
+}
+
+.step-nav-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.back-arrow-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #333;
+}
+
+.nav-divider {
+    width: 1px;
+    height: 24px;
+    background-color: #e0e0e0;
+}
+
+.logo-text {
+    font-size: 24px;
+    font-weight: 700;
+    color: #87d8a3;
+    margin-right: 10px;
+}
+
+.step-nav-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #87d8a3; /* 로고와 같은 초록색 계열 */
+}
+
+.step-nav-right {
+    display: flex;
+    gap: 12px;
+}
+
+.login-btn {
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid #ddd;
+    background: white;
+    cursor: pointer;
+}
+
+.start-btn {
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: none;
+    background-color: #87d8a3;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* --- 메인 콘텐츠 영역 --- */
+.step-main-content {
+    display: flex;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    gap: 40px;
+}
+
+/* 왼쪽 사이드바 (도형 & 세로선) */
+.step-sidebar {
+    width: 150px;
+    border-right: 2px solid #87d8a3; /* 초록색 세로선! */
+    position: relative;
+}
+
+.graphics-placeholder {
+    width: 100%;
+    height: 100%;
+    /* 나중에 이미지를 넣을 곳입니다 */
+}
+
+/* 오른쪽 리스트 영역 */
+.step-list-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* --- 카드 디자인 --- */
+.step-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 30px;
+    border-radius: 8px;
+    background-color: #ffffff;
+}
+
+.step-card-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+    color: #333;
+}
+
+.step-card-desc {
+    font-size: 14px;
+    color: #666;
+    margin: 0 0 12px 0;
+}
+
+.step-card-level {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    color: #666;
+}
+
+.level-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+.step-action-btn {
+    padding: 10px 28px;
+    border-radius: 20px;
+    border: none;
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.step-action-btn:hover {
+    opacity: 0.8;
+}
+
+/* 🔥 상태별 컬러 테마 (초록색: 시작 / 보라색: 완료) */
+.card-start {
+    border: 2px solid #8fd3b2; /* 연한 초록색 테두리 */
+}
+.btn-start {
+    background-color: #8fd3b2;
+}
+.dot-start {
+    background-color: #8fd3b2;
+}
+
+.card-done {
+    border: 2px solid #b8a1f8; /* 연한 보라색 테두리 */
+}
+.btn-done {
+    background-color: #b8a1f8;
+}
+.dot-done {
+    background-color: #b8a1f8;
+}
