@@ -14,6 +14,7 @@ import {
     createComment,
     toggleGalleryLike,
     toggleCommentLike,
+    getGalleryTagNames,
     type GalleryListItem,
     type GalleryDetailItem,
 } from '../../shared/api/gallery';
@@ -241,16 +242,28 @@ export default function Gallery() {
     const [isLoading, setIsLoading] = useState(true);
     const [isDetailLoading, setIsDetailLoading] = useState(false);
     const [commentInput, setCommentInput] = useState('');
+    const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+    const [searchText, setSearchText] = useState('');
+    const [tagOptions, setTagOptions] = useState<string[]>(['전체']);
+    const [selectedTag, setSelectedTag] = useState('전체');
 
     const commentSectionRef = useRef<HTMLDivElement | null>(null);
     const commentInputRef = useRef<HTMLInputElement | null>(null);
+
+    const isLoggedIn =
+        localStorage.getItem('isLoggedIn') === 'true' ||
+        !!localStorage.getItem('access_token');
 
     useEffect(() => {
         const fetchGallery = async () => {
             try {
                 setIsLoading(true);
-                const items = await getGalleryList();
+                const [items, tags] = await Promise.all([
+                    getGalleryList(),
+                    getGalleryTagNames(),
+                ]);
                 setGalleryItems(items);
+                setTagOptions(tags);
             } catch (error) {
                 console.error('갤러리 목록 불러오기 실패:', error);
                 setGalleryItems([]);
@@ -261,6 +274,22 @@ export default function Gallery() {
 
         fetchGallery();
     }, []);
+
+    const filteredGalleryItems = useMemo(() => {
+        return galleryItems.filter((item) => {
+            const matchesTag =
+                selectedTag === '전체' || item.tags.includes(selectedTag);
+
+            const query = searchText.trim().toLowerCase();
+            const matchesSearch =
+                query.length === 0 ||
+                item.title.toLowerCase().includes(query) ||
+                (item.description ?? '').toLowerCase().includes(query) ||
+                item.tags.some((tag) => tag.toLowerCase().includes(query));
+
+            return matchesTag && matchesSearch;
+        });
+    }, [galleryItems, selectedTag, searchText]);
 
     const relatedItems = useMemo(() => {
         if (!selectedPost) return [];
@@ -287,10 +316,12 @@ export default function Gallery() {
     };
 
     const handleCreateComment = async () => {
-        if (!selectedPost || !commentInput.trim()) return;
+        if (!selectedPost || !commentInput.trim() || isSubmittingComment) return;
 
         try {
-            await createComment(Number(selectedPost.id), commentInput);
+            setIsSubmittingComment(true);
+
+            await createComment(Number(selectedPost.id), commentInput.trim());
 
             const refreshedDetail = await getGalleryDetail(Number(selectedPost.id));
             setSelectedPost(refreshedDetail);
@@ -302,11 +333,19 @@ export default function Gallery() {
             }, 100);
         } catch (error) {
             console.error('댓글 작성 실패:', error);
+        } finally {
+            setIsSubmittingComment(false);
         }
     };
 
     const handleCommentKeyDown = async (e: KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter') {
+        if (e.nativeEvent.isComposing) return;
+
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+
+            if (isSubmittingComment) return;
+
             await handleCreateComment();
         }
     };
@@ -375,11 +414,20 @@ export default function Gallery() {
           <span className="gallery-search-icon">
             <SearchIcon />
           </span>
-                    <input type="text" placeholder="Search for..." className="gallery-search-input" />
+                    <input
+                        type="text"
+                        placeholder="Search for..."
+                        className="gallery-search-input"
+                        value={searchText}
+                        onChange={(e) => setSearchText(e.target.value)}
+                    />
                 </div>
 
                 <div className="gallery-actions">
-                    <Link to="/gallery/write" className="gallery-write-link">
+                    <Link
+                        to={isLoggedIn ? '/gallery/write' : '/login'}
+                        className="gallery-write-link"
+                    >
                         <button className="gallery-write-btn" type="button">
                             <WritingIcon />
                             <span>writing</span>
@@ -396,21 +444,36 @@ export default function Gallery() {
                 </div>
             </div>
 
+            {!selectedPost && (
+                <div className="gallery-tag-bar">
+                    {tagOptions.map((tag) => (
+                        <button
+                            key={tag}
+                            type="button"
+                            className={`gallery-tag-chip ${selectedTag === tag ? 'active' : ''}`}
+                            onClick={() => setSelectedTag(tag)}
+                        >
+                            {tag}
+                        </button>
+                    ))}
+                </div>
+            )}
+
             {isLoading ? (
                 <div className="gallery-loading-state">
                     <div className="gallery-loading-icon">⏳</div>
                     <p>갤러리 목록을 불러오는 중입니다.</p>
                 </div>
             ) : !selectedPost ? (
-                galleryItems.length === 0 ? (
+                filteredGalleryItems.length === 0 ? (
                     <div className="gallery-empty-state">
                         <div style={{ fontSize: '50px', marginBottom: '15px' }}>📷</div>
-                        <h3>등록된 사진이 없습니다.</h3>
-                        <p>가장 먼저 멋진 사진을 공유해 보세요!</p>
+                        <h3>검색 결과가 없습니다.</h3>
+                        <p>다른 태그나 검색어로 다시 시도해 보세요.</p>
                     </div>
                 ) : (
                     <main className="masonry-grid">
-                        {galleryItems.map((item) => (
+                        {filteredGalleryItems.map((item) => (
                             <article
                                 className="masonry-item"
                                 key={item.id}
@@ -487,6 +550,14 @@ export default function Gallery() {
                                     <h2 className="gallery-detail-title">
                                         {selectedPost.title || '제목 없음'}
                                     </h2>
+
+                                    <div className="gallery-detail-tag-list">
+                                        {selectedPost.tags.map((tag) => (
+                                            <span key={tag} className="gallery-detail-tag">
+                        #{tag}
+                      </span>
+                                        ))}
+                                    </div>
 
                                     <div className="gallery-detail-author-row">
                                         <div className="gallery-detail-author-avatar">
@@ -568,10 +639,11 @@ export default function Gallery() {
                                                 ref={commentInputRef}
                                                 type="text"
                                                 className="gallery-detail-comment-input"
-                                                placeholder="댓글 추가"
+                                                placeholder={isSubmittingComment ? '등록 중...' : '댓글 추가'}
                                                 value={commentInput}
                                                 onChange={(e) => setCommentInput(e.target.value)}
                                                 onKeyDown={handleCommentKeyDown}
+                                                disabled={isSubmittingComment}
                                             />
 
                                             <div className="gallery-detail-comment-tools">
