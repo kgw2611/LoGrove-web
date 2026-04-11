@@ -98,7 +98,7 @@ export default function GalleryWrite() {
     const [isReady, setIsReady] = useState(false);
 
     useEffect(() => {
-        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        const isLoggedIn = !!localStorage.getItem('access_token');
 
         if (!isLoggedIn) {
             alert('갤러리 글쓰기는 로그인한 회원만 이용할 수 있습니다.');

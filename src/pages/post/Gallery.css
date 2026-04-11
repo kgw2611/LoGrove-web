@@ -517,6 +517,38 @@
   margin-bottom: 12px;
 }
 
+/* 태그 필터 바 */
+.gallery-tag-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.gallery-tag-chip {
+  border: 1px solid #d4d4cd;
+  background: #f4f4f0;
+  color: #555;
+  font-size: 13px;
+  font-weight: 400;
+  border-radius: 999px;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+
+.gallery-tag-chip:hover {
+  background: #e4e4dc;
+}
+
+.gallery-tag-chip.active {
+  background: #b8d9c7;
+  color: #3f5447;
+  border-color: #b8d9c7;
+  font-weight: 500;
+}
+
 /* 반응형 */
 @media (max-width: 1500px) {
   .gallery-detail-layout {

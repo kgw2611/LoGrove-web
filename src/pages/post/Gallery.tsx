@@ -251,7 +251,6 @@ export default function Gallery() {
     const commentInputRef = useRef<HTMLInputElement | null>(null);
 
     const isLoggedIn =
-        localStorage.getItem('isLoggedIn') === 'true' ||
         !!localStorage.getItem('access_token');
 
     useEffect(() => {
