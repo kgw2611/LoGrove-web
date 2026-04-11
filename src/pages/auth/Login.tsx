@@ -1,49 +1,39 @@
-import { useState, type FormEvent, type ChangeEvent } from 'react' // 🔥 type 키워드 추가!
+import { useState, type FormEvent, type ChangeEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import '../home/Home.css' // 상단바 디자인 가져오기
-import './Auth.css' // 로그인/회원가입 디자인 가져오기
+import '../home/Home.css'
+import './Auth.css'
+import { loginAPI } from '../../features/auth/api/authApi'
 
 export default function Login() {
     const navigate = useNavigate()
 
-    // 1️⃣ 입력값 상태 관리
     const [userId, setUserId] = useState<string>('')
     const [password, setPassword] = useState<string>('')
     const [errorMessage, setErrorMessage] = useState<string>('')
 
-    // 2️⃣ 로그인 폼 제출 함수
-    const handleLoginSubmit = (e: FormEvent<HTMLFormElement>) => {
+    const handleLoginSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault()
 
-        // 3️⃣ 브라우저의 비밀 수첩(localStorage)에서 가입된 유저 정보 꺼내오기!
-        const savedUserString = localStorage.getItem('user_db')
-
-        if (!savedUserString) {
-            setErrorMessage('가입된 정보가 없습니다. 회원가입을 먼저 진행해주세요.')
+        if (!userId || !password) {
+            setErrorMessage('아이디와 비밀번호를 입력해주세요.')
             return
         }
 
-        const savedUser: {
-            userId: string
-            password: string
-            name: string
-        } = JSON.parse(savedUserString)
+        try {
+            const result = await loginAPI({ loginId: userId, loginPw: password })
 
-        // 4️⃣ 내가 방금 입력한 정보와 수첩에 적힌 정보 대조하기
-        if (savedUser.userId === userId && savedUser.password === password) {
-            // ✅ 로그인 성공!
+            localStorage.setItem('access_token', result.token)
+            localStorage.setItem('userId', String(result.userId))
+            localStorage.setItem('nickname', result.nickname)
+
             setErrorMessage('')
-            alert(`${savedUser.name}님, 환영합니다!`)
-
-            // 🔥 앱 전체가 이 사람이 로그인했다는 걸 알 수 있게 도장 찍어두기
-            localStorage.setItem('isLoggedIn', 'true')
-
-            // 홈 화면으로 이동 후, 헤더를 업데이트 하기 위해 새로고침
             navigate('/')
             window.location.reload()
-        } else {
-            // ❌ 로그인 실패
-            setErrorMessage('아이디 또는 비밀번호가 일치하지 않습니다.')
+        } catch (error: any) {
+            const errorMsg =
+                error.response?.data?.message ||
+                '아이디 또는 비밀번호가 일치하지 않습니다.'
+            setErrorMessage(errorMsg)
         }
     }
 

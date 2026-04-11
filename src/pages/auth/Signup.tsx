@@ -72,8 +72,8 @@ export default function Signup() {
         try {
             // 🔥 1. API 명세서(SignupRequest)에 맞춰서 데이터를 포장합니다.
             const reqData = {
-                login_id: userId,
-                password: password, // 🔥 기존 login_pw를 password로 변경!
+                loginId: userId,
+                loginPw: password,
                 name: name,
                 nickname: nickname,
                 email: email,
