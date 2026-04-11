@@ -6,7 +6,7 @@ export default function Header() {
     const navigate = useNavigate();
 
     // 무조건 false가 아니라, 로컬 스토리지에 'isLoggedIn' 도장이 있는지 확인합니다!
-    const [isLoggedIn, setIsLoggedIn] = useState<boolean>(localStorage.getItem('isLoggedIn') === 'true');
+    const [isLoggedIn, setIsLoggedIn] = useState<boolean>(!!localStorage.getItem('access_token'));
 
     // "Get started" 버튼 클릭 시 작동하는 함수
     const handleStartClick = () => {
@@ -27,7 +27,9 @@ export default function Header() {
     const handleLogout = () => {
         if (window.confirm('정말 로그아웃 하시겠습니까?')) {
             // 1. 로컬 스토리지에서 로그인 도장 지우기!
-            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('nickname');
 
             // 2. 상태를 false로 변경
             setIsLoggedIn(false);
