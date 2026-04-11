@@ -42,7 +42,7 @@ export default function Forum() {
     // 컴포넌트가 렌더링될 때 로컬 스토리지 확인
     useEffect(() => {
         // 로그인 상태 확인
-        const loggedInStatus = localStorage.getItem('isLoggedIn') === 'true';
+        const loggedInStatus = !!localStorage.getItem('access_token');
         setIsLoggedIn(loggedInStatus);
 
         if (loggedInStatus) {

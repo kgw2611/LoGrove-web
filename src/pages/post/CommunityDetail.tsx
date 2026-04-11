@@ -59,7 +59,7 @@ export default function CommunityDetail() {
     const [editReplyText, setEditReplyText] = useState<string>('');
 
     useEffect(() => {
-        const loggedInStatus = localStorage.getItem('isLoggedIn') === 'true';
+        const loggedInStatus = !!localStorage.getItem('access_token');
         setIsLoggedIn(loggedInStatus);
 
         if (loggedInStatus) {

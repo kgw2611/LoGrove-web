@@ -8,7 +8,7 @@ export default function Home() {
     // 🔥 핵심: 무조건 false가 아니라, 로컬 스토리지에 'isLoggedIn' 도장이 있는지 확인합니다!
     // (setIsLoggedIn은 이 컴포넌트 내에서 쓰지 않으므로 에러 방지를 위해 지웠습니다!)
     const [isLoggedIn] = useState<boolean>(
-        localStorage.getItem('isLoggedIn') === 'true'
+        !!localStorage.getItem('access_token')
     )
 
     // "시작하기" 버튼 클릭 시 작동하는 함수

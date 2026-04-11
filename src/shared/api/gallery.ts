@@ -153,7 +153,7 @@ function normalizeGalleryDetail(raw: RawPost): GalleryDetailItem {
 
 export async function getGalleryList(): Promise<GalleryListItem[]> {
     const res = await apiClient.get('/api/posts', {
-        params: { board: 'gallery' },
+        params: { board: 'GALLERY' },
     });
 
     const raw = unwrapData<RawPostListResponse>(res.data);
@@ -270,7 +270,7 @@ export async function createGalleryPost(
 
     formData.append('title', payload.title);
     formData.append('content', payload.description);
-    formData.append('boardType', 'gallery');
+    formData.append('boardType', 'GALLERY');
 
     payload.tagIds?.forEach((tagId) => {
         formData.append('tagIds', String(tagId));
