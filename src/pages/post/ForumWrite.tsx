@@ -1,9 +1,9 @@
-import { useState, type ChangeEvent } from 'react'; // 🔥 type 키워드 사용 및 ChangeEvent 추가
-import { useNavigate } from 'react-router-dom'; // 🔥 사용하지 않는 Link 제거
+import { useState, useRef, type ChangeEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios'; // 🔥 백엔드 통신용 axios
 import '../home/Home.css';
-import './CommunityWrite.css'; // 커뮤니티 글쓰기 디자인 완벽 재사용!
+import './CommunityWrite.css';
 
-// 타입 정의
 interface Toggles {
     comment: boolean;
     share: boolean;
@@ -11,91 +11,99 @@ interface Toggles {
     source: boolean;
 }
 
-interface ForumPostType {
-    id: number;
-    boardType: string;
-    brand: string;
-    title: string;
-    content: string;
-    author: string;
-    date: string;
-    views: number;
-}
-
 export default function ForumWrite() {
     const navigate = useNavigate();
 
-    // 🔥 1. 입력 상태(State) 관리 (카메라 브랜드 추가!)
-    const [board, setBoard] = useState<string>('');
-    const [camera, setCamera] = useState<string>(''); // 카메라 브랜드 전용
+    // 입력 상태(State) 관리
+    const [board, setBoard] = useState<string>(''); // 세부 카테고리 (Q&A, 정보공유)
+    const [camera, setCamera] = useState<string>(''); // 카메라 브랜드
     const [title, setTitle] = useState<string>('');
     const [content, setContent] = useState<string>('');
 
-    // 4개의 토글 스위치 상태 관리
+    // 🔥 사진 파일 관리를 위한 상태 추가
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [previewImage, setPreviewImage] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // 토글 스위치
     const [toggles, setToggles] = useState<Toggles>({
-        comment: true,
-        share: true,
-        scrap: true,
-        source: true
+        comment: true, share: true, scrap: true, source: true
     });
 
     const handleToggle = (key: keyof Toggles) => {
         setToggles(prev => ({ ...prev, [key]: !prev[key] }));
     };
 
-    // 🔥 2. "등록" 버튼 클릭 함수
-    const handleSubmit = () => {
-        // 유효성 검사
-        if (!board) {
-            alert('게시판 카테고리를 선택해주세요.');
-            return;
+    // 🔥 사진 첨부 기능
+    const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setImageFile(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setPreviewImage(reader.result as string);
+            };
+            reader.readAsDataURL(file);
         }
-        if (!camera) {
-            alert('카메라 종류를 선택해주세요.');
-            return;
+    };
+
+    const handleRemoveImage = () => {
+        setImageFile(null);
+        setPreviewImage(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+
+    // 🔥 "등록" 버튼: 백엔드 서버로 전송
+    const handleSubmit = async () => {
+        if (!board) return alert('게시판 카테고리를 선택해주세요.');
+        if (!camera) return alert('카메라 종류를 선택해주세요.');
+        if (!title.trim()) return alert('제목을 입력해주세요.');
+        if (!content.trim()) return alert('내용을 입력해주세요.');
+
+        const formData = new FormData();
+
+        // 🚨 포럼 글쓰기이므로 무조건 FORUM으로 고정!
+        formData.append('boardType', 'FORUM');
+        formData.append('title', title);
+        formData.append('content', content);
+
+        // 💡 팁: 백엔드에서 세부 카테고리(board)와 카메라(camera)를 태그(tagIds)로 받을지,
+        // 아니면 다른 필드로 받을지 건우님과 확인이 필요합니다! 임시로 제목에 붙여서 보냅니다.
+        // 나중에 건우님이 정해주시면 formData.append('어쩌구', board) 로 추가하세요!
+        // formData.append('subCategory', board);
+        // formData.append('cameraBrand', camera);
+
+        if (imageFile) {
+            formData.append('images', imageFile); // 건우님 컨트롤러에 맞춤
         }
-        if (!title.trim()) {
-            alert('제목을 입력해주세요.');
-            return;
+
+        try {
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                alert('로그인이 필요한 서비스입니다.');
+                navigate('/login');
+                return;
+            }
+
+            const response = await axios.post('/api/posts', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.status === 200 || response.status === 201) {
+                alert('포럼 게시글이 성공적으로 등록되었습니다!');
+                navigate('/forum');
+            }
+        } catch (error) {
+            console.error('게시글 등록 실패:', error);
+            alert('글 작성에 실패했습니다. (네트워크 탭을 확인해주세요)');
         }
-        if (!content.trim()) {
-            alert('내용을 입력해주세요.');
-            return;
-        }
-
-        // 로그인한 유저 정보 가져오기
-        const savedUserString = localStorage.getItem('user_db');
-        const authorName: string = savedUserString ? JSON.parse(savedUserString).name : '익명';
-
-        // 3. 포럼 전용 게시글 데이터 만들기
-        const newPost: ForumPostType = {
-            id: Date.now(),
-            boardType: board, // Q&A 인지 정보공유인지
-            brand: camera,    // 🔥 어느 카메라 브랜드인지 (포럼에서 가장 중요!)
-            title: title,
-            content: content,
-            author: authorName,
-            date: new Date().toLocaleDateString(),
-            views: 0
-        };
-
-        // 4. 로컬 스토리지에서 'forum_posts' 가져오기 (커뮤니티와 다른 수첩을 씁니다!)
-        const existingPosts: ForumPostType[] = JSON.parse(localStorage.getItem('forum_posts') || '[]');
-
-        // 5. 저장
-        const updatedPosts = [newPost, ...existingPosts];
-        localStorage.setItem('forum_posts', JSON.stringify(updatedPosts));
-
-        alert('포럼 게시글이 성공적으로 등록되었습니다!');
-
-        // 6. 포럼 메인 화면으로 이동
-        navigate('/forum');
     };
 
     return (
         <div className="write-container">
-
-            {/* 글쓰기 헤더 */}
             <div className="write-header-bar">
                 <div className="write-header-left">
                     <button className="back-btn" onClick={() => navigate(-1)}>←</button>
@@ -103,18 +111,12 @@ export default function ForumWrite() {
                 </div>
                 <div className="write-header-right">
                     <span className="temp-save">임시등록 <span className="temp-count">0</span></span>
-                    {/* 🔥 등록 버튼에 handleSubmit 연결 */}
                     <button className="submit-post-btn" onClick={handleSubmit}>등록</button>
                 </div>
             </div>
 
-            {/* 메인 영역 */}
             <div className="write-content">
-
-                {/* 왼쪽: 에디터 */}
                 <main className="write-main">
-
-                    {/* 게시판과 카메라 종류 드롭다운 */}
                     <div className="editor-top">
                         <div style={{ display: 'flex', gap: '16px' }}>
                             <select
@@ -155,10 +157,11 @@ export default function ForumWrite() {
                         />
                     </div>
 
-                    {/* 에디터 툴바 */}
                     <div className="editor-toolbar">
                         <div className="toolbar-icons">
-                            <button>🖼️ 사진</button>
+                            {/* 🔥 숨겨진 파일 인풋 & 버튼 연결 */}
+                            <input type="file" accept="image/*" ref={fileInputRef} style={{ display: 'none' }} onChange={handleImageUpload} />
+                            <button onClick={() => fileInputRef.current?.click()}>🖼️ 사진</button>
                             <button>🎥 동영상</button>
                             <button>🙂 이모티콘</button>
                             <button>🗺️ 장소</button>
@@ -173,19 +176,35 @@ export default function ForumWrite() {
                             <button><b>B</b></button>
                             <button><i>I</i></button>
                             <button><u>U</u></button>
-                            {/* 🔥 strike 태그를 del 태그로 변경했습니다! */}
                             <button><del>T</del></button>
                         </div>
                     </div>
 
-                    <textarea
-                        className="content-textarea"
-                        placeholder="내용을 입력하세요"
-                        value={content}
-                        onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setContent(e.target.value)}
-                    ></textarea>
+                    {/* 본문 및 이미지 미리보기 */}
+                    <div className="textarea-container" style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '20px' }}>
+                        <textarea
+                            className="content-textarea"
+                            placeholder="내용을 입력하세요"
+                            value={content}
+                            onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setContent(e.target.value)}
+                            style={{ flex: 1, border: 'none', resize: 'none', outline: 'none', minHeight: '300px' }}
+                        ></textarea>
 
-                    {/* 하단 태그 영역 */}
+                        {previewImage && (
+                            <div className="image-preview" style={{ position: 'relative', display: 'inline-block', marginTop: '20px', maxWidth: '300px' }}>
+                                <img src={previewImage} alt="미리보기" style={{ width: '100%', borderRadius: '8px', border: '1px solid #eee' }} />
+                                <button
+                                    onClick={handleRemoveImage}
+                                    style={{
+                                        position: 'absolute', top: '10px', right: '10px', background: 'rgba(0,0,0,0.6)',
+                                        color: 'white', border: 'none', borderRadius: '50%', width: '24px', height: '24px',
+                                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                    }}
+                                >✕</button>
+                            </div>
+                        )}
+                    </div>
+
                     <div className="editor-bottom-tags">
                         <div className="tag-input-wrapper">
                             <span className="tag-count">태그된 주제(1)개</span>
@@ -201,9 +220,7 @@ export default function ForumWrite() {
                     </div>
                 </main>
 
-                {/* 오른쪽: 설정 사이드바 */}
                 <aside className="write-sidebar">
-                    {/* 공개 설정 박스 */}
                     <div className="setting-box gray-box">
                         <div className="setting-title">공개설정 ⌄</div>
                         <div className="setting-list">
@@ -212,39 +229,13 @@ export default function ForumWrite() {
                         </div>
                     </div>
 
-                    {/* 토글 설정 박스 */}
                     <div className="setting-box gray-box">
-                        <div className="toggle-row">
-                            <span className="toggle-label">댓글달기 허용</span>
-                            <label className="switch">
-                                <input type="checkbox" checked={toggles.comment} onChange={() => handleToggle('comment')} />
-                                <span className="slider round"></span>
-                            </label>
-                        </div>
-                        <div className="toggle-row">
-                            <span className="toggle-label">공유 허용</span>
-                            <label className="switch">
-                                <input type="checkbox" checked={toggles.share} onChange={() => handleToggle('share')} />
-                                <span className="slider round"></span>
-                            </label>
-                        </div>
-                        <div className="toggle-row">
-                            <span className="toggle-label">스크랩 허용</span>
-                            <label className="switch">
-                                <input type="checkbox" checked={toggles.scrap} onChange={() => handleToggle('scrap')} />
-                                <span className="slider round"></span>
-                            </label>
-                        </div>
-                        <div className="toggle-row">
-                            <span className="toggle-label">자동출처 사용</span>
-                            <label className="switch">
-                                <input type="checkbox" checked={toggles.source} onChange={() => handleToggle('source')} />
-                                <span className="slider round"></span>
-                            </label>
-                        </div>
+                        <div className="toggle-row"><span className="toggle-label">댓글달기 허용</span><label className="switch"><input type="checkbox" checked={toggles.comment} onChange={() => handleToggle('comment')} /><span className="slider round"></span></label></div>
+                        <div className="toggle-row"><span className="toggle-label">공유 허용</span><label className="switch"><input type="checkbox" checked={toggles.share} onChange={() => handleToggle('share')} /><span className="slider round"></span></label></div>
+                        <div className="toggle-row"><span className="toggle-label">스크랩 허용</span><label className="switch"><input type="checkbox" checked={toggles.scrap} onChange={() => handleToggle('scrap')} /><span className="slider round"></span></label></div>
+                        <div className="toggle-row"><span className="toggle-label">자동출처 사용</span><label className="switch"><input type="checkbox" checked={toggles.source} onChange={() => handleToggle('source')} /><span className="slider round"></span></label></div>
                     </div>
                 </aside>
-
             </div>
         </div>
     );
