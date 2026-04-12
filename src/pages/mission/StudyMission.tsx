@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom' // 🔥 페이지 이동을 위�
 import axios from 'axios'
 import './StudyMission.css'
 
+const API_BASE_URL = 'http://43.200.183.163:8080'
+
 type Mission = {
     id: number
     title: string
@@ -92,7 +94,7 @@ export default function StudyMission() {
                 }
 
                 // POST /api/learning/{mission_id}/photo/submit 호출
-                const response = await axios.post(`/api/learning/${selectedMission?.id}/photo/submit`, formData, {
+                const response = await axios.post(`${API_BASE_URL}/api/learning/${selectedMission?.id}/photo/submit`, formData, {
                     headers: {
                         'Content-Type': 'multipart/form-data',
                         'Authorization': `Bearer ${token}` // 🚨 403 에러 방지용 토큰 추가
@@ -109,10 +111,17 @@ export default function StudyMission() {
                 })
                 setModalStep('result')
 
-            } catch (error) {
-                console.error("채점 실패:", error)
-                alert('채점 서버와 연결할 수 없거나 권한이 없습니다. 로그인을 확인해주세요.')
-                setModalStep('upload')
+            } catch (error: unknown) {
+                if (axios.isAxiosError(error)) {
+                    console.error('채점 실패:', error);
+                    console.error('status:', error.response?.status);
+                    console.error('data:', error.response?.data);
+                    alert(`채점 실패: ${error.response?.status ?? 'unknown'} / ${JSON.stringify(error.response?.data ?? {})}`);
+                } else {
+                    console.error('채점 실패:', error);
+                    alert('채점 실패: unknown');
+                }
+                setModalStep('upload');
             }
         }
     }
