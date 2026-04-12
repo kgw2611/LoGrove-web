@@ -1,4 +1,5 @@
 import { useState, useRef, type ChangeEvent } from 'react'
+import { useNavigate } from 'react-router-dom' // 🔥 페이지 이동을 위한 추가
 import axios from 'axios'
 import './StudyMission.css'
 
@@ -11,24 +12,19 @@ type Mission = {
     desc: string
 }
 
-// 🔥 채점 결과 타입 정의
 type GradingResult = {
     score: number;
     feedback: string;
 }
 
 export default function StudyMission() {
+    const navigate = useNavigate();
     const [selectedMission, setSelectedMission] = useState<Mission | null>(null)
-
-    // 🔥 모달의 4가지 상태 관리: 'desc'(설명) -> 'upload'(첨부) -> 'loading'(채점중) -> 'result'(결과)
     const [modalStep, setModalStep] = useState<'desc' | 'upload' | 'loading' | 'result'>('desc')
 
-    // 파일 업로드 관련 상태
     const [imageFile, setImageFile] = useState<File | null>(null)
     const [previewImage, setPreviewImage] = useState<string | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
-
-    // 채점 결과 상태
     const [result, setResult] = useState<GradingResult | null>(null)
 
     const missions: Mission[] = [
@@ -38,7 +34,6 @@ export default function StudyMission() {
         { id: 4, title: '야경사진', level: '레벨 1', theme: 'green', img: '/images/night view.png', desc: '야경 사진은 빛의 흔적과 도시의 감성을 담아냅니다. 삼각대를 활용하고 노출 시간을 길게 설정하여 멋진 야경을 담아보세요.' },
     ]
 
-    // 모달 열기
     const openModal = (mission: Mission) => {
         setSelectedMission(mission)
         setModalStep('desc')
@@ -51,12 +46,10 @@ export default function StudyMission() {
         setSelectedMission(null)
     }
 
-    // 🔥 1. 파일 선택 창 띄우기
     const handleUploadClick = () => {
         fileInputRef.current?.click()
     }
 
-    // 🔥 2. 파일이 선택되었을 때 미리보기 만들기
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (file) {
@@ -69,10 +62,10 @@ export default function StudyMission() {
         }
     }
 
-    // 🔥 3. 제출하기 버튼 클릭 (백엔드 API 연동)
+    // 🔥 3. 제출하기 버튼 클릭 (백엔드 API 연동 수정본)
     const handleSubmitClick = async () => {
         if (modalStep === 'desc') {
-            setModalStep('upload') // 설명 모드면 업로드 모드로 전환
+            setModalStep('upload')
             return
         }
 
@@ -82,34 +75,44 @@ export default function StudyMission() {
                 return
             }
 
-            // 로딩 화면으로 전환
             setModalStep('loading')
 
             const formData = new FormData()
-            formData.append('image', imageFile) // 건우님과 키값('image' 또는 'file' 등) 맞춰보세요!
+            // 🚨 건우님 컨트롤러 @RequestParam("file")에 맞춰 'file'로 변경
+            formData.append('file', imageFile)
 
             try {
-                // 명세서에 적힌 POST /api/learning/{mission_id}/photo/submit 호출
+                // 🚨 로컬 스토리지에서 신분증(토큰) 꺼내기
+                const token = localStorage.getItem('access_token');
+
+                if (!token) {
+                    alert('로그인이 필요한 서비스입니다.');
+                    navigate('/login');
+                    return;
+                }
+
+                // POST /api/learning/{mission_id}/photo/submit 호출
                 const response = await axios.post(`/api/learning/${selectedMission?.id}/photo/submit`, formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                        'Authorization': `Bearer ${token}` // 🚨 403 에러 방지용 토큰 추가
+                    }
                 })
 
-                // 서버에서 채점 결과를 받아왔다고 가정
+                // 🚨 건우님의 ApiResponse 구조에 맞춰 데이터 추출
+                // response.data.data 내에 score와 feedback이 들어있을 확률이 높습니다.
+                const serverData = response.data.data || response.data;
+
                 setResult({
-                    score: response.data.score || 90, // 실제 데이터 구조에 맞게 변경하세요!
-                    feedback: response.data.feedback || "너무 잘 찍으셨습니다!!!!!!"
+                    score: serverData.score || 0,
+                    feedback: serverData.feedback || "채점 완료되었습니다."
                 })
-                setModalStep('result') // 결과 화면으로 전환
+                setModalStep('result')
 
             } catch (error) {
                 console.error("채점 실패:", error)
-                // 🚨 백엔드 연결 전 테스트를 위한 가짜 결과 (나중에 지우세요!)
-                setTimeout(() => {
-                    setResult({ score: 90, feedback: "너무 잘 찍으셨습니다!!!!!!" })
-                    setModalStep('result')
-                }, 2000);
-                // alert('채점 서버와 연결할 수 없습니다.')
-                // setModalStep('upload')
+                alert('채점 서버와 연결할 수 없거나 권한이 없습니다. 로그인을 확인해주세요.')
+                setModalStep('upload')
             }
         }
     }
@@ -142,16 +145,13 @@ export default function StudyMission() {
                 </section>
             </main>
 
-            {/* 🔥 모달 영역 */}
             {selectedMission && (
                 <div className="modal-overlay" onClick={closeModal}>
                     <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-
                         <h2 className="modal-title">
                             {modalStep === 'result' ? '채점 결과' : selectedMission.title}
                         </h2>
 
-                        {/* ⏳ 로딩 중 화면 */}
                         {modalStep === 'loading' && (
                             <div className="modal-loading-area">
                                 <div className="spinner"></div>
@@ -159,7 +159,6 @@ export default function StudyMission() {
                             </div>
                         )}
 
-                        {/* 📄 설명 & 업로드 & 결과 화면 */}
                         {modalStep !== 'loading' && (
                             <div className="modal-body">
                                 <div className="modal-left">
@@ -169,9 +168,7 @@ export default function StudyMission() {
 
                                     {modalStep === 'upload' && (
                                         <>
-                                            {/* 숨겨진 파일 인풋 */}
                                             <input type="file" accept="image/*" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileChange} />
-
                                             {previewImage ? (
                                                 <div className="preview-container" onClick={handleUploadClick}>
                                                     <img src={previewImage} alt="미리보기" className="modal-image preview-img" />
@@ -193,9 +190,7 @@ export default function StudyMission() {
 
                                 <div className="modal-right">
                                     {modalStep === 'desc' && selectedMission.desc.split('\n').map((line, idx) => <span key={idx}>{line}<br /></span>)}
-
                                     {modalStep === 'upload' && selectedMission.desc.split('\n').map((line, idx) => <span key={idx}>{line}<br /></span>)}
-
                                     {modalStep === 'result' && result && (
                                         <div className="result-content">
                                             <p className="result-username">숲속으로님의 사진 결과는...</p>
@@ -211,7 +206,6 @@ export default function StudyMission() {
                             </div>
                         )}
 
-                        {/* 하단 버튼 영역 */}
                         {modalStep !== 'loading' && (
                             <div className="modal-footer">
                                 {modalStep === 'result' ? (
