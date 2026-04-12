@@ -1,26 +1,54 @@
-import { useState, useRef, type ChangeEvent } from 'react'
-import { useNavigate } from 'react-router-dom' // 🔥 페이지 이동을 위한 추가
+import { useState, useRef, useEffect, type ChangeEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import { apiClient } from '../../shared/api/client'
 import './StudyMission.css'
-
-const API_BASE_URL = 'http://43.200.183.163:8080'
 
 type Mission = {
     id: number
-    title: string
-    level: string
-    theme: 'green' | 'purple'
+    theme: string
+    color: 'green' | 'purple'
     img: string
     desc: string
 }
 
 type GradingResult = {
-    score: number;
-    feedback: string;
+    score: number
+    feedback: string
+}
+
+type MissionListItem = {
+    id?: number
+    missionId?: number
+}
+
+type MissionDetailItem = {
+    theme?: string
+    content?: string
+    guide?: string
+    sampleUrl?: string | null
+    sample_url?: string | null
+}
+
+const getDefaultMissionImage = (theme?: string) => {
+    switch (theme) {
+        case '3분할':
+            return '/images/3divisions.png'
+        case '황금비율':
+            return '/images/golden ratio.png'
+        case '소실점':
+            return '/images/vanishing point.png'
+        case '야경사진':
+            return '/images/night view.png'
+        default:
+            return '/images/mission-illustration.png'
+    }
 }
 
 export default function StudyMission() {
-    const navigate = useNavigate();
+    const navigate = useNavigate()
+
+    const [missions, setMissions] = useState<Mission[]>([])
     const [selectedMission, setSelectedMission] = useState<Mission | null>(null)
     const [modalStep, setModalStep] = useState<'desc' | 'upload' | 'loading' | 'result'>('desc')
 
@@ -29,12 +57,37 @@ export default function StudyMission() {
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [result, setResult] = useState<GradingResult | null>(null)
 
-    const missions: Mission[] = [
-        { id: 1, title: '3분할', level: '레벨 1', theme: 'green', img: '/images/3divisions.png', desc: '3분할 구도는 사진을 찍는다면 기본적으로 알아야 할 구도법입니다. 중앙에만 피사체를 배치하는 사진 대신, 색다른 느낌을 줄 수 있습니다.\n\n당장 카메라에서 격자선을 켜고 사진을 찍어보세요.' },
-        { id: 2, title: '황금비율', level: '레벨 1', theme: 'green', img: '/images/golden ratio.png', desc: '황금비율은 자연에서 발견되는 가장 안정적이고 아름다운 비율입니다. 피보나치 나선을 활용하여 피사체를 배치해보세요.' },
-        { id: 3, title: '소실점', level: '레벨 1', theme: 'green', img: '/images/vanishing point.png', desc: '소실점 구도는 시선이 한 곳으로 모이게 하여 강한 원근감과 집중력을 만들어냅니다. 길이나 건축물을 찍을 때 유용합니다.' },
-        { id: 4, title: '야경사진', level: '레벨 1', theme: 'green', img: '/images/night view.png', desc: '야경 사진은 빛의 흔적과 도시의 감성을 담아냅니다. 삼각대를 활용하고 노출 시간을 길게 설정하여 멋진 야경을 담아보세요.' },
-    ]
+    useEffect(() => {
+        const fetchPhotoMissions = async () => {
+            try {
+                const listResponse = await apiClient.get('/api/learning/photo')
+                const listData: MissionListItem[] = listResponse.data.data || listResponse.data || []
+
+                const detailedMissions = await Promise.all(
+                    listData.map(async (item, index) => {
+                        const missionId = item.id ?? item.missionId ?? 0
+                        const detailResponse = await apiClient.get(`/api/learning/${missionId}/photo`)
+                        const detail: MissionDetailItem = detailResponse.data.data || detailResponse.data || {}
+
+                        return {
+                            id: missionId,
+                            theme: detail.theme ?? `사진 미션 ${missionId}`,
+                            color: index % 2 === 0 ? 'green' : 'purple',
+                            img: getDefaultMissionImage(detail.theme),
+                            desc: `${detail.content ?? ''}\n\n${detail.guide ?? ''}`.trim(),
+                        } satisfies Mission
+                    })
+                )
+
+                setMissions(detailedMissions)
+            } catch (error) {
+                console.error('사진 미션 목록 불러오기 실패:', error)
+                alert('사진 미션 목록을 불러오지 못했습니다.')
+            }
+        }
+
+        fetchPhotoMissions()
+    }, [])
 
     const openModal = (mission: Mission) => {
         setSelectedMission(mission)
@@ -64,7 +117,6 @@ export default function StudyMission() {
         }
     }
 
-    // 🔥 3. 제출하기 버튼 클릭 (백엔드 API 연동 수정본)
     const handleSubmitClick = async () => {
         if (modalStep === 'desc') {
             setModalStep('upload')
@@ -77,51 +129,47 @@ export default function StudyMission() {
                 return
             }
 
+            const token = localStorage.getItem('access_token')
+            if (!token) {
+                alert('로그인이 필요한 서비스입니다.')
+                navigate('/login')
+                return
+            }
+
             setModalStep('loading')
 
             const formData = new FormData()
-            // 🚨 건우님 컨트롤러 @RequestParam("file")에 맞춰 'file'로 변경
             formData.append('file', imageFile)
 
             try {
-                // 🚨 로컬 스토리지에서 신분증(토큰) 꺼내기
-                const token = localStorage.getItem('access_token');
-
-                if (!token) {
-                    alert('로그인이 필요한 서비스입니다.');
-                    navigate('/login');
-                    return;
-                }
-
-                // POST /api/learning/{mission_id}/photo/submit 호출
-                const response = await axios.post(`${API_BASE_URL}/api/learning/${selectedMission?.id}/photo/submit`, formData, {
-                    headers: {
-                        'Content-Type': 'multipart/form-data',
-                        'Authorization': `Bearer ${token}` // 🚨 403 에러 방지용 토큰 추가
+                const response = await apiClient.post(
+                    `/api/learning/${selectedMission?.id}/photo/submit`,
+                    formData,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
                     }
-                })
+                )
 
-                // 🚨 건우님의 ApiResponse 구조에 맞춰 데이터 추출
-                // response.data.data 내에 score와 feedback이 들어있을 확률이 높습니다.
-                const serverData = response.data.data || response.data;
+                const serverData = response.data.data || response.data
 
                 setResult({
                     score: serverData.score || 0,
-                    feedback: serverData.feedback || "채점 완료되었습니다."
+                    feedback: serverData.feedback || '채점 완료되었습니다.',
                 })
                 setModalStep('result')
-
             } catch (error: unknown) {
                 if (axios.isAxiosError(error)) {
-                    console.error('채점 실패:', error);
-                    console.error('status:', error.response?.status);
-                    console.error('data:', error.response?.data);
-                    alert(`채점 실패: ${error.response?.status ?? 'unknown'} / ${JSON.stringify(error.response?.data ?? {})}`);
+                    console.error('채점 실패:', error)
+                    console.error('status:', error.response?.status)
+                    console.error('data:', error.response?.data)
+                    alert(`채점 실패: ${error.response?.status ?? 'unknown'} / ${JSON.stringify(error.response?.data ?? {})}`)
                 } else {
-                    console.error('채점 실패:', error);
-                    alert('채점 실패: unknown');
+                    console.error('채점 실패:', error)
+                    alert('채점 실패: unknown')
                 }
-                setModalStep('upload');
+                setModalStep('upload')
             }
         }
     }
@@ -135,19 +183,20 @@ export default function StudyMission() {
 
                 <section className="mission-grid-section">
                     {missions.map((item) => (
-                        <div key={item.id} className={`mission-card ${item.theme === 'purple' ? 'card-purple' : 'card-green'}`}>
+                        <div key={item.id} className={`mission-card ${item.color === 'purple' ? 'card-purple' : 'card-green'}`}>
                             <div className="mission-card-header">
-                                <h3 className="mission-card-title">{item.title}</h3>
+                                <h3 className="mission-card-title">{item.theme}</h3>
                                 <div className="mission-card-right">
-                                    <div className="mission-card-level">
-                                        <span className={`level-dot ${item.theme === 'purple' ? 'dot-purple' : 'dot-green'}`}></span>
-                                        {item.level}
-                                    </div>
-                                    <button className={`mission-action-btn ${item.theme === 'purple' ? 'btn-purple' : 'btn-green'}`} onClick={() => openModal(item)}>시작</button>
+                                    <button
+                                        className={`mission-action-btn ${item.color === 'purple' ? 'btn-purple' : 'btn-green'}`}
+                                        onClick={() => openModal(item)}
+                                    >
+                                        시작
+                                    </button>
                                 </div>
                             </div>
                             <div className="mission-card-image-box">
-                                <img src={item.img} alt={item.title} />
+                                <img src={item.img} alt={item.theme} />
                             </div>
                         </div>
                     ))}
@@ -158,7 +207,7 @@ export default function StudyMission() {
                 <div className="modal-overlay" onClick={closeModal}>
                     <div className="modal-box" onClick={(e) => e.stopPropagation()}>
                         <h2 className="modal-title">
-                            {modalStep === 'result' ? '채점 결과' : selectedMission.title}
+                            {modalStep === 'result' ? '채점 결과' : selectedMission.theme}
                         </h2>
 
                         {modalStep === 'loading' && (
@@ -172,12 +221,18 @@ export default function StudyMission() {
                             <div className="modal-body">
                                 <div className="modal-left">
                                     {modalStep === 'desc' && (
-                                        <img src={selectedMission.img} alt={selectedMission.title} className="modal-image" />
+                                        <img src={selectedMission.img} alt={selectedMission.theme} className="modal-image" />
                                     )}
 
                                     {modalStep === 'upload' && (
                                         <>
-                                            <input type="file" accept="image/*" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileChange} />
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                ref={fileInputRef}
+                                                style={{ display: 'none' }}
+                                                onChange={handleFileChange}
+                                            />
                                             {previewImage ? (
                                                 <div className="preview-container" onClick={handleUploadClick}>
                                                     <img src={previewImage} alt="미리보기" className="modal-image preview-img" />
@@ -186,7 +241,7 @@ export default function StudyMission() {
                                             ) : (
                                                 <div className="modal-upload-area" onClick={handleUploadClick}>
                                                     <span className="upload-icon">↑</span>
-                                                    <p>파일을 선택하거나<br/>여기로 끌어다 놓으세요</p>
+                                                    <p>파일을 선택하거나<br />여기로 끌어다 놓으세요</p>
                                                 </div>
                                             )}
                                         </>
