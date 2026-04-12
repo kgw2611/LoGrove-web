@@ -9,7 +9,7 @@ import './ForumDetail.css';
 const getImageUrl = (path?: string) => {
     if (!path) return '';
     if (path.startsWith('http')) return path;
-    return `http://localhost:8080${path.startsWith('/') ? '' : '/'}${path}`;
+    return `http://43.200.183.163:8080${path.startsWith('/') ? '' : '/'}${path}`;
 };
 
 // 🔥 명세서에 맞춰 대댓글(Reply) 관련 타입은 깔끔하게 지웠습니다!
