@@ -4,7 +4,7 @@
     min-height: 100vh;
 }
 
-/* --- 상단 네비게이션 바 & 레이아웃 (StudyStep과 완벽 동일) --- */
+/* --- 상단 네비게이션 바 & 레이아웃 --- */
 .step-navbar {
     display: flex;
     justify-content: space-between;
@@ -23,7 +23,7 @@
 
 .step-main-content {
     display: flex;
-    max-width: 1100px; /* 카드가 2개 들어가니 살짝 넓게 */
+    max-width: 1100px;
     margin: 0 auto;
     padding: 40px 20px;
     gap: 40px;
@@ -36,12 +36,13 @@
 }
 .graphics-placeholder { width: 100%; height: 100%; }
 
-/* --- 🔥 우측 미션 카드 그리드 (이곳이 핵심!) --- */
+/* --- 🔥 우측 미션 카드 그리드 --- */
 .mission-grid-section {
     flex: 1;
     display: grid;
-    grid-template-columns: repeat(2, 1fr); /* 2칸씩 나누기! */
-    gap: 20px; /* 카드 사이 간격 */
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    align-content: start;
 }
 
 .mission-card {
@@ -50,13 +51,18 @@
     padding: 20px;
     border-radius: 8px;
     background-color: #ffffff;
+    overflow: hidden;
+    height: fit-content;
 }
+
+.card-green { border: 2px solid #8fd3b2; }
+.card-purple { border: 2px solid #b8a1f8; }
 
 .mission-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    padding-bottom: 16px;
 }
 
 .mission-card-title {
@@ -86,6 +92,8 @@
     border-radius: 50%;
     margin-right: 6px;
 }
+.dot-green { background-color: #8fd3b2; }
+.dot-purple { background-color: #b8a1f8; }
 
 .mission-action-btn {
     padding: 8px 24px;
@@ -97,28 +105,245 @@
     cursor: pointer;
     transition: opacity 0.2s;
 }
-
 .mission-action-btn:hover { opacity: 0.8; }
+.btn-green { background-color: #8fd3b2; }
+.btn-purple { background-color: #b8a1f8; }
 
 /* 이미지 박스 */
 .mission-card-image-box {
     width: 100%;
-    height: 220px; /* 사진 높이 고정 */
-    border-radius: 4px;
-    overflow: hidden;
+    font-size: 0;
 }
 
 .mission-card-image-box img {
     width: 100%;
-    height: 100%;
-    object-fit: cover; /* 사진이 비율 깨지지 않고 꽉 차게 */
+    height: auto;
+    display: block;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+    object-fit: cover;
 }
 
-/* --- 테마 컬러 (초록색 / 보라색) --- */
-.card-green { border: 2px solid #8fd3b2; }
-.btn-green { background-color: #8fd3b2; }
-.dot-green { background-color: #8fd3b2; }
+/* =========================================
+   🔥 모달 (팝업) 디자인 (여기가 통째로 빠져있었습니다!)
+   ========================================= */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
 
-.card-purple { border: 2px solid #b8a1f8; }
-.btn-purple { background-color: #b8a1f8; }
-.dot-purple { background-color: #b8a1f8; }
+.modal-box {
+    background-color: #ffffff;
+    width: 800px;
+    max-width: 90%;
+    padding: 40px;
+    border-radius: 8px;
+    border: 12px solid #e2f4e8;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.modal-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+    margin-top: 0;
+    margin-bottom: 30px;
+}
+
+.modal-body {
+    display: flex;
+    gap: 30px;
+    align-items: center;
+    margin-bottom: 40px;
+}
+
+.modal-left, .modal-right {
+    flex: 1;
+}
+
+.modal-left {
+    height: 250px;
+}
+
+.modal-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    border-radius: 4px;
+}
+
+.modal-upload-area {
+    width: 100%;
+    height: 100%;
+    background-color: #e6e5e0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border-radius: 8px;
+    color: #333;
+    font-size: 14px;
+    line-height: 1.5;
+    cursor: pointer;
+}
+
+.upload-icon {
+    font-size: 24px;
+    margin-bottom: 10px;
+    display: inline-block;
+    border: 1px solid #333;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    line-height: 26px;
+}
+
+.modal-right {
+    text-align: left;
+    font-size: 15px;
+    color: #333;
+    line-height: 1.6;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.btn-cancel, .btn-submit {
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-cancel {
+    background-color: white;
+    border: 1px solid #ff7b7b;
+    color: #333;
+}
+
+.btn-submit {
+    background-color: #e2f4e8;
+    border: none;
+    color: #333;
+}
+
+/* =========================================
+   🔥 추가된 모달 로딩 & 결과 디자인
+   ========================================= */
+
+/* 로딩 화면 */
+.modal-loading-area {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 250px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #e2f4e8;
+    border-top: 5px solid #87d8a3; /* 돌아가는 초록색 부분 */
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 사진 미리보기 오버레이 */
+.preview-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.preview-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    opacity: 0;
+    transition: opacity 0.2s;
+    border-radius: 4px;
+}
+
+.preview-container:hover .preview-overlay {
+    opacity: 1;
+}
+
+/* 결과 화면 디자인 */
+.result-img {
+    border-radius: 8px;
+}
+
+.result-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
+}
+
+.result-username {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.score-bar-container {
+    width: 100%;
+    height: 28px;
+    background-color: #ffffff;
+    border: 2px solid #87d8a3;
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.score-bar-fill {
+    height: 100%;
+    background-color: #87d8a3;
+    display: flex;
+    align-items: center;
+    transition: width 1s ease-in-out; /* 점수가 차오르는 애니메이션 */
+}
+
+.score-text {
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+    padding-left: 12px;
+}
+
+.result-feedback {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    text-align: center;
+}
