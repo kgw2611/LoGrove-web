@@ -275,24 +275,32 @@ export default function Gallery() {
     }, []);
 
     const filteredGalleryItems = useMemo(() => {
-        return galleryItems.filter((item) => {
-            const matchesTag =
-                selectedTag === '전체' || item.tags.includes(selectedTag);
+        return galleryItems
+            .filter((item) => {
+                const matchesTag =
+                    selectedTag === '전체' || item.tags.includes(selectedTag);
 
-            const query = searchText.trim().toLowerCase();
-            const matchesSearch =
-                query.length === 0 ||
-                item.title.toLowerCase().includes(query) ||
-                (item.description ?? '').toLowerCase().includes(query) ||
-                item.tags.some((tag) => tag.toLowerCase().includes(query));
+                const query = searchText.trim().toLowerCase();
+                const matchesSearch =
+                    query.length === 0 ||
+                    item.title.toLowerCase().includes(query) ||
+                    (item.description ?? '').toLowerCase().includes(query) ||
+                    item.tags.some((tag) => tag.toLowerCase().includes(query));
 
-            return matchesTag && matchesSearch;
-        });
+                return matchesTag && matchesSearch;
+            })
+            .slice()
+            .sort((a, b) => Number(b.id) - Number(a.id));
     }, [galleryItems, selectedTag, searchText]);
 
     const relatedItems = useMemo(() => {
         if (!selectedPost) return [];
-        return galleryItems.filter((item) => item.id !== selectedPost.id).slice(0, 4);
+
+        return galleryItems
+            .filter((item) => item.id !== selectedPost.id)
+            .slice()
+            .sort((a, b) => Number(b.id) - Number(a.id))
+            .slice(0, 4);
     }, [galleryItems, selectedPost]);
 
     const openDetail = async (item: GalleryListItem) => {

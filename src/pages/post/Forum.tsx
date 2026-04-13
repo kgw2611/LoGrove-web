@@ -46,7 +46,14 @@ export default function Forum() {
     const [boardList, setBoardList] = useState<ForumPostType[]>([]);
 
     // 포럼 댓글 전체 목록을 담을 상태 추가!
-    const [allComments, setAllComments] = useState<CommentType[]>([]);
+    const [allComments] = useState<CommentType[]>(() => {
+        try {
+            const savedCommentsString = localStorage.getItem('forum_comments');
+            return savedCommentsString ? JSON.parse(savedCommentsString) : [];
+        } catch {
+            return [];
+        }
+    });
 
     useEffect(() => {
         // 3. 백엔드에서 포럼 게시글 진짜 목록 불러오기!
@@ -77,12 +84,6 @@ export default function Forum() {
 
         // 🚨 오타 수정 완료! fetchPosts() -> fetchForumPosts()
         fetchForumPosts();
-
-        // 댓글은 우선 기존처럼 임시 저장소(localStorage) 사용
-        const savedCommentsString = localStorage.getItem('forum_comments');
-        if (savedCommentsString) {
-            setAllComments(JSON.parse(savedCommentsString));
-        }
     }, []);
 
     const getCommentCount = (postId: number | string): number => {
@@ -102,7 +103,10 @@ export default function Forum() {
     ];
 
     // 현재 선택된 브랜드(activeBrand)와 일치하는 글만 골라내기!
-    const filteredList = boardList.filter(board => board.brand === activeBrand);
+    const filteredList = boardList
+        .filter((board) => board.brand === activeBrand)
+        .slice()
+        .sort((a, b) => Number(b.id) - Number(a.id));
 
     return (
         <div className="community-container">
@@ -153,7 +157,7 @@ export default function Forum() {
                                 </td>
                             </tr>
                         ) : (
-                            filteredList.map((row, index) => {
+                            filteredList.map((row) => {
                                 const commentCount = getCommentCount(row.id);
 
                                 return (
@@ -162,7 +166,7 @@ export default function Forum() {
                                         onClick={() => navigate(`/forum/${row.id}`)}
                                         style={{ cursor: 'pointer' }}
                                     >
-                                        <td>{filteredList.length - index}</td>
+                                        <td>{row.id}</td>
                                         <td className="title-cell">
                                             <span style={{ color: '#00bfa5', fontWeight: 'bold', marginRight: '8px' }}>
                                                 [{row.boardType}]
