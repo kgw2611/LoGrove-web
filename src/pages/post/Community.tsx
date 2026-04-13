@@ -34,7 +34,14 @@ export default function Community() {
     })
 
     const [boardList, setBoardList] = useState<Board[]>([])
-    const [allComments, setAllComments] = useState<Comment[]>([])
+    const [allComments] = useState<Comment[]>(() => {
+        try {
+            const savedCommentsString = localStorage.getItem('community_comments')
+            return savedCommentsString ? JSON.parse(savedCommentsString) : []
+        } catch {
+            return []
+        }
+    })
 
     useEffect(() => {
         // 🔥 2. 로그인 세팅 로직은 위로 올라갔으므로 여기서는 백엔드 통신만 집중합니다!
@@ -67,12 +74,6 @@ export default function Community() {
         };
 
         fetchPosts(); // 함수 실행!
-
-        // 댓글 목록 꺼내오기 (이 부분도 나중에 백엔드 API로 교체해야 합니다!)
-        const savedCommentsString = localStorage.getItem('community_comments')
-        if (savedCommentsString) {
-            setAllComments(JSON.parse(savedCommentsString))
-        }
     }, [])
 
     const getCommentCount = (postId: number) => {
@@ -89,10 +90,11 @@ export default function Community() {
         return count
     }
 
-    const filteredList =
+    const filteredList = (
         activeTag === '인기순위'
             ? boardList
             : boardList.filter((board) => board.tag === activeTag)
+    ).slice().sort((a, b) => b.id - a.id)
 
     const categoryList = ['인기순위', '일상', '자유', '사진', '거래', '유머', '출사']
 
@@ -158,7 +160,7 @@ export default function Community() {
                         </thead>
                         <tbody>
                         {filteredList.length > 0 ? (
-                            filteredList.map((row, index) => {
+                            filteredList.map((row) => {
                                 const commentCount = getCommentCount(row.id)
 
                                 return (
@@ -167,7 +169,7 @@ export default function Community() {
                                         onClick={() => navigate(`/community/${row.id}`)}
                                         style={{ cursor: 'pointer' }}
                                     >
-                                        <td>{filteredList.length - index}</td>
+                                        <td>{row.id}</td>
                                         <td>
                                             {row.tag && (
                                                 <span className={`table-tag ${getTagClass(row.tag)}`}>
