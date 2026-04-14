@@ -12,6 +12,17 @@ interface Toggles {
     source: boolean;
 }
 
+const communityTagIdMap: Record<string, number> = {
+    '일상': 21,
+    '거래': 22,
+    '정보': 23,
+    '질문': 24,
+    '사진': 25,
+    '출사지': 26,
+    '이벤트': 27,
+    '리뷰': 28,
+};
+
 export default function CommunityWrite() {
     const navigate = useNavigate();
 
@@ -68,7 +79,11 @@ export default function CommunityWrite() {
         formData.append('title', title);
         formData.append('content', content);
 
-        // 사진이 있으면 'images'라는 이름표로 추가 (건우님 컨트롤러에 맞춤)
+        const tagId = communityTagIdMap[board];
+        if (tagId) {
+            formData.append('tagIds', String(tagId));
+        }
+
         if (imageFile) {
             formData.append('images', imageFile);
         }
@@ -122,11 +137,13 @@ export default function CommunityWrite() {
                         <select className="board-select" value={board} onChange={(e: ChangeEvent<HTMLSelectElement>) => setBoard(e.target.value)}>
                             <option value="">게시판을 선택해 주세요</option>
                             <option value="일상">일상</option>
-                            <option value="자유">자유</option>
-                            <option value="사진">사진</option>
                             <option value="거래">거래</option>
-                            <option value="유머">유머</option>
-                            <option value="출사">출사</option>
+                            <option value="정보">정보</option>
+                            <option value="질문">질문</option>
+                            <option value="사진">사진</option>
+                            <option value="출사지">출사지</option>
+                            <option value="이벤트">이벤트</option>
+                            <option value="리뷰">리뷰</option>
                         </select>
                         <input type="text" className="title-input" placeholder="제목을 입력해 주세요" value={title} onChange={(e: ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)} />
                     </div>
@@ -182,20 +199,6 @@ export default function CommunityWrite() {
                         )}
                     </div>
 
-                    {/* 하단 태그 영역 */}
-                    <div className="editor-bottom-tags">
-                        <div className="tag-input-wrapper">
-                            <span className="tag-count">태그된 주제(1)개</span>
-                            <div className="tag-input-row">
-                                <input type="text" placeholder="태그 검색" />
-                                <span className="dropdown-arrow">⌄</span>
-                            </div>
-                        </div>
-                        <div className="tag-chips-row">
-                            <span className="tag-chip">풍경사진 ✕</span>
-                            <button className="tag-recommend-btn">태그 추천</button>
-                        </div>
-                    </div>
                 </main>
 
                 {/* 오른쪽: 설정 사이드바 */}

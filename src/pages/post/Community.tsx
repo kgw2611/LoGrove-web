@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import axios from 'axios' // 🔥 백엔드 통신을 위한 axios 추가!
+import axios from 'axios'
 import '../home/Home.css'
 import './Community.css'
+import Pagination from '../../shared/ui/Pagination'
 
 type Comment = {
     postId: string
@@ -17,6 +18,17 @@ type Board = {
     date: string
     views: number
 }
+
+const tagNameToCategory: Record<string, string> = {
+    'DAILY': '일상',
+    'TRADE': '거래',
+    'INFO': '정보',
+    'QUESTION': '질문',
+    'PHOTO': '사진',
+    'LOCATION': '출사지',
+    'EVENT': '이벤트',
+    'REVIEW': '리뷰',
+};
 
 export default function Community() {
     const navigate = useNavigate()
@@ -34,6 +46,8 @@ export default function Community() {
     })
 
     const [boardList, setBoardList] = useState<Board[]>([])
+    const [currentPage, setCurrentPage] = useState<number>(0)
+    const [totalPages, setTotalPages] = useState<number>(0)
     const [allComments] = useState<Comment[]>(() => {
         try {
             const savedCommentsString = localStorage.getItem('community_comments')
@@ -49,18 +63,15 @@ export default function Community() {
         // 가짜 저장소(localStorage)가 아닌 백엔드(DB)에서 진짜 글 목록 불러오기!
         const fetchPosts = async () => {
             try {
-                // 건우님 컨트롤러에 맞춰서 board 파라미터를 'COMMUNITY'로 보냅니다.
-                const response = await axios.get('/api/posts?board=COMMUNITY');
-
-                // 🚨 주의: 백엔드 응답 구조(Page 객체 등)에 따라 데이터 위치가 다를 수 있습니다.
-                // 보통 Spring Boot의 Page 객체는 response.data.data.content 안에 배열이 들어있습니다.
-                const postsData = response.data.data?.content || response.data.content || response.data.data || [];
+                const response = await axios.get(`/api/posts?board=COMMUNITY&page=${currentPage}&size=15`);
+                const pageData = response.data.data;
+                const postsData = pageData?.content || [];
 
                 // 프론트엔드 형식(Board)에 맞게 데이터 이름표 싹 바꿔주기
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const formattedPosts: Board[] = postsData.map((post: any) => ({
                     id: post.id || post.postId,
-                    tag: post.tagName || post.tag || 'COMMUNITY', // 백엔드 태그 필드명에 맞추세요
+                    tag: tagNameToCategory[post.tagNames?.[0]] ?? '',
                     title: post.title,
                     author: post.authorName || post.author || post.nickname || '익명', // 작성자 필드명
                     date: post.createdAt ? new Date(post.createdAt).toLocaleDateString() : '방금 전',
@@ -68,13 +79,14 @@ export default function Community() {
                 }));
 
                 setBoardList(formattedPosts);
+                setTotalPages(pageData?.totalPages ?? 0);
             } catch (error) {
                 console.error('게시글 목록 불러오기 실패:', error);
             }
         };
 
-        fetchPosts(); // 함수 실행!
-    }, [])
+        fetchPosts();
+    }, [currentPage])
 
     const getCommentCount = (postId: number) => {
         const postComments = allComments.filter(
@@ -96,14 +108,15 @@ export default function Community() {
             : boardList.filter((board) => board.tag === activeTag)
     ).slice().sort((a, b) => b.id - a.id)
 
-    const categoryList = ['인기순위', '일상', '자유', '사진', '거래', '유머', '출사']
+    const categoryList = ['인기순위', '일상', '거래', '정보', '질문', '사진', '출사지', '이벤트', '리뷰']
 
     const getTagClass = (tag?: string) => {
         switch (tag) {
             case '일상': return 'tag-green'
-            case '출사': return 'tag-blue'
-            case '자유': return 'tag-orange'
             case '사진': return 'tag-pink'
+            case '거래': return 'tag-orange'
+            case '정보': return 'tag-blue'
+            case '질문': return 'tag-blue'
             default: return 'tag-default'
         }
     }
@@ -203,6 +216,11 @@ export default function Community() {
                         )}
                         </tbody>
                     </table>
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={(page) => setCurrentPage(page)}
+                    />
                 </main>
 
                 {/* 오른쪽: 사이드바 영역 */}

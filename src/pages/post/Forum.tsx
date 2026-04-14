@@ -4,6 +4,7 @@ import axios from 'axios';
 import '../home/Home.css';
 import './Community.css';
 import './Forum.css';
+import Pagination from '../../shared/ui/Pagination';
 
 // 타입 정의
 interface ReplyType {
@@ -25,6 +26,19 @@ interface ForumPostType {
     views: number;
 }
 
+const tagNameToBrand: Record<string, string> = {
+    'CANON': 'Canon',
+    'SONY': 'Sony',
+    'NIKON': 'Nikon',
+    'FUJIFILM': 'Fujifilm',
+    'LEICA': 'Leica',
+    'HASSELBLAD': 'Hasselblad',
+    'PANASONIC': 'Panasonic',
+    'OLYMPUS': 'Olympus',
+    'OTHER': '기타(etc)',
+    'FILM': 'Film',
+};
+
 export default function Forum() {
     const navigate = useNavigate();
 
@@ -44,6 +58,8 @@ export default function Forum() {
 
     // 게시글 목록을 담을 상태 추가
     const [boardList, setBoardList] = useState<ForumPostType[]>([]);
+    const [currentPage, setCurrentPage] = useState<number>(0);
+    const [totalPages, setTotalPages] = useState<number>(0);
 
     // 포럼 댓글 전체 목록을 담을 상태 추가!
     const [allComments] = useState<CommentType[]>(() => {
@@ -60,15 +76,16 @@ export default function Forum() {
         const fetchForumPosts = async () => {
             try {
                 // 건우님 컨트롤러 규칙에 따라 board=FORUM 으로 호출합니다.
-                const response = await axios.get('/api/posts?board=FORUM');
+                const response = await axios.get(`/api/posts?board=FORUM&page=${currentPage}&size=15`);
 
                 // 백엔드 응답 구조(Page 객체)에 맞춰 데이터 추출
-                const postsData = response.data.data?.content || response.data.content || response.data.data || [];
+                const pageData = response.data.data;
+                const postsData = pageData?.content || response.data.content || response.data.data || [];
 
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const formattedPosts: ForumPostType[] = postsData.map((post: any) => ({
                     id: post.id || post.postId,
-                    brand: post.tagName || post.tag || 'Canon',
+                    brand: tagNameToBrand[post.tagNames?.[0]] ?? '',
                     boardType: 'Q&A',
                     title: post.title,
                     author: post.authorName || post.author || post.nickname || '익명',
@@ -77,14 +94,14 @@ export default function Forum() {
                 }));
 
                 setBoardList(formattedPosts);
+                setTotalPages(pageData?.totalPages ?? 0);
             } catch (error) {
                 console.error('포럼 게시글 목록 불러오기 실패:', error);
             }
         };
 
-        // 🚨 오타 수정 완료! fetchPosts() -> fetchForumPosts()
         fetchForumPosts();
-    }, []);
+    }, [currentPage]);
 
     const getCommentCount = (postId: number | string): number => {
         const postComments = allComments.filter(c => c.postId === String(postId));
@@ -187,6 +204,11 @@ export default function Forum() {
                         )}
                         </tbody>
                     </table>
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={(page) => setCurrentPage(page)}
+                    />
                 </main>
 
                 <aside className="comm-sidebar">
