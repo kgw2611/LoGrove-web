@@ -11,6 +11,19 @@ interface Toggles {
     source: boolean;
 }
 
+const brandTagIdMap: Record<string, number> = {
+    'Canon': 29,
+    'Sony': 30,
+    'Nikon': 31,
+    'Fujifilm': 32,
+    'Leica': 33,
+    'Hasselblad': 34,
+    'Panasonic': 35,
+    'Olympus': 36,
+    '기타(etc)': 37,
+    'Film': 96,
+};
+
 export default function ForumWrite() {
     const navigate = useNavigate();
 
@@ -67,11 +80,10 @@ export default function ForumWrite() {
         formData.append('title', title);
         formData.append('content', content);
 
-        // 💡 팁: 백엔드에서 세부 카테고리(board)와 카메라(camera)를 태그(tagIds)로 받을지,
-        // 아니면 다른 필드로 받을지 건우님과 확인이 필요합니다! 임시로 제목에 붙여서 보냅니다.
-        // 나중에 건우님이 정해주시면 formData.append('어쩌구', board) 로 추가하세요!
-        // formData.append('subCategory', board);
-        // formData.append('cameraBrand', camera);
+        const tagId = brandTagIdMap[camera];
+        if (tagId) {
+            formData.append('tagIds', String(tagId));
+        }
 
         if (imageFile) {
             formData.append('images', imageFile); // 건우님 컨트롤러에 맞춤
@@ -205,19 +217,6 @@ export default function ForumWrite() {
                         )}
                     </div>
 
-                    <div className="editor-bottom-tags">
-                        <div className="tag-input-wrapper">
-                            <span className="tag-count">태그된 주제(1)개</span>
-                            <div className="tag-input-row">
-                                <input type="text" placeholder="태그 검색" />
-                                <span className="dropdown-arrow">⌄</span>
-                            </div>
-                        </div>
-                        <div className="tag-chips-row">
-                            <span className="tag-chip">풍경사진 ✕</span>
-                            <button className="tag-recommend-btn">태그 추천</button>
-                        </div>
-                    </div>
                 </main>
 
                 <aside className="write-sidebar">

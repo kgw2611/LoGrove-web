@@ -18,6 +18,7 @@ import {
     type GalleryListItem,
     type GalleryDetailItem,
 } from '../../shared/api/gallery';
+import Pagination from '../../shared/ui/Pagination';
 
 function SearchIcon() {
     return (
@@ -246,6 +247,8 @@ export default function Gallery() {
     const [searchText, setSearchText] = useState('');
     const [tagOptions, setTagOptions] = useState<string[]>(['전체']);
     const [selectedTag, setSelectedTag] = useState('전체');
+    const [currentPage, setCurrentPage] = useState<number>(0);
+    const [totalPages, setTotalPages] = useState<number>(0);
 
     const commentSectionRef = useRef<HTMLDivElement | null>(null);
     const commentInputRef = useRef<HTMLInputElement | null>(null);
@@ -257,11 +260,12 @@ export default function Gallery() {
         const fetchGallery = async () => {
             try {
                 setIsLoading(true);
-                const [items, tags] = await Promise.all([
-                    getGalleryList(),
+                const [result, tags] = await Promise.all([
+                    getGalleryList(currentPage, 12),
                     getGalleryTagNames(),
                 ]);
-                setGalleryItems(items);
+                setGalleryItems(result.items);
+                setTotalPages(result.totalPages);
                 setTagOptions(tags);
             } catch (error) {
                 console.error('갤러리 목록 불러오기 실패:', error);
@@ -272,7 +276,7 @@ export default function Gallery() {
         };
 
         fetchGallery();
-    }, []);
+    }, [currentPage]);
 
     const filteredGalleryItems = useMemo(() => {
         return galleryItems
@@ -479,25 +483,32 @@ export default function Gallery() {
                         <p>다른 태그나 검색어로 다시 시도해 보세요.</p>
                     </div>
                 ) : (
-                    <main className="masonry-grid">
-                        {filteredGalleryItems.map((item) => (
-                            <article
-                                className="masonry-item"
-                                key={item.id}
-                                onClick={() => openDetail(item)}
-                            >
-                                <img
-                                    src={item.src}
-                                    alt={item.title || item.description || 'gallery image'}
-                                    className="masonry-img"
-                                />
-                                <div className="masonry-info">
-                                    <span className="masonry-title">{item.title || ''}</span>
-                                    <span className="masonry-more">…</span>
-                                </div>
-                            </article>
-                        ))}
-                    </main>
+                    <>
+                        <main className="masonry-grid">
+                            {filteredGalleryItems.map((item) => (
+                                <article
+                                    className="masonry-item"
+                                    key={item.id}
+                                    onClick={() => openDetail(item)}
+                                >
+                                    <img
+                                        src={item.src}
+                                        alt={item.title || item.description || 'gallery image'}
+                                        className="masonry-img"
+                                    />
+                                    <div className="masonry-info">
+                                        <span className="masonry-title">{item.title || ''}</span>
+                                        <span className="masonry-more">…</span>
+                                    </div>
+                                </article>
+                            ))}
+                        </main>
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={(page) => setCurrentPage(page)}
+                        />
+                    </>
                 )
             ) : (
                 <div className="gallery-detail-layout">

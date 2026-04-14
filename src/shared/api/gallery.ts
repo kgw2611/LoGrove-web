@@ -79,7 +79,7 @@ type RawPost = {
     comments?: RawComment[];
 };
 
-type RawPostListResponse = RawPost[] | { content?: RawPost[] };
+type RawPostListResponse = RawPost[] | { content?: RawPost[]; totalPages?: number };
 
 function unwrapData<T>(payload: T | ApiResponse<T>): T {
     if (
@@ -151,18 +151,26 @@ function normalizeGalleryDetail(raw: RawPost): GalleryDetailItem {
     };
 }
 
-export async function getGalleryList(): Promise<GalleryListItem[]> {
+export interface GalleryListResult {
+    items: GalleryListItem[];
+    totalPages: number;
+}
+
+export async function getGalleryList(page = 0, size = 12): Promise<GalleryListResult> {
     const res = await apiClient.get('/api/posts', {
-        params: { board: 'GALLERY' },
+        params: { board: 'GALLERY', page, size },
     });
 
     const raw = unwrapData<RawPostListResponse>(res.data);
 
     if (Array.isArray(raw)) {
-        return raw.map(normalizeGalleryItem);
+        return { items: raw.map(normalizeGalleryItem), totalPages: 1 };
     }
 
-    return (raw.content ?? []).map(normalizeGalleryItem);
+    return {
+        items: (raw.content ?? []).map(normalizeGalleryItem),
+        totalPages: (raw as { totalPages?: number }).totalPages ?? 1,
+    };
 }
 
 export async function getGalleryDetail(postId: number): Promise<GalleryDetailItem> {
