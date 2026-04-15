@@ -12,6 +12,7 @@ type Comment = {
 
 type Board = {
     id: number
+    rowNumber: number
     tag?: string
     title: string
     author: string
@@ -28,6 +29,17 @@ const tagNameToCategory: Record<string, string> = {
     'LOCATION': '출사지',
     'EVENT': '이벤트',
     'REVIEW': '리뷰',
+};
+
+const categoryToTagId: Record<string, number> = {
+    '일상': 21,
+    '거래': 22,
+    '정보': 23,
+    '질문': 24,
+    '사진': 25,
+    '출사지': 26,
+    '이벤트': 27,
+    '리뷰': 28,
 };
 
 export default function Community() {
@@ -58,22 +70,24 @@ export default function Community() {
     })
 
     useEffect(() => {
-        // 🔥 2. 로그인 세팅 로직은 위로 올라갔으므로 여기서는 백엔드 통신만 집중합니다!
-
-        // 가짜 저장소(localStorage)가 아닌 백엔드(DB)에서 진짜 글 목록 불러오기!
         const fetchPosts = async () => {
             try {
-                const response = await axios.get(`/api/posts?board=COMMUNITY&page=${currentPage}&size=15`);
+                const tagId = categoryToTagId[activeTag];
+                const url = tagId
+                    ? `/api/posts?board=COMMUNITY&tagIds=${tagId}&page=${currentPage}&size=15`
+                    : `/api/posts?board=COMMUNITY&page=${currentPage}&size=15`;
+
+                const response = await axios.get(url);
                 const pageData = response.data.data;
                 const postsData = pageData?.content || [];
 
-                // 프론트엔드 형식(Board)에 맞게 데이터 이름표 싹 바꿔주기
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const formattedPosts: Board[] = postsData.map((post: any) => ({
                     id: post.id || post.postId,
+                    rowNumber: post.rowNumber,
                     tag: tagNameToCategory[post.tagNames?.[0]] ?? '',
                     title: post.title,
-                    author: post.authorName || post.author || post.nickname || '익명', // 작성자 필드명
+                    author: post.authorName || post.author || post.nickname || '익명',
                     date: post.createdAt ? new Date(post.createdAt).toLocaleDateString() : '방금 전',
                     views: post.viewCount || post.views || 0
                 }));
@@ -86,7 +100,7 @@ export default function Community() {
         };
 
         fetchPosts();
-    }, [currentPage])
+    }, [currentPage, activeTag])
 
     const getCommentCount = (postId: number) => {
         const postComments = allComments.filter(
@@ -102,11 +116,12 @@ export default function Community() {
         return count
     }
 
-    const filteredList = (
-        activeTag === '인기순위'
-            ? boardList
-            : boardList.filter((board) => board.tag === activeTag)
-    ).slice().sort((a, b) => b.id - a.id)
+    const handleTagChange = (tag: string) => {
+        setActiveTag(tag)
+        setCurrentPage(0)
+    }
+
+    const filteredList = boardList.slice().sort((a, b) => b.id - a.id)
 
     const categoryList = ['인기순위', '일상', '거래', '정보', '질문', '사진', '출사지', '이벤트', '리뷰']
 
@@ -130,7 +145,7 @@ export default function Community() {
                         <span className="search-icon">🔍 태그 검색</span>
                         <span
                             className="view-all"
-                            onClick={() => setActiveTag('인기순위')}
+                            onClick={() => handleTagChange('인기순위')}
                             style={{ cursor: 'pointer' }}
                         >
                             전체보기 ≡
@@ -142,7 +157,7 @@ export default function Community() {
                             <button
                                 key={tag}
                                 className={`cat-btn ${activeTag === tag ? 'active' : ''}`}
-                                onClick={() => setActiveTag(tag)}
+                                onClick={() => handleTagChange(tag)}
                             >
                                 {tag}
                             </button>
@@ -182,7 +197,7 @@ export default function Community() {
                                         onClick={() => navigate(`/community/${row.id}`)}
                                         style={{ cursor: 'pointer' }}
                                     >
-                                        <td>{row.id}</td>
+                                        <td>{row.rowNumber}</td>
                                         <td>
                                             {row.tag && (
                                                 <span className={`table-tag ${getTagClass(row.tag)}`}>
