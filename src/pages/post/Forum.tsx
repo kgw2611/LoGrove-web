@@ -27,16 +27,16 @@ interface ForumPostType {
 }
 
 const tagNameToBrand: Record<string, string> = {
-    'CANON': 'Canon',
-    'SONY': 'Sony',
-    'NIKON': 'Nikon',
-    'FUJIFILM': 'Fujifilm',
-    'LEICA': 'Leica',
-    'HASSELBLAD': 'Hasselblad',
-    'PANASONIC': 'Panasonic',
-    'OLYMPUS': 'Olympus',
-    'OTHER': '기타(etc)',
-    'FILM': 'Film',
+    '캐논': 'Canon',
+    '소니': 'Sony',
+    '니콘': 'Nikon',
+    '후지필름': 'Fujifilm',
+    '라이카': 'Leica',
+    '핫셀블라드': 'Hasselblad',
+    '파나소닉': 'Panasonic',
+    '올림푸스': 'Olympus',
+    '기타': '기타(etc)',
+    '필름': 'Film',
 };
 
 export default function Forum() {
