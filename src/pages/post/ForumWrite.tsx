@@ -12,16 +12,16 @@ interface Toggles {
 }
 
 const brandTagIdMap: Record<string, number> = {
-    'Canon': 29,
-    'Sony': 30,
-    'Nikon': 31,
-    'Fujifilm': 32,
-    'Leica': 33,
-    'Hasselblad': 34,
-    'Panasonic': 35,
-    'Olympus': 36,
-    '기타(etc)': 37,
-    'Film': 96,
+    'Canon': 9,
+    'Sony': 10,
+    'Nikon': 11,
+    'Fujifilm': 12,
+    'Leica': 13,
+    'Hasselblad': 14,
+    'Panasonic': 15,
+    'Olympus': 16,
+    '기타(etc)': 17,
+    'Film': 76,
 };
 
 export default function ForumWrite() {
