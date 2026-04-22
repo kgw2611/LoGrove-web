@@ -365,7 +365,7 @@ export default function Gallery() {
         if (!selectedPost) return;
 
         try {
-            const updated = await toggleGalleryLike(Number(selectedPost.id));
+            const updated = await toggleGalleryLike(Number(selectedPost.id), selectedPost.isLiked, selectedPost.likeCount);
 
             setSelectedPost((prev) =>
                 prev

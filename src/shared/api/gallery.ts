@@ -174,10 +174,13 @@ export async function getGalleryList(page = 0, size = 12): Promise<GalleryListRe
 }
 
 export async function getGalleryDetail(postId: number): Promise<GalleryDetailItem> {
-    const res = await apiClient.get(`/api/posts/${postId}`);
-    const raw = unwrapData<RawPost>(res.data);
-
-    return normalizeGalleryDetail(raw);
+    const [postRes, likeRes] = await Promise.all([
+        apiClient.get(`/api/posts/${postId}`),
+        apiClient.get(`/api/posts/${postId}/like`).catch(() => ({ data: { data: false } })),
+    ]);
+    const raw = unwrapData<RawPost>(postRes.data);
+    const detail = normalizeGalleryDetail(raw);
+    return { ...detail, isLiked: likeRes.data?.data ?? false };
 }
 
 export async function createComment(postId: number, content: string): Promise<CommentItem> {
@@ -190,24 +193,17 @@ export async function createComment(postId: number, content: string): Promise<Co
 }
 
 export async function toggleGalleryLike(
-    postId: number
+    postId: number,
+    currentIsLiked: boolean,
+    currentLikeCount: number,
 ): Promise<{ likeCount: number; isLiked: boolean }> {
-    const detailRes = await apiClient.get(`/api/posts/${postId}`);
-    const current = normalizeGalleryDetail(unwrapData<RawPost>(detailRes.data));
-
-    if (current.isLiked) {
+    if (currentIsLiked) {
         await apiClient.delete(`/api/posts/${postId}/like`);
-        return {
-            likeCount: Math.max(current.likeCount - 1, 0),
-            isLiked: false,
-        };
+        return { likeCount: Math.max(currentLikeCount - 1, 0), isLiked: false };
     }
 
     await apiClient.post(`/api/posts/${postId}/like`);
-    return {
-        likeCount: current.likeCount + 1,
-        isLiked: true,
-    };
+    return { likeCount: currentLikeCount + 1, isLiked: true };
 }
 
 export async function toggleCommentLike(
