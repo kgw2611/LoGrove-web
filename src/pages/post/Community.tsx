@@ -21,14 +21,14 @@ type Board = {
 }
 
 const tagNameToCategory: Record<string, string> = {
-    'DAILY': '일상',
-    'TRADE': '거래',
-    'INFO': '정보',
-    'QUESTION': '질문',
-    'PHOTO': '사진',
-    'LOCATION': '출사지',
-    'EVENT': '이벤트',
-    'REVIEW': '리뷰',
+    '일상': '일상',
+    '거래': '거래',
+    '정보': '정보',
+    '질문': '질문',
+    '사진': '사진',
+    '출사지': '출사지',
+    '이벤트': '이벤트',
+    '리뷰': '리뷰',
 };
 
 const categoryToTagId: Record<string, number> = {
