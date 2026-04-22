@@ -32,14 +32,14 @@ const tagNameToCategory: Record<string, string> = {
 };
 
 const categoryToTagId: Record<string, number> = {
-    '일상': 21,
-    '거래': 22,
-    '정보': 23,
-    '질문': 24,
-    '사진': 25,
-    '출사지': 26,
-    '이벤트': 27,
-    '리뷰': 28,
+    '일상': 1,
+    '거래': 2,
+    '정보': 3,
+    '질문': 4,
+    '사진': 5,
+    '출사지': 6,
+    '이벤트': 7,
+    '리뷰': 79,
 };
 
 export default function Community() {
