@@ -53,6 +53,7 @@ type RawComment = {
     id?: number;
     commentId?: number;
     author?: string;
+    authorName?: string;
     nickname?: string;
     content?: string;
     createdAt?: string;
@@ -117,7 +118,7 @@ function extractTagNames(rawTags?: string[] | RawTag[]): string[] {
 function normalizeComment(raw: RawComment): CommentItem {
     return {
         id: raw.id ?? raw.commentId ?? 0,
-        author: raw.author ?? raw.nickname ?? '익명',
+        author: raw.authorName ?? raw.author ?? raw.nickname ?? '익명',
         content: raw.content ?? '',
         createdAt: raw.createdAt ?? raw.createdDate ?? '',
         likeCount: raw.likeCount ?? 0,
@@ -174,13 +175,17 @@ export async function getGalleryList(page = 0, size = 12): Promise<GalleryListRe
 }
 
 export async function getGalleryDetail(postId: number): Promise<GalleryDetailItem> {
-    const [postRes, likeRes] = await Promise.all([
+    const [postRes, commentsRes] = await Promise.all([
         apiClient.get(`/api/posts/${postId}`),
-        apiClient.get(`/api/posts/${postId}/like`).catch(() => ({ data: { data: false } })),
+        apiClient.get(`/api/posts/${postId}/comments`).catch(() => ({ data: { data: [] } })),
     ]);
     const raw = unwrapData<RawPost>(postRes.data);
-    const detail = normalizeGalleryDetail(raw);
-    return { ...detail, isLiked: likeRes.data?.data ?? false };
+    const detail = normalizeGalleryDetail(raw); // isLiked가 postRes에 포함됨
+    const commentsRaw = unwrapData<RawComment[]>(commentsRes.data);
+    return {
+        ...detail,
+        comments: (Array.isArray(commentsRaw) ? commentsRaw : []).map(normalizeComment),
+    };
 }
 
 export async function createComment(postId: number, content: string): Promise<CommentItem> {
@@ -208,31 +213,15 @@ export async function toggleGalleryLike(
 
 export async function toggleCommentLike(
     postId: number,
-    commentId: number
+    comment: CommentItem,
 ): Promise<CommentItem> {
-    const detailRes = await apiClient.get(`/api/posts/${postId}`);
-    const currentPost = normalizeGalleryDetail(unwrapData<RawPost>(detailRes.data));
-    const currentComment = currentPost.comments.find((comment) => comment.id === commentId);
-
-    if (!currentComment) {
-        throw new Error('댓글을 찾을 수 없습니다.');
+    if (comment.isLiked) {
+        await apiClient.delete(`/api/posts/${postId}/comments/${comment.id}/like`);
+        return { ...comment, isLiked: false, likeCount: Math.max(comment.likeCount - 1, 0) };
     }
 
-    if (currentComment.isLiked) {
-        await apiClient.delete(`/api/posts/${postId}/comments/${commentId}/like`);
-        return {
-            ...currentComment,
-            isLiked: false,
-            likeCount: Math.max(currentComment.likeCount - 1, 0),
-        };
-    }
-
-    await apiClient.post(`/api/posts/${postId}/comments/${commentId}/like`);
-    return {
-        ...currentComment,
-        isLiked: true,
-        likeCount: currentComment.likeCount + 1,
-    };
+    await apiClient.post(`/api/posts/${postId}/comments/${comment.id}/like`);
+    return { ...comment, isLiked: true, likeCount: comment.likeCount + 1 };
 }
 
 export async function getTagList(): Promise<TagItem[]> {

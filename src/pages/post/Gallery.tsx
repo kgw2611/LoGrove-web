@@ -5,7 +5,7 @@ import {
     useState,
     type KeyboardEvent,
 } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import '../home/Home.css';
 import './Gallery.css';
 import {
@@ -91,27 +91,6 @@ function BackIcon() {
     );
 }
 
-function HeartIcon({
-                       active = false,
-                       size = 24,
-                   }: {
-    active?: boolean;
-    size?: number;
-}) {
-    const color = active ? '#7BC9A5' : '#2D2D2D';
-
-    return (
-        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path
-                d="M12 20.2C11.7 20.2 11.3 20.1 11.1 19.8L4.8 13.9C3.2 12.4 2.5 11.2 2.5 9.5C2.5 6.7 4.6 4.6 7.4 4.6C9 4.6 10.5 5.3 11.5 6.5C12.5 5.3 14 4.6 15.6 4.6C18.4 4.6 20.5 6.7 20.5 9.5C20.5 11.2 19.8 12.4 18.2 13.9L11.9 19.8C11.7 20.1 11.3 20.2 12 20.2Z"
-                stroke={color}
-                fill={active ? '#E8F7F0' : 'none'}
-                strokeWidth="1.8"
-                strokeLinejoin="round"
-            />
-        </svg>
-    );
-}
 
 function CommentIcon() {
     return (
@@ -238,6 +217,9 @@ function ImageIcon() {
 }
 
 export default function Gallery() {
+    const { id: paramId } = useParams<{ id?: string }>();
+    const navigate = useNavigate();
+
     const [galleryItems, setGalleryItems] = useState<GalleryListItem[]>([]);
     const [selectedPost, setSelectedPost] = useState<GalleryDetailItem | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -252,6 +234,29 @@ export default function Gallery() {
 
     const commentSectionRef = useRef<HTMLDivElement | null>(null);
     const commentInputRef = useRef<HTMLInputElement | null>(null);
+
+    useEffect(() => {
+        if (!paramId) {
+            setSelectedPost(null);
+            return;
+        }
+        if (selectedPost?.id === Number(paramId)) return;
+        const fetchByParam = async () => {
+            try {
+                setIsDetailLoading(true);
+                const detail = await getGalleryDetail(Number(paramId));
+                setSelectedPost(detail);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } catch (error) {
+                console.error('상세 조회 실패:', error);
+                navigate('/gallery');
+            } finally {
+                setIsDetailLoading(false);
+            }
+        };
+        fetchByParam();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [paramId]);
 
     const isLoggedIn =
         !!localStorage.getItem('access_token');
@@ -308,6 +313,7 @@ export default function Gallery() {
     }, [galleryItems, selectedPost]);
 
     const openDetail = async (item: GalleryListItem) => {
+        navigate('/gallery/' + item.id);
         try {
             setIsDetailLoading(true);
             const detail = await getGalleryDetail(Number(item.id));
@@ -322,6 +328,7 @@ export default function Gallery() {
     };
 
     const closeDetail = () => {
+        navigate('/gallery');
         setSelectedPost(null);
         setCommentInput('');
     };
@@ -363,19 +370,13 @@ export default function Gallery() {
 
     const handleToggleGalleryLike = async () => {
         if (!selectedPost) return;
-
         try {
-            const updated = await toggleGalleryLike(Number(selectedPost.id), selectedPost.isLiked, selectedPost.likeCount);
-
-            setSelectedPost((prev) =>
-                prev
-                    ? {
-                        ...prev,
-                        likeCount: updated.likeCount,
-                        isLiked: updated.isLiked,
-                    }
-                    : prev
-            );
+            await toggleGalleryLike(Number(selectedPost.id), selectedPost.isLiked, selectedPost.likeCount);
+            setSelectedPost(prev => prev ? {
+                ...prev,
+                isLiked: !prev.isLiked,
+                likeCount: prev.isLiked ? prev.likeCount - 1 : prev.likeCount + 1,
+            } : prev);
         } catch (error) {
             console.error('게시글 좋아요 실패:', error);
         }
@@ -383,20 +384,18 @@ export default function Gallery() {
 
     const handleToggleCommentLike = async (commentId: number) => {
         if (!selectedPost) return;
-
+        const comment = selectedPost.comments.find((c) => c.id === commentId);
+        if (!comment) return;
         try {
-            const updatedComment = await toggleCommentLike(Number(selectedPost.id), commentId);
-
-            setSelectedPost((prev) =>
-                prev
-                    ? {
-                        ...prev,
-                        comments: prev.comments.map((comment) =>
-                            comment.id === updatedComment.id ? updatedComment : comment
-                        ),
-                    }
-                    : prev
-            );
+            await toggleCommentLike(Number(selectedPost.id), comment);
+            setSelectedPost(prev => prev ? {
+                ...prev,
+                comments: prev.comments.map(c =>
+                    c.id === commentId
+                        ? { ...c, isLiked: !c.isLiked, likeCount: c.isLiked ? c.likeCount - 1 : c.likeCount + 1 }
+                        : c
+                ),
+            } : prev);
         } catch (error) {
             console.error('댓글 좋아요 실패:', error);
         }
@@ -519,14 +518,13 @@ export default function Gallery() {
                             </button>
 
                             <div className="detail-left-actions">
-                                <button
-                                    type="button"
-                                    className={`detail-icon-btn detail-like-btn ${selectedPost.isLiked ? 'active' : ''}`}
+                                <span
+                                    className={`post-like-btn ${selectedPost.isLiked ? 'liked' : ''}`}
                                     onClick={handleToggleGalleryLike}
+                                    style={{ cursor: 'pointer' }}
                                 >
-                                    <HeartIcon active={selectedPost.isLiked} />
-                                    <span>{selectedPost.likeCount}</span>
-                                </button>
+                                    {selectedPost.isLiked ? '❤️' : '🤍'} 좋아요 {selectedPost.likeCount}
+                                </span>
 
                                 <button
                                     type="button"
@@ -634,11 +632,10 @@ export default function Gallery() {
 
                                                                     <button
                                                                         type="button"
-                                                                        className={`comment-like-btn ${comment.isLiked ? 'active' : ''}`}
+                                                                        className={`action-btn ${comment.isLiked ? 'liked' : ''}`}
                                                                         onClick={() => handleToggleCommentLike(comment.id)}
                                                                     >
-                                                                        <HeartIcon active={comment.isLiked} size={18} />
-                                                                        <span>{comment.likeCount}</span>
+                                                                        {comment.isLiked ? '❤️' : '🤍'} {comment.likeCount}
                                                                     </button>
                                                                 </div>
                                                             </div>
