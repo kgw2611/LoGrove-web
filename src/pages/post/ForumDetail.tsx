@@ -106,9 +106,19 @@ export default function ForumDetail() {
                 };
 
                 setPost(formattedPost);
-                setPostLike({ count: formattedPost.views || 0, isLiked: false });
                 setEditPostTitle(formattedPost.title);
                 setEditPostContent(formattedPost.content);
+
+                const likeCount = data.likeCount || 0;
+                const token = localStorage.getItem('access_token');
+                if (token) {
+                    const likeRes = await axios.get(`/api/posts/${id}/like`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    setPostLike({ count: likeCount, isLiked: likeRes.data.data });
+                } else {
+                    setPostLike({ count: likeCount, isLiked: false });
+                }
             } catch (error) {
                 console.error("포럼 게시글 상세 조회 실패:", error);
                 alert("게시글을 불러올 수 없습니다. 삭제되었거나 존재하지 않는 글입니다.");
@@ -250,6 +260,21 @@ export default function ForumDetail() {
         }
     };
 
+    const handlePostLike = async () => {
+        if (!isLoggedIn) return alert('로그인 후 이용 가능합니다.');
+        try {
+            const token = localStorage.getItem('access_token');
+            if (postLike.isLiked) {
+                await axios.delete(`/api/posts/${id}/like`, { headers: { Authorization: `Bearer ${token}` } });
+            } else {
+                await axios.post(`/api/posts/${id}/like`, {}, { headers: { Authorization: `Bearer ${token}` } });
+            }
+            setPostLike(prev => ({ count: prev.isLiked ? prev.count - 1 : prev.count + 1, isLiked: !prev.isLiked }));
+        } catch (error) {
+            console.error('게시글 좋아요 처리 실패:', error);
+        }
+    };
+
     if (!post) return <div style={{textAlign: 'center', padding: '100px'}}>포럼 게시글을 불러오는 중입니다...</div>;
     const profileImgSrc = "https://images.unsplash.com/photo-1518098268026-4e89f1a2cd8e?q=80&w=100&auto=format&fit=crop";
 
@@ -345,7 +370,7 @@ export default function ForumDetail() {
                         <div className="post-footer-actions">
                             <div className="more-posts-link"><span className="author-name-bold">{post.author}</span> 님의 게시글 더보기 &gt;</div>
                             <div className="like-comment-count">
-                                <span className={`post-like-btn ${postLike.isLiked ? 'liked' : ''}`} onClick={() => setPostLike({ count: postLike.isLiked ? postLike.count - 1 : postLike.count + 1, isLiked: !postLike.isLiked })}>
+                                <span className={`post-like-btn ${postLike.isLiked ? 'liked' : ''}`} onClick={handlePostLike}>
                                     {postLike.isLiked ? '❤️' : '🤍'} 좋아요 {postLike.count}
                                 </span>
                                 <span>💬 댓글 {comments.length}</span>
