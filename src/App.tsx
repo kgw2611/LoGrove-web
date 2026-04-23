@@ -35,6 +35,7 @@ export default function App() {
                     {/* 갤러리 관련 라우트 */}
                     <Route path="/gallery" element={<Gallery />} />
                     <Route path="/gallery/write" element={<GalleryWrite />} />
+                    <Route path="/gallery/:id" element={<Gallery />} />
 
                     {/* 포럼 관련 라우트 */}
                     <Route path="/forum" element={<Forum />} />

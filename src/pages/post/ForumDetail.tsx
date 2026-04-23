@@ -67,7 +67,10 @@ export default function ForumDetail() {
     // 🔥 2. 댓글 목록 조회 API 연동
     const fetchComments = async () => {
         try {
-            const response = await axios.get(`/api/posts/${id}/comments`);
+            const token = localStorage.getItem('access_token');
+            const response = await axios.get(`/api/posts/${id}/comments`, {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
             const data = response.data.data || response.data || [];
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -90,7 +93,10 @@ export default function ForumDetail() {
         // 백엔드에서 진짜 포럼 게시글 상세 데이터 불러오기!
         const fetchPostDetail = async () => {
             try {
-                const response = await axios.get(`/api/posts/${id}`);
+                const token = localStorage.getItem('access_token');
+                const response = await axios.get(`/api/posts/${id}`, {
+                    headers: token ? { Authorization: `Bearer ${token}` } : {},
+                });
                 const data = response.data.data || response.data;
 
                 const formattedPost: ForumPostType = {
@@ -108,17 +114,8 @@ export default function ForumDetail() {
                 setPost(formattedPost);
                 setEditPostTitle(formattedPost.title);
                 setEditPostContent(formattedPost.content);
-
-                const likeCount = data.likeCount || 0;
-                const token = localStorage.getItem('access_token');
-                if (token) {
-                    const likeRes = await axios.get(`/api/posts/${id}/like`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-                    setPostLike({ count: likeCount, isLiked: likeRes.data.data });
-                } else {
-                    setPostLike({ count: likeCount, isLiked: false });
-                }
+                // isLiked가 게시글 상세 응답에 포함되어 별도 /like API 호출 불필요
+                setPostLike({ count: data.likeCount || 0, isLiked: data.isLiked || false });
             } catch (error) {
                 console.error("포럼 게시글 상세 조회 실패:", error);
                 alert("게시글을 불러올 수 없습니다. 삭제되었거나 존재하지 않는 글입니다.");
@@ -254,7 +251,11 @@ export default function ForumDetail() {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
             }
-            fetchComments();
+            setComments(prev => prev.map(c =>
+                c.id === comment.id
+                    ? { ...c, isLiked: !c.isLiked, likes: c.isLiked ? c.likes - 1 : c.likes + 1 }
+                    : c
+            ));
         } catch (error) {
             console.error("댓글 좋아요 처리 실패", error);
         }
