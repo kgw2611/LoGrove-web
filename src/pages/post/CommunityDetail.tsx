@@ -1,5 +1,5 @@
 import { useState, useEffect, type ChangeEvent } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import '../home/Home.css';
 import './Community.css';
@@ -11,7 +11,6 @@ const getImageUrl = (path?: string) => {
     return `http://52.79.122.225:8080${path.startsWith('/') ? '' : '/'}${path}`;
 };
 
-// 🔥 명세서에 맞춰 대댓글(Reply) 관련 타입은 깔끔하게 지웠습니다!
 interface CommentType {
     id: number;
     postId: string | undefined;
@@ -19,7 +18,7 @@ interface CommentType {
     text: string;
     date: string;
     likes: number;
-    isLiked: boolean; // 좋아요 여부 추가
+    isLiked: boolean;
 }
 
 interface PostType {
@@ -40,7 +39,9 @@ export default function CommunityDetail() {
     const [post, setPost] = useState<PostType | null>(null);
 
     const [isLoggedIn] = useState<boolean>(() => !!localStorage.getItem('access_token'));
-    const [userName] = useState<string>(() => {
+
+    // 🔥 해결 1: 이름을 바꿀 수 있도록 setUserName을 부활시킵니다!
+    const [userName, setUserName] = useState<string>(() => {
         const savedUserString = localStorage.getItem('user_db');
         if (savedUserString) {
             const parsedUser = JSON.parse(savedUserString);
@@ -61,7 +62,6 @@ export default function CommunityDetail() {
     const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
     const [editCommentText, setEditCommentText] = useState<string>('');
 
-    // 🔥 1. 댓글 조회 (명세서엔 상세조회만 있지만, 보통 목록을 가져오는 GET 요청)
     const fetchComments = async () => {
         try {
             const token = localStorage.getItem('access_token');
@@ -118,14 +118,33 @@ export default function CommunityDetail() {
             }
         };
 
+        // 🔥 해결 2: 내 진짜 닉네임을 서버에서 쫙 당겨와서 일치시킵니다!
+        const fetchMyInfo = async () => {
+            const token = localStorage.getItem('access_token');
+            if (token) {
+                try {
+                    const response = await axios.get('/api/users/me', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const data = response.data.data || response.data;
+                    setUserName(data.nickname || data.name || '익명');
+                } catch (error) {
+                    console.error("내 정보 불러오기 실패", error);
+                }
+            }
+        };
+
         if (id) {
             fetchPostDetail();
-            fetchComments(); // 글 불러올 때 댓글도 싹 가져오기!
+            fetchComments();
         }
+
+        fetchMyInfo(); // 함수 실행!
+
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id, navigate]);
 
-    // 게시글 삭제 로직
+    // 게시글 삭제
     const handleDeletePost = async () => {
         if (window.confirm('정말 이 게시글을 삭제하시겠습니까? (댓글도 함께 사라집니다)')) {
             try {
@@ -142,7 +161,7 @@ export default function CommunityDetail() {
         }
     };
 
-    // 게시글 수정 로직
+    // 게시글 수정
     const handleSavePost = async () => {
         if (!editPostTitle.trim() || !editPostContent.trim()) {
             return alert('제목과 내용을 모두 입력해주세요.');
@@ -165,27 +184,26 @@ export default function CommunityDetail() {
         }
     };
 
-    // 🔥 2. 댓글 작성 (POST /api/posts/{post_id}/comments)
+    // 댓글 작성
     const handleCommentSubmit = async () => {
         if (!isLoggedIn) return alert('로그인 후 이용 가능합니다.');
         if (!newComment.trim()) return alert('댓글 내용을 입력해주세요.');
 
         try {
             const token = localStorage.getItem('access_token');
-            // 건우님 백엔드가 content를 받는지 text를 받는지 DTO 확인 필요! (보통 content)
             await axios.post(`/api/posts/${id}/comments`, { content: newComment }, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
             setNewComment('');
-            fetchComments(); // 작성 성공하면 목록 새로고침
+            fetchComments();
         } catch (error) {
             console.error("댓글 등록 실패:", error);
             alert("댓글을 등록하지 못했습니다.");
         }
     };
 
-    // 🔥 3. 댓글 삭제 (DELETE /api/posts/{post_id}/comments/{comment_id})
+    // 댓글 삭제
     const handleDeleteComment = async (commentId: number) => {
         if (window.confirm('정말 이 댓글을 삭제하시겠습니까?')) {
             try {
@@ -193,7 +211,7 @@ export default function CommunityDetail() {
                 await axios.delete(`/api/posts/${id}/comments/${commentId}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                fetchComments(); // 삭제 성공하면 목록 새로고침
+                fetchComments();
             } catch (error) {
                 console.error("댓글 삭제 실패", error);
                 alert("삭제 권한이 없습니다.");
@@ -201,7 +219,7 @@ export default function CommunityDetail() {
         }
     };
 
-    // 🔥 4. 댓글 수정 (PUT /api/posts/{post_id}/comments/{comment_id})
+    // 댓글 수정
     const startEditing = (comment: CommentType) => {
         setEditingCommentId(comment.id);
         setEditCommentText(comment.text);
@@ -215,40 +233,47 @@ export default function CommunityDetail() {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             setEditingCommentId(null);
-            fetchComments(); // 수정 성공하면 목록 새로고침
+            fetchComments();
         } catch (error) {
             console.error("댓글 수정 실패", error);
             alert("수정 권한이 없습니다.");
         }
     };
 
+<<<<<<< sungmin
+    // 댓글 좋아요
+=======
     // 🔥 5. 댓글 좋아요 / 좋아요 취소 — 게시글 좋아요와 동일한 optimistic update 패턴
+>>>>>>> main
     const handleCommentLike = async (comment: CommentType) => {
         if (!isLoggedIn) return alert('로그인 후 이용 가능합니다.');
         const token = localStorage.getItem('access_token');
         try {
             if (comment.isLiked) {
-                // 이미 좋아요 상태면 취소 (DELETE)
                 await axios.delete(`/api/posts/${id}/comments/${comment.id}/like`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
             } else {
-                // 좋아요 안 한 상태면 추가 (POST)
                 await axios.post(`/api/posts/${id}/comments/${comment.id}/like`, {}, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
             }
+<<<<<<< sungmin
+            fetchComments();
+=======
             // API 성공 후 즉시 로컬 상태 반영 (re-fetch 없이)
             setComments(prev => prev.map(c =>
                 c.id === comment.id
                     ? { ...c, isLiked: !c.isLiked, likes: c.isLiked ? c.likes - 1 : c.likes + 1 }
                     : c
             ));
+>>>>>>> main
         } catch (error) {
             console.error("댓글 좋아요 처리 실패", error);
         }
     };
 
+    // 게시글 좋아요
     const handlePostLike = async () => {
         if (!isLoggedIn) return alert('로그인 후 이용 가능합니다.');
         try {
@@ -368,7 +393,6 @@ export default function CommunityDetail() {
                             </div>
                         </div>
 
-                        {/* 🔥 6. 댓글 렌더링 영역 (대댓글 완전 삭제) */}
                         <div className="comments-section">
                             {comments.map(comment => (
                                 <div key={comment.id} className="comment-item" style={{ marginBottom: '15px' }}>
@@ -419,8 +443,37 @@ export default function CommunityDetail() {
                         </div>
                     </div>
                 </main>
+
                 <aside className="comm-sidebar">
-                    {/* ... (사이드바 생략 없이 기존 코드 그대로 유지) */}
+                    <div className="sidebar-box profile-box">
+                        <div className="profile-info">
+                            {isLoggedIn ? (
+                                <div className="profile-avatar" style={{ overflow: 'hidden' }}>
+                                    <img
+                                        src="https://images.unsplash.com/photo-1518098268026-4e89f1a2cd8e?q=80&w=100&auto=format&fit=crop"
+                                        alt="프로필"
+                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                    />
+                                </div>
+                            ) : (
+                                <div className="profile-avatar">👤</div>
+                            )}
+
+                            <div className="profile-name">
+                                {isLoggedIn ? `${userName} 님` : '로그인 해주세요'}
+                            </div>
+                        </div>
+
+                        {isLoggedIn ? (
+                            <button className="write-btn" onClick={() => navigate('/community/write')}>
+                                ✍️ 글쓰기
+                            </button>
+                        ) : (
+                            <Link to="/login" style={{ textDecoration: 'none' }}>
+                                <button className="write-btn">로그인 하러 가기</button>
+                            </Link>
+                        )}
+                    </div>
                 </aside>
             </div>
         </div>

@@ -5,11 +5,6 @@ import '../home/Home.css'
 import './Community.css'
 import Pagination from '../../shared/ui/Pagination'
 
-type Comment = {
-    postId: string
-    replies?: Comment[]
-}
-
 type Board = {
     id: number
     rowNumber: number
@@ -18,6 +13,7 @@ type Board = {
     author: string
     date: string
     views: number
+    commentCount: number
 }
 
 const tagNameToCategory: Record<string, string> = {
@@ -46,28 +42,39 @@ export default function Community() {
     const navigate = useNavigate()
     const [activeTag, setActiveTag] = useState<string>('인기순위')
 
-    // 🔥 1. useState 안에서 시작할 때 바로 로컬 스토리지를 뒤져서 초기값을 세팅합니다! (ESLint 에러 해결)
     const [isLoggedIn] = useState<boolean>(() => !!localStorage.getItem('access_token'))
-    const [userName] = useState<string>(() => {
-        const savedUserString = localStorage.getItem('user_db')
-        if (savedUserString) {
-            const savedUser = JSON.parse(savedUserString)
-            return savedUser.nickname || savedUser.name || ''
-        }
-        return ''
-    })
+
+    // 사이드바 닉네임을 서버에서 받아오기 위해 빈 문자열로 세팅
+    const [userName, setUserName] = useState<string>('')
 
     const [boardList, setBoardList] = useState<Board[]>([])
     const [currentPage, setCurrentPage] = useState<number>(0)
     const [totalPages, setTotalPages] = useState<number>(0)
-    const [allComments] = useState<Comment[]>(() => {
-        try {
-            const savedCommentsString = localStorage.getItem('community_comments')
-            return savedCommentsString ? JSON.parse(savedCommentsString) : []
-        } catch {
-            return []
-        }
-    })
+
+    // 시작할 때 백엔드에서 내 진짜 정보(닉네임)를 가져옵니다!
+    useEffect(() => {
+        const fetchMyInfo = async () => {
+            const token = localStorage.getItem('access_token');
+            if (token) {
+                try {
+                    const response = await axios.get('/api/users/me', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const data = response.data.data || response.data;
+                    setUserName(data.nickname || data.name || '익명');
+                } catch (error) {
+                    console.error("내 정보 불러오기 실패", error);
+                    // 에러 나면 임시로 로컬 데이터 사용
+                    const savedUserString = localStorage.getItem('user_db');
+                    if (savedUserString) {
+                        const savedUser = JSON.parse(savedUserString);
+                        setUserName(savedUser.nickname || savedUser.name || '');
+                    }
+                }
+            }
+        };
+        fetchMyInfo();
+    }, []);
 
     useEffect(() => {
         const fetchPosts = async () => {
@@ -89,7 +96,10 @@ export default function Community() {
                     title: post.title,
                     author: post.authorName || post.author || post.nickname || '익명',
                     date: post.createdAt ? new Date(post.createdAt).toLocaleDateString() : '방금 전',
-                    views: post.viewCount || post.views || 0
+                    // 🔥 백엔드 DTO(PostListResponse)에 있는 `view` 변수명으로 완벽하게 매칭!
+                    views: post.view || 0,
+                    // 🔥 백엔드에서 나중에 넘겨줄 댓글 개수 세팅
+                    commentCount: post.commentCount || post.commentsCount || 0
                 }));
 
                 setBoardList(formattedPosts);
@@ -101,20 +111,6 @@ export default function Community() {
 
         fetchPosts();
     }, [currentPage, activeTag])
-
-    const getCommentCount = (postId: number) => {
-        const postComments = allComments.filter(
-            (c) => c.postId === String(postId)
-        )
-
-        let count = postComments.length
-        postComments.forEach((comment) => {
-            if (comment.replies && comment.replies.length > 0) {
-                count += comment.replies.length
-            }
-        })
-        return count
-    }
 
     const handleTagChange = (tag: string) => {
         setActiveTag(tag)
@@ -141,17 +137,6 @@ export default function Community() {
             <div className="comm-content">
                 {/* 왼쪽: 게시판 메인 영역 */}
                 <main className="comm-main">
-                    <div className="comm-top-search">
-                        <span className="search-icon">🔍 태그 검색</span>
-                        <span
-                            className="view-all"
-                            onClick={() => handleTagChange('인기순위')}
-                            style={{ cursor: 'pointer' }}
-                        >
-                            전체보기 ≡
-                        </span>
-                    </div>
-
                     <div className="comm-categories">
                         {categoryList.map((tag) => (
                             <button
@@ -189,8 +174,6 @@ export default function Community() {
                         <tbody>
                         {filteredList.length > 0 ? (
                             filteredList.map((row) => {
-                                const commentCount = getCommentCount(row.id)
-
                                 return (
                                     <tr
                                         key={row.id}
@@ -207,9 +190,10 @@ export default function Community() {
                                         </td>
                                         <td className="title-cell">
                                             {row.title}
-                                            {commentCount > 0 && (
+                                            {/* 🔥 백엔드에서 받은 댓글 개수가 0보다 크면 숫자를 띄웁니다! */}
+                                            {row.commentCount > 0 && (
                                                 <span style={{ color: '#ff5252', fontWeight: 'bold', marginLeft: '8px', fontSize: '13px' }}>
-                                                        [{commentCount}]
+                                                        [{row.commentCount}]
                                                     </span>
                                             )}
                                         </td>
@@ -255,6 +239,7 @@ export default function Community() {
                             )}
 
                             <div className="profile-name">
+                                {/* 🔥 백엔드 연동 완료! */}
                                 {isLoggedIn ? `${userName} 님` : '로그인 해주세요'}
                             </div>
                         </div>
