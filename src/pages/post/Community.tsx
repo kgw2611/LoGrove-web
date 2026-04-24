@@ -50,6 +50,7 @@ export default function Community() {
     const [boardList, setBoardList] = useState<Board[]>([])
     const [currentPage, setCurrentPage] = useState<number>(0)
     const [totalPages, setTotalPages] = useState<number>(0)
+    const [popularSidebar, setPopularSidebar] = useState<Board[]>([])
 
     // 시작할 때 백엔드에서 내 진짜 정보(닉네임)를 가져옵니다!
     useEffect(() => {
@@ -76,9 +77,43 @@ export default function Community() {
         fetchMyInfo();
     }, []);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const formatPost = (post: any, index?: number): Board => ({
+        id: post.id || post.postId,
+        rowNumber: index !== undefined ? index + 1 : post.rowNumber,
+        tag: tagNameToCategory[post.tagNames?.[0]] ?? '',
+        title: post.title,
+        author: post.authorName || post.author || post.nickname || '익명',
+        date: post.createdAt ? new Date(post.createdAt).toLocaleDateString() : '방금 전',
+        views: post.view || 0,
+        commentCount: post.commentCount || post.commentsCount || 0,
+    });
+
+    useEffect(() => {
+        const fetchPopularSidebar = async () => {
+            try {
+                const response = await axios.get('/api/posts/popular?board=COMMUNITY');
+                const postsData: Board[] = (response.data.data || []).slice(0, 5).map(formatPost);
+                setPopularSidebar(postsData);
+            } catch (error) {
+                console.error('인기 게시글 사이드바 불러오기 실패:', error);
+            }
+        };
+        fetchPopularSidebar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     useEffect(() => {
         const fetchPosts = async () => {
             try {
+                if (activeTag === '인기순위') {
+                    const response = await axios.get('/api/posts/popular?board=COMMUNITY');
+                    const postsData: Board[] = (response.data.data || []).map(formatPost);
+                    setBoardList(postsData);
+                    setTotalPages(0);
+                    return;
+                }
+
                 const tagId = categoryToTagId[activeTag];
                 const url = tagId
                     ? `/api/posts?board=COMMUNITY&tagIds=${tagId}&page=${currentPage}&size=15`
@@ -86,23 +121,10 @@ export default function Community() {
 
                 const response = await axios.get(url);
                 const pageData = response.data.data;
-                const postsData = pageData?.content || [];
-
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const formattedPosts: Board[] = postsData.map((post: any) => ({
-                    id: post.id || post.postId,
-                    rowNumber: post.rowNumber,
-                    tag: tagNameToCategory[post.tagNames?.[0]] ?? '',
-                    title: post.title,
-                    author: post.authorName || post.author || post.nickname || '익명',
-                    date: post.createdAt ? new Date(post.createdAt).toLocaleDateString() : '방금 전',
-                    // 🔥 백엔드 DTO(PostListResponse)에 있는 `view` 변수명으로 완벽하게 매칭!
-                    views: post.view || 0,
-                    // 🔥 백엔드에서 나중에 넘겨줄 댓글 개수 세팅
-                    commentCount: post.commentCount || post.commentsCount || 0
-                }));
+                const postsData: Board[] = (pageData?.content || []).map((post: any) => formatPost(post));
 
-                setBoardList(formattedPosts);
+                setBoardList(postsData);
                 setTotalPages(pageData?.totalPages ?? 0);
             } catch (error) {
                 console.error('게시글 목록 불러오기 실패:', error);
@@ -110,6 +132,7 @@ export default function Community() {
         };
 
         fetchPosts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentPage, activeTag])
 
     const handleTagChange = (tag: string) => {
@@ -117,7 +140,9 @@ export default function Community() {
         setCurrentPage(0)
     }
 
-    const filteredList = boardList.slice().sort((a, b) => b.id - a.id)
+    const filteredList = activeTag === '인기순위'
+        ? boardList
+        : boardList.slice().sort((a, b) => b.id - a.id)
 
     const categoryList = ['인기순위', '일상', '거래', '정보', '질문', '사진', '출사지', '이벤트', '리뷰']
 
@@ -215,11 +240,13 @@ export default function Community() {
                         )}
                         </tbody>
                     </table>
-                    <Pagination
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        onPageChange={(page) => setCurrentPage(page)}
-                    />
+                    {activeTag !== '인기순위' && (
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={(page) => setCurrentPage(page)}
+                        />
+                    )}
                 </main>
 
                 {/* 오른쪽: 사이드바 영역 */}
@@ -259,7 +286,18 @@ export default function Community() {
                         <h4>실시간 인기 게시판</h4>
                         <hr className="dashed-line" />
                         <div className="popular-content">
-                            {/* 나중에 인기글 리스트가 들어갈 자리 */}
+                            {popularSidebar.map((post, index) => (
+                                <div
+                                    key={post.id}
+                                    className="popular-item"
+                                    onClick={() => navigate(`/community/${post.id}`)}
+                                    style={{ cursor: 'pointer' }}
+                                >
+                                    <span className="popular-rank">{index + 1}</span>
+                                    <span className="popular-title">{post.title}</span>
+                                    <span className="popular-views">{post.views}</span>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </aside>
