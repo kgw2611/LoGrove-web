@@ -64,7 +64,10 @@ export default function CommunityDetail() {
 
     const fetchComments = async () => {
         try {
-            const response = await axios.get(`/api/posts/${id}/comments`);
+            const token = localStorage.getItem('access_token');
+            const response = await axios.get(`/api/posts/${id}/comments`, {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
             const data = response.data.data || response.data || [];
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -86,7 +89,10 @@ export default function CommunityDetail() {
     useEffect(() => {
         const fetchPostDetail = async () => {
             try {
-                const response = await axios.get(`/api/posts/${id}`);
+                const token = localStorage.getItem('access_token');
+                const response = await axios.get(`/api/posts/${id}`, {
+                    headers: token ? { Authorization: `Bearer ${token}` } : {},
+                });
                 const data = response.data.data || response.data;
 
                 const formattedPost: PostType = {
@@ -103,17 +109,8 @@ export default function CommunityDetail() {
                 setPost(formattedPost);
                 setEditPostTitle(formattedPost.title);
                 setEditPostContent(formattedPost.content);
-
-                const likeCount = data.likeCount || 0;
-                const token = localStorage.getItem('access_token');
-                if (token) {
-                    const likeRes = await axios.get(`/api/posts/${id}/like`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-                    setPostLike({ count: likeCount, isLiked: likeRes.data.data });
-                } else {
-                    setPostLike({ count: likeCount, isLiked: false });
-                }
+                // isLiked가 게시글 상세 응답에 포함되어 별도 /like API 호출 불필요
+                setPostLike({ count: data.likeCount || 0, isLiked: data.isLiked || false });
             } catch (error) {
                 console.error("게시글 상세 조회 실패:", error);
                 alert("게시글을 불러올 수 없습니다.");
@@ -243,22 +240,34 @@ export default function CommunityDetail() {
         }
     };
 
+<<<<<<< sungmin
     // 댓글 좋아요
+=======
+    // 🔥 5. 댓글 좋아요 / 좋아요 취소 — 게시글 좋아요와 동일한 optimistic update 패턴
+>>>>>>> main
     const handleCommentLike = async (comment: CommentType) => {
         if (!isLoggedIn) return alert('로그인 후 이용 가능합니다.');
+        const token = localStorage.getItem('access_token');
         try {
-            const token = localStorage.getItem('access_token');
-
             if (comment.isLiked) {
                 await axios.delete(`/api/posts/${id}/comments/${comment.id}/like`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: { Authorization: `Bearer ${token}` }
                 });
             } else {
                 await axios.post(`/api/posts/${id}/comments/${comment.id}/like`, {}, {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: { Authorization: `Bearer ${token}` }
                 });
             }
+<<<<<<< sungmin
             fetchComments();
+=======
+            // API 성공 후 즉시 로컬 상태 반영 (re-fetch 없이)
+            setComments(prev => prev.map(c =>
+                c.id === comment.id
+                    ? { ...c, isLiked: !c.isLiked, likes: c.isLiked ? c.likes - 1 : c.likes + 1 }
+                    : c
+            ));
+>>>>>>> main
         } catch (error) {
             console.error("댓글 좋아요 처리 실패", error);
         }
