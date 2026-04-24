@@ -6,24 +6,18 @@ import './Community.css';
 import './Forum.css';
 import Pagination from '../../shared/ui/Pagination';
 
-// 타입 정의
-interface ReplyType {
-    id?: number;
-}
-
-interface CommentType {
-    postId: string;
-    replies?: ReplyType[];
-}
+// 🔥 필요 없어진 로컬 스토리지용 CommentType, ReplyType 삭제!
 
 interface ForumPostType {
     id: number | string;
+    rowNumber?: number; // 서버에서 주는 글 번호용
     brand: string;
     boardType: string;
     title: string;
     author: string;
     date: string;
     views: number;
+    commentCount: number; // 🔥 백엔드에서 주는 댓글 개수를 담을 공간 추가!
 }
 
 const tagNameToBrand: Record<string, string> = {
@@ -42,55 +36,64 @@ const tagNameToBrand: Record<string, string> = {
 export default function Forum() {
     const navigate = useNavigate();
 
-    // 1. 현재 선택된 카메라 브랜드 상태 관리 (기본값: Canon)
     const [activeBrand, setActiveBrand] = useState<string>('Canon');
 
-    // 2. 로그인 상태 및 사용자 이름 초기값 설정
     const [isLoggedIn] = useState<boolean>(() => !!localStorage.getItem('access_token'));
-    const [userName] = useState<string>(() => {
-        const savedUserString = localStorage.getItem('user_db');
-        if (savedUserString) {
-            const savedUser = JSON.parse(savedUserString);
-            return savedUser.nickname || savedUser.name || '';
-        }
-        return '';
-    });
 
-    // 게시글 목록을 담을 상태 추가
+    // 🔥 수정 1: 사이드바 닉네임을 서버에서 받아오기 위해 빈 문자열로 세팅
+    const [userName, setUserName] = useState<string>('');
+
     const [boardList, setBoardList] = useState<ForumPostType[]>([]);
     const [currentPage, setCurrentPage] = useState<number>(0);
     const [totalPages, setTotalPages] = useState<number>(0);
 
-    // 포럼 댓글 전체 목록을 담을 상태 추가!
-    const [allComments] = useState<CommentType[]>(() => {
-        try {
-            const savedCommentsString = localStorage.getItem('forum_comments');
-            return savedCommentsString ? JSON.parse(savedCommentsString) : [];
-        } catch {
-            return [];
-        }
-    });
+    // 🔥 로컬 스토리지에서 댓글 뒤지던 allComments 상태는 완전히 삭제했습니다!
+
+    // 🔥 수정 2: 시작할 때 백엔드에서 내 진짜 정보(닉네임)를 가져옵니다!
+    useEffect(() => {
+        const fetchMyInfo = async () => {
+            const token = localStorage.getItem('access_token');
+            if (token) {
+                try {
+                    const response = await axios.get('/api/users/me', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const data = response.data.data || response.data;
+                    setUserName(data.nickname || data.name || '익명');
+                } catch (error) {
+                    console.error("내 정보 불러오기 실패", error);
+                    const savedUserString = localStorage.getItem('user_db');
+                    if (savedUserString) {
+                        const savedUser = JSON.parse(savedUserString);
+                        setUserName(savedUser.nickname || savedUser.name || '');
+                    }
+                }
+            }
+        };
+        fetchMyInfo();
+    }, []);
 
     useEffect(() => {
-        // 3. 백엔드에서 포럼 게시글 진짜 목록 불러오기!
         const fetchForumPosts = async () => {
             try {
-                // 건우님 컨트롤러 규칙에 따라 board=FORUM 으로 호출합니다.
                 const response = await axios.get(`/api/posts?board=FORUM&page=${currentPage}&size=15`);
 
-                // 백엔드 응답 구조(Page 객체)에 맞춰 데이터 추출
                 const pageData = response.data.data;
                 const postsData = pageData?.content || response.data.content || response.data.data || [];
 
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const formattedPosts: ForumPostType[] = postsData.map((post: any) => ({
                     id: post.id || post.postId,
+                    rowNumber: post.rowNumber,
                     brand: tagNameToBrand[post.tagNames?.[0]] ?? '',
                     boardType: 'Q&A',
                     title: post.title,
                     author: post.authorName || post.author || post.nickname || '익명',
                     date: post.createdAt ? new Date(post.createdAt).toLocaleDateString() : '방금 전',
-                    views: post.viewCount || post.views || 0
+                    // 🔥 백엔드 변수명 `view`로 완벽 매칭!
+                    views: post.view || 0,
+                    // 🔥 백엔드에서 아직 안 보내주지만 미리 세팅해 둡니다! (댓글 개수)
+                    commentCount: post.commentCount || post.commentsCount || 0
                 }));
 
                 setBoardList(formattedPosts);
@@ -103,23 +106,11 @@ export default function Forum() {
         fetchForumPosts();
     }, [currentPage]);
 
-    const getCommentCount = (postId: number | string): number => {
-        const postComments = allComments.filter(c => c.postId === String(postId));
-        let count = postComments.length;
-        postComments.forEach(comment => {
-            if (comment.replies && comment.replies.length > 0) {
-                count += comment.replies.length;
-            }
-        });
-        return count;
-    };
-
     const brands: string[] = [
         'Canon', 'Sony', 'Nikon', 'Leica', 'Film',
         'Fujifilm', 'Hasselblad', 'Olympus', 'Panasonic', '기타(etc)'
     ];
 
-    // 현재 선택된 브랜드(activeBrand)와 일치하는 글만 골라내기!
     const filteredList = boardList
         .filter((board) => board.brand === activeBrand)
         .slice()
@@ -175,23 +166,22 @@ export default function Forum() {
                             </tr>
                         ) : (
                             filteredList.map((row) => {
-                                const commentCount = getCommentCount(row.id);
-
                                 return (
                                     <tr
                                         key={row.id}
                                         onClick={() => navigate(`/forum/${row.id}`)}
                                         style={{ cursor: 'pointer' }}
                                     >
-                                        <td>{row.id}</td>
+                                        <td>{row.rowNumber || row.id}</td>
                                         <td className="title-cell">
                                             <span style={{ color: '#00bfa5', fontWeight: 'bold', marginRight: '8px' }}>
                                                 [{row.boardType}]
                                             </span>
                                             {row.title}
-                                            {commentCount > 0 && (
+                                            {/* 🔥 백엔드에서 받은 댓글 개수가 0보다 크면 숫자를 띄웁니다! */}
+                                            {row.commentCount > 0 && (
                                                 <span style={{ color: '#ff5252', fontWeight: 'bold', marginLeft: '8px', fontSize: '13px' }}>
-                                                    [{commentCount}]
+                                                    [{row.commentCount}]
                                                 </span>
                                             )}
                                         </td>
@@ -227,6 +217,7 @@ export default function Forum() {
                             )}
 
                             <div className="profile-name">
+                                {/* 🔥 백엔드에서 갓 받아온 닉네임 연동! */}
                                 {isLoggedIn ? `${userName} 님` : '로그인 해주세요'}
                             </div>
                         </div>

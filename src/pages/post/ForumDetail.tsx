@@ -12,7 +12,6 @@ const getImageUrl = (path?: string) => {
     return `http://52.79.122.225:8080${path.startsWith('/') ? '' : '/'}${path}`;
 };
 
-// 🔥 명세서에 맞춰 대댓글(Reply) 관련 타입은 깔끔하게 지웠습니다!
 interface CommentType {
     id: number;
     postId: string | undefined;
@@ -20,7 +19,7 @@ interface CommentType {
     text: string;
     date: string;
     likes: number;
-    isLiked: boolean; // 좋아요 여부 추가
+    isLiked: boolean;
 }
 
 interface ForumPostType {
@@ -41,16 +40,10 @@ export default function ForumDetail() {
 
     const [post, setPost] = useState<ForumPostType | null>(null);
 
-    // 🔥 1. useState 초기값으로 로그인 정보 세팅 (ESLint 경고 및 TS6133 에러 해결)
     const [isLoggedIn] = useState<boolean>(() => !!localStorage.getItem('access_token'));
-    const [userName] = useState<string>(() => {
-        const savedUserString = localStorage.getItem('user_db');
-        if (savedUserString) {
-            const parsedUser = JSON.parse(savedUserString);
-            return parsedUser.nickname || parsedUser.name || '';
-        }
-        return '';
-    });
+
+    // 🔥 커뮤니티와 동일하게! 로컬스토리지 이름은 임시로 비워두고 서버에서 가져오도록 수정
+    const [userName, setUserName] = useState<string>('');
 
     const [isEditingPost, setIsEditingPost] = useState<boolean>(false);
     const [editPostTitle, setEditPostTitle] = useState<string>('');
@@ -64,7 +57,6 @@ export default function ForumDetail() {
     const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
     const [editCommentText, setEditCommentText] = useState<string>('');
 
-    // 🔥 2. 댓글 목록 조회 API 연동
     const fetchComments = async () => {
         try {
             const response = await axios.get(`/api/posts/${id}/comments`);
@@ -87,7 +79,6 @@ export default function ForumDetail() {
     };
 
     useEffect(() => {
-        // 백엔드에서 진짜 포럼 게시글 상세 데이터 불러오기!
         const fetchPostDetail = async () => {
             try {
                 const response = await axios.get(`/api/posts/${id}`);
@@ -126,14 +117,38 @@ export default function ForumDetail() {
             }
         };
 
+        // 🔥 마이페이지/커뮤니티와 동일하게 진짜 내 닉네임을 서버에서 당겨옵니다!
+        const fetchMyInfo = async () => {
+            const token = localStorage.getItem('access_token');
+            if (token) {
+                try {
+                    const response = await axios.get('/api/users/me', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const data = response.data.data || response.data;
+                    setUserName(data.nickname || data.name || '익명');
+                } catch (error) {
+                    console.error("내 정보 불러오기 실패", error);
+                    // 실패 시 로컬 스토리지로 폴백
+                    const savedUserString = localStorage.getItem('user_db');
+                    if (savedUserString) {
+                        const parsedUser = JSON.parse(savedUserString);
+                        setUserName(parsedUser.nickname || parsedUser.name || '익명');
+                    }
+                }
+            }
+        };
+
         if (id) {
             fetchPostDetail();
-            fetchComments(); // 🔥 글 불러올 때 댓글도 같이 서버에서 가져오기
+            fetchComments();
         }
+
+        fetchMyInfo(); // 내 이름 불러오기 함수 실행!
+
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id, navigate]);
 
-    // 게시글 삭제
     const handleDeletePost = async () => {
         if (window.confirm('정말 이 포럼 게시글을 삭제하시겠습니까? (댓글도 함께 사라집니다)')) {
             try {
@@ -151,7 +166,6 @@ export default function ForumDetail() {
         }
     };
 
-    // 게시글 수정
     const handleSavePost = async () => {
         if (!editPostTitle.trim() || !editPostContent.trim()) {
             return alert('제목과 내용을 모두 입력해주세요.');
@@ -183,7 +197,6 @@ export default function ForumDetail() {
         }
     };
 
-    // 🔥 3. 댓글 작성 (POST /api/posts/{post_id}/comments)
     const handleCommentSubmit = async () => {
         if (!isLoggedIn) return alert('로그인 후 이용 가능합니다.');
         if (!newComment.trim()) return alert('댓글 내용을 입력해주세요.');
@@ -195,14 +208,13 @@ export default function ForumDetail() {
             });
 
             setNewComment('');
-            fetchComments(); // 작성 성공 시 댓글 목록 새로고침
+            fetchComments();
         } catch (error) {
             console.error("댓글 등록 실패:", error);
             alert("댓글을 등록하지 못했습니다.");
         }
     };
 
-    // 🔥 4. 댓글 삭제 (DELETE /api/posts/{post_id}/comments/{comment_id})
     const handleDeleteComment = async (commentId: number) => {
         if (window.confirm('정말 삭제하시겠습니까?')) {
             try {
@@ -218,7 +230,6 @@ export default function ForumDetail() {
         }
     };
 
-    // 🔥 5. 댓글 수정 (PUT /api/posts/{post_id}/comments/{comment_id})
     const startEditing = (comment: CommentType) => {
         setEditingCommentId(comment.id);
         setEditCommentText(comment.text);
@@ -239,7 +250,6 @@ export default function ForumDetail() {
         }
     };
 
-    // 🔥 6. 댓글 좋아요 토글 (POST & DELETE)
     const handleCommentLike = async (comment: CommentType) => {
         if (!isLoggedIn) return alert('로그인 후 이용 가능합니다.');
         try {
@@ -377,7 +387,7 @@ export default function ForumDetail() {
                             </div>
                         </div>
 
-                        {/* 🔥 7. 댓글 섹션 (대댓글 완전 삭제 및 컴포넌트 정리) */}
+                        {/* 댓글 섹션 */}
                         <div className="comments-section">
                             {comments.map(comment => (
                                 <div key={comment.id} className="comment-item" style={{ marginBottom: '15px' }}>
@@ -404,6 +414,7 @@ export default function ForumDetail() {
                                                     >
                                                         {comment.isLiked ? '❤️' : '🤍'} {comment.likes}
                                                     </button>
+                                                    {/* 🔥 여기서 서버에서 가져온 닉네임과 일치하면 버튼 렌더링! */}
                                                     {isLoggedIn && comment.author === userName && (
                                                         <>
                                                             <button className="action-btn" onClick={() => startEditing(comment)}>수정</button>
