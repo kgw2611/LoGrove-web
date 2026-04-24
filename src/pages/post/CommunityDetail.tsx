@@ -240,11 +240,7 @@ export default function CommunityDetail() {
         }
     };
 
-<<<<<<< sungmin
-    // 댓글 좋아요
-=======
     // 🔥 5. 댓글 좋아요 / 좋아요 취소 — 게시글 좋아요와 동일한 optimistic update 패턴
->>>>>>> main
     const handleCommentLike = async (comment: CommentType) => {
         if (!isLoggedIn) return alert('로그인 후 이용 가능합니다.');
         const token = localStorage.getItem('access_token');
@@ -258,16 +254,12 @@ export default function CommunityDetail() {
                     headers: { Authorization: `Bearer ${token}` }
                 });
             }
-<<<<<<< sungmin
-            fetchComments();
-=======
             // API 성공 후 즉시 로컬 상태 반영 (re-fetch 없이)
             setComments(prev => prev.map(c =>
                 c.id === comment.id
                     ? { ...c, isLiked: !c.isLiked, likes: c.isLiked ? c.likes - 1 : c.likes + 1 }
                     : c
             ));
->>>>>>> main
         } catch (error) {
             console.error("댓글 좋아요 처리 실패", error);
         }
