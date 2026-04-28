@@ -158,7 +158,7 @@ export interface GalleryListResult {
 }
 
 export async function getGalleryList(page = 0, size = 12): Promise<GalleryListResult> {
-    const res = await apiClient.get('/api/posts', {
+    const res = await apiClient.get('/posts', {
         params: { board: 'GALLERY', page, size },
     });
 
@@ -176,8 +176,8 @@ export async function getGalleryList(page = 0, size = 12): Promise<GalleryListRe
 
 export async function getGalleryDetail(postId: number): Promise<GalleryDetailItem> {
     const [postRes, commentsRes] = await Promise.all([
-        apiClient.get(`/api/posts/${postId}`),
-        apiClient.get(`/api/posts/${postId}/comments`).catch(() => ({ data: { data: [] } })),
+        apiClient.get(`/posts/${postId}`),
+        apiClient.get(`/posts/${postId}/comments`).catch(() => ({ data: { data: [] } })),
     ]);
     const raw = unwrapData<RawPost>(postRes.data);
     const detail = normalizeGalleryDetail(raw); // isLiked가 postRes에 포함됨
@@ -189,7 +189,7 @@ export async function getGalleryDetail(postId: number): Promise<GalleryDetailIte
 }
 
 export async function createComment(postId: number, content: string): Promise<CommentItem> {
-    const res = await apiClient.post(`/api/posts/${postId}/comments`, {
+    const res = await apiClient.post(`/posts/${postId}/comments`, {
         content,
     });
 
@@ -203,11 +203,11 @@ export async function toggleGalleryLike(
     currentLikeCount: number,
 ): Promise<{ likeCount: number; isLiked: boolean }> {
     if (currentIsLiked) {
-        await apiClient.delete(`/api/posts/${postId}/like`);
+        await apiClient.delete(`/posts/${postId}/like`);
         return { likeCount: Math.max(currentLikeCount - 1, 0), isLiked: false };
     }
 
-    await apiClient.post(`/api/posts/${postId}/like`);
+    await apiClient.post(`/posts/${postId}/like`);
     return { likeCount: currentLikeCount + 1, isLiked: true };
 }
 
@@ -216,16 +216,16 @@ export async function toggleCommentLike(
     comment: CommentItem,
 ): Promise<CommentItem> {
     if (comment.isLiked) {
-        await apiClient.delete(`/api/posts/${postId}/comments/${comment.id}/like`);
+        await apiClient.delete(`/posts/${postId}/comments/${comment.id}/like`);
         return { ...comment, isLiked: false, likeCount: Math.max(comment.likeCount - 1, 0) };
     }
 
-    await apiClient.post(`/api/posts/${postId}/comments/${comment.id}/like`);
+    await apiClient.post(`/posts/${postId}/comments/${comment.id}/like`);
     return { ...comment, isLiked: true, likeCount: comment.likeCount + 1 };
 }
 
 export async function getTagList(): Promise<TagItem[]> {
-    const res = await apiClient.get('/api/tags');
+    const res = await apiClient.get('/tags');
     const raw = unwrapData<RawTag[]>(res.data);
 
     return (raw ?? []).map(normalizeTag);
@@ -242,7 +242,7 @@ export async function recommendTagsByImage(file?: File): Promise<TagItem[]> {
     const formData = new FormData();
     formData.append('file', file);
 
-    const recommendRes = await apiClient.post('/api/gemini/tags', formData, {
+    const recommendRes = await apiClient.post('/gemini/tags', formData, {
         headers: {
             'Content-Type': 'multipart/form-data',
         },
@@ -273,7 +273,7 @@ export async function createGalleryPost(
         formData.append('images', file);
     });
 
-    const res = await apiClient.post('/api/posts', formData, {
+    const res = await apiClient.post('/posts', formData, {
         headers: {
             'Content-Type': 'multipart/form-data',
         },
