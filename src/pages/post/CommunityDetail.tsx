@@ -8,7 +8,7 @@ import './CommunityDetail.css';
 const getImageUrl = (path?: string) => {
     if (!path) return '';
     if (path.startsWith('http')) return path;
-    return `http://52.79.122.225:8080${path.startsWith('/') ? '' : '/'}${path}`;
+    return `/api${path.startsWith('/') ? '' : '/'}${path}`;
 };
 
 interface CommentType {
