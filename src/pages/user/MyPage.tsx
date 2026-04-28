@@ -1,5 +1,6 @@
 import { useState, useEffect, type ChangeEvent, type MouseEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import './MyPage.css';
 
 // --- 타입 정의 ---
@@ -31,115 +32,158 @@ interface MyCommentType {
 export default function MyPage() {
     const navigate = useNavigate();
 
-    // 메인 탭 상태 (기본값: posts)
     const [activeTab, setActiveTab] = useState<string>('posts');
-
-    // 나의 정보 서브 탭 상태 (기본값: account)
     const [infoTab, setInfoTab] = useState<string>('account');
-
-    // 비밀번호 변경 모달 창 열림/닫힘 상태
     const [isPwModalOpen, setIsPwModalOpen] = useState<boolean>(false);
 
-    // 유저 데이터 상태 관리
     const [userData, setUserData] = useState<UserDataType>({});
-    const [userName, setUserName] = useState<string>('숲속으로'); // 상단에 보여질 닉네임(또는 이름)
+    const [userName, setUserName] = useState<string>('숲속으로');
     const [bio, setBio] = useState<string>('한줄소개쓰는 공간');
     const [isEditingBio, setIsEditingBio] = useState<boolean>(false);
 
-    // 닉네임 변경 관련 상태
     const [editNickname, setEditNickname] = useState<string>('');
-    const [isNicknameChecked, setIsNicknameChecked] = useState<boolean>(true); // 처음엔 기존 닉네임이니 true
+    const [isNicknameChecked, setIsNicknameChecked] = useState<boolean>(true);
 
     const [myPosts, setMyPosts] = useState<MyPostType[]>([]);
     const [myComments, setMyComments] = useState<MyCommentType[]>([]);
 
+    // 1. 백엔드에서 내 정보 가져오기
     useEffect(() => {
-        // 1. 유저 정보 전체 불러오기
-        const savedUserString = localStorage.getItem('user_db');
-        let currentDisplayName = '숲속으로';
+        const fetchMyInfo = async () => {
+            const token = localStorage.getItem('access_token');
+            if (token) {
+                try {
+                    const response = await axios.get('/api/users/me', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const data = response.data.data || response.data;
 
-        if (savedUserString) {
-            const savedUser: UserDataType = JSON.parse(savedUserString);
+                    const fetchedUser: UserDataType = {
+                        userId: data.loginId || data.userId || data.username || '',
+                        email: data.email || '',
+                        name: data.name || '',
+                        nickname: data.nickname || data.name || '숲속으로',
+                        bio: data.bio || '한줄소개쓰는 공간'
+                    };
+
+                    setUserData(fetchedUser);
+                    setUserName(fetchedUser.nickname!);
+                    setEditNickname(fetchedUser.nickname!);
+                    setBio(fetchedUser.bio!);
+
+                } catch (error) {
+                    console.error("내 정보 불러오기 실패:", error);
+                }
+            }
+        };
+
+        fetchMyInfo();
+    }, []);
+
+    // 2. 백엔드에서 '내가 쓴 글' & '내가 쓴 댓글' 가져오기
+    useEffect(() => {
+        if (userName === '숲속으로') return;
+
+        const fetchMyActivities = async () => {
+            const token = localStorage.getItem('access_token');
+            if (!token) return;
+
+            // --- 내가 쓴 글 가져오기 ---
+            try {
+                const postsRes = await axios.get('/api/users/me/myposts', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const postsData = postsRes.data.data || postsRes.data?.content || [];
+
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const formattedPosts: MyPostType[] = postsData.map((p: any) => ({
+                    id: p.id || p.postId,
+                    author: p.author || p.nickname || userName,
+                    title: p.title,
+                    date: p.createdAt ? new Date(p.createdAt).toLocaleDateString() : '방금 전',
+                    type: (p.boardType === 'FORUM' || p.board === 'FORUM') ? 'forum' : 'community'
+                }));
+                setMyPosts(formattedPosts);
+            } catch (error) {
+                console.error('내가 쓴 글 불러오기 실패:', error);
+            }
+
+            // --- 내가 쓴 댓글 가져오기 ---
+            try {
+                const commentsRes = await axios.get('/api/users/me/mycomments', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const commentsData = commentsRes.data.data || commentsRes.data?.content || [];
+
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const formattedComments: MyCommentType[] = commentsData.map((c: any) => {
+                    return {
+                        id: c.commentId || c.id,
+
+                        // 🔥 백엔드에서 줄 만한 모든 게시글 번호 변수명 그물망!
+                        postId: c.postId || c.post_id || c.boardId || c.board_id || c.articleId,
+
+                        author: c.nickname || c.author || userName,
+                        text: c.content || c.text,
+                        date: c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '방금 전',
+                        type: (c.boardType === 'FORUM' || c.board === 'FORUM') ? 'forum' : 'community'
+                    };
+                });
+                setMyComments(formattedComments);
+            } catch (error) {
+                console.error('내가 쓴 댓글 불러오기 실패:', error);
+            }
+        };
+
+        fetchMyActivities();
+    }, [userName]);
+
+    // 3. 한줄소개 저장
+    const handleSaveBio = async () => {
+        try {
+            const token = localStorage.getItem('access_token');
+            await axios.put('/api/users/me', { bio: bio }, { headers: { Authorization: `Bearer ${token}` }});
+
+            const savedUser: UserDataType = { ...userData, bio: bio };
             setUserData(savedUser);
-
-            // 닉네임이 있으면 닉네임을, 없으면 이름을 보여줍니다.
-            currentDisplayName = savedUser.nickname || savedUser.name || '숲속으로';
-            setUserName(currentDisplayName);
-            setEditNickname(savedUser.nickname || ''); // 닉네임 입력창 초기값 세팅
-
-            if (savedUser.bio) setBio(savedUser.bio);
+            setIsEditingBio(false);
+            alert('한줄소개가 저장되었습니다!');
+        } catch (error) {
+            console.error("한줄소개 수정 실패:", error);
+            alert("저장에 실패했습니다.");
         }
-
-        // 2. 내가 쓴 글 불러오기
-        const commPosts: MyPostType[] = JSON.parse(localStorage.getItem('community_posts') || '[]');
-        const forumPosts: MyPostType[] = JSON.parse(localStorage.getItem('forum_posts') || '[]');
-
-        const allMyPosts: MyPostType[] = [
-            ...commPosts.filter(p => p.author === currentDisplayName).map(p => ({ ...p, type: 'community' as const })),
-            ...forumPosts.filter(p => p.author === currentDisplayName).map(p => ({ ...p, type: 'forum' as const }))
-        ].sort((a, b) => Number(b.id) - Number(a.id));
-
-        setMyPosts(allMyPosts);
-
-        // 3. 내가 쓴 댓글 불러오기
-        const commComments: MyCommentType[] = JSON.parse(localStorage.getItem('community_comments') || '[]');
-        const forumComments: MyCommentType[] = JSON.parse(localStorage.getItem('forum_comments') || '[]');
-
-        // 🔥 핵심: 내가 쓴 댓글 중, '원본 게시글이 아직 존재하는 댓글'만 골라냅니다!
-        const allMyComments: MyCommentType[] = [
-            ...commComments
-                .filter(c => c.author === currentDisplayName)
-                // 커뮤니티 원본 글 존재 여부 확인 (게시글 목록에 이 댓글의 postId가 있는지 검사)
-                .filter(c => commPosts.some(p => p.id.toString() === c.postId.toString()))
-                .map(c => ({ ...c, type: 'community' as const })),
-            ...forumComments
-                .filter(c => c.author === currentDisplayName)
-                // 포럼 원본 글 존재 여부 확인 (게시글 목록에 이 댓글의 postId가 있는지 검사)
-                .filter(c => forumPosts.some(p => p.id.toString() === c.postId.toString()))
-                .map(c => ({ ...c, type: 'forum' as const }))
-        ].sort((a, b) => Number(b.id) - Number(a.id));
-
-        setMyComments(allMyComments);
-    }, [userName]); // userName이 바뀔 때마다 글/댓글 다시 불러오기
-
-    // 한줄소개 저장
-    const handleSaveBio = () => {
-        const savedUser: UserDataType = { ...userData, bio: bio };
-        localStorage.setItem('user_db', JSON.stringify(savedUser));
-        setUserData(savedUser);
-        setIsEditingBio(false);
-        alert('한줄소개가 저장되었습니다!');
     };
 
-    // 닉네임 중복 확인 함수
-    const handleNicknameCheck = () => {
-        if (!editNickname.trim()) {
-            return alert('변경할 닉네임을 입력해주세요.');
-        }
-        if (editNickname === userData.nickname) {
-            return alert('현재 사용 중인 닉네임입니다.');
-        }
-        // 실제로는 여기서 백엔드에 중복 확인을 요청합니다.
+    // 닉네임 중복 확인
+    const handleNicknameCheck = async () => {
+        if (!editNickname.trim()) return alert('변경할 닉네임을 입력해주세요.');
+        if (editNickname === userData.nickname) return alert('현재 사용 중인 닉네임입니다.');
         alert('사용 가능한 닉네임입니다!');
         setIsNicknameChecked(true);
     };
 
-    // 계정 정보(닉네임) 변경사항 저장 함수
-    const handleSaveAccount = () => {
+    // 4. 계정 정보(닉네임) 저장
+    const handleSaveAccount = async () => {
         if (editNickname !== userData.nickname && !isNicknameChecked) {
             return alert('닉네임 중복확인을 먼저 진행해주세요.');
         }
 
-        const updatedUser: UserDataType = { ...userData, nickname: editNickname };
-        localStorage.setItem('user_db', JSON.stringify(updatedUser));
+        try {
+            const token = localStorage.getItem('access_token');
+            await axios.put('/api/users/me', { nickname: editNickname }, { headers: { Authorization: `Bearer ${token}` }});
 
-        setUserData(updatedUser);
-        setUserName(editNickname); // 프로필 이름 즉시 변경!
+            const updatedUser: UserDataType = { ...userData, nickname: editNickname };
+            setUserData(updatedUser);
+            setUserName(editNickname);
 
-        alert('계정 정보가 성공적으로 변경되었습니다!');
+            alert('계정 정보가 성공적으로 변경되었습니다!');
+        } catch (error) {
+            console.error("정보 수정 실패:", error);
+            alert("변경사항 저장에 실패했습니다.");
+        }
     };
 
-    // '나의 정보' 탭 안의 내용을 그려주는 함수
     const renderInfoContent = () => {
         if (infoTab === 'account') {
             return (
@@ -242,7 +286,6 @@ export default function MyPage() {
 
     return (
         <div className="mypage-container">
-
             <div className="profile-section">
                 <div className="profile-image-wrapper">
                     <img src="https://images.unsplash.com/photo-1518098268026-4e89f1a2cd8e?q=80&w=400&auto=format&fit=crop" alt="프로필" className="profile-image" />
@@ -274,8 +317,6 @@ export default function MyPage() {
             </div>
 
             <div className="tab-content" style={{ padding: '40px 0' }}>
-
-                {/* 1. 내가 쓴 글 탭 */}
                 {activeTab === 'posts' && (
                     <div>
                         <h3 style={{ marginBottom: '20px' }}>작성한 게시글 총 {myPosts.length}개</h3>
@@ -295,7 +336,6 @@ export default function MyPage() {
                     </div>
                 )}
 
-                {/* 2. 내가 쓴 댓글 탭 */}
                 {activeTab === 'comments' && (
                     <div>
                         <h3 style={{ marginBottom: '20px' }}>작성한 댓글 총 {myComments.length}개</h3>
@@ -304,7 +344,7 @@ export default function MyPage() {
                                 {myComments.map(comment => (
                                     <li key={`${comment.type}-${comment.id}`} onClick={() => navigate(`/${comment.type}/${comment.postId}`)} style={{ borderBottom: '1px solid #eee', padding: '15px 0', cursor: 'pointer' }}>
                                         <div style={{ fontSize: '15px', color: '#333', marginBottom: '8px' }}>{comment.text}</div>
-                                        <div style={{ fontSize: '12px', color: '#999' }}><span style={{ color: '#00bfa5', marginRight: '8px' }}>{comment.type === 'community' ? '커뮤니티' : '포럼'}</span>{comment.date}</div>
+                                        <div style={{ fontSize: '12px', color: '#999' }}><span style={{ color: '#00bfa5', marginRight: '8px' }}>{comment.type === 'community' ? '포럼' : '커뮤니티'}</span>{comment.date}</div>
                                     </li>
                                 ))}
                             </ul>
@@ -316,7 +356,6 @@ export default function MyPage() {
                     <div style={{ color: '#999', textAlign: 'center', padding: '40px 0' }}>준비 중인 기능입니다.</div>
                 )}
 
-                {/* 4. 나의 정보 서브 탭 렌더링 */}
                 {activeTab === 'info' && (
                     <div className="info-container">
                         <aside className="info-sidebar">
@@ -327,14 +366,11 @@ export default function MyPage() {
                                 <li className={infoTab === 'password' ? 'active' : ''} onClick={() => setInfoTab('password')}>🔒 비밀번호</li>
                             </ul>
                         </aside>
-
                         {renderInfoContent()}
                     </div>
                 )}
-
             </div>
 
-            {/* 비밀번호 변경 모달 */}
             {isPwModalOpen && (
                 <div className="modal-overlay" onClick={() => setIsPwModalOpen(false)}>
                     <div className="modal-content" onClick={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()}>
@@ -363,7 +399,6 @@ export default function MyPage() {
                     </div>
                 </div>
             )}
-
         </div>
     );
 }
