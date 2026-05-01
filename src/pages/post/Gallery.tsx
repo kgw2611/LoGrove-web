@@ -1,24 +1,25 @@
 import {
+    useCallback,
     useEffect,
     useMemo,
     useRef,
     useState,
     type KeyboardEvent,
 } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import '../home/Home.css';
 import './Gallery.css';
 import {
-    getGalleryList,
-    getGalleryDetail,
     createComment,
-    toggleGalleryLike,
-    toggleCommentLike,
+    getGalleryDetail,
+    getGalleryList,
     getGalleryTagNames,
-    type GalleryListItem,
+    toggleCommentLike,
+    toggleGalleryLike,
+    type CommentItem,
     type GalleryDetailItem,
+    type GalleryListItem,
 } from '../../shared/api/gallery';
-import Pagination from '../../shared/ui/Pagination';
 
 function SearchIcon() {
     return (
@@ -81,16 +82,26 @@ function BackIcon() {
                 strokeLinecap="round"
                 strokeLinejoin="round"
             />
-            <path
-                d="M10 12H20"
-                stroke="#2D2D2D"
-                strokeWidth="2"
-                strokeLinecap="round"
-            />
+            <path d="M10 12H20" stroke="#2D2D2D" strokeWidth="2" strokeLinecap="round" />
         </svg>
     );
 }
 
+function HeartIcon({ active = false, size = 24 }: { active?: boolean; size?: number }) {
+    const color = active ? '#7BC9A5' : '#2D2D2D';
+
+    return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+                d="M12 20.2C11.7 20.2 11.3 20.1 11.1 19.8L4.8 13.9C3.2 12.4 2.5 11.2 2.5 9.5C2.5 6.7 4.6 4.6 7.4 4.6C9 4.6 10.5 5.3 11.5 6.5C12.5 5.3 14 4.6 15.6 4.6C18.4 4.6 20.5 6.7 20.5 9.5C20.5 11.2 19.8 12.4 18.2 13.9L11.9 19.8C11.7 20.1 11.3 20.2 12 20.2Z"
+                stroke={color}
+                fill={active ? color : 'none'}
+                strokeWidth="1.8"
+                strokeLinejoin="round"
+            />
+        </svg>
+    );
+}
 
 function CommentIcon() {
     return (
@@ -108,12 +119,7 @@ function CommentIcon() {
 function ShareIcon() {
     return (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path
-                d="M12 16V4"
-                stroke="#2D2D2D"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-            />
+            <path d="M12 16V4" stroke="#2D2D2D" strokeWidth="1.8" strokeLinecap="round" />
             <path
                 d="M8 8L12 4L16 8"
                 stroke="#2D2D2D"
@@ -141,166 +147,260 @@ function MoreIcon() {
     );
 }
 
-function SmileIcon() {
+function SendIcon({ active = false }: { active?: boolean }) {
     return (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <circle cx="12" cy="12" r="9" stroke="#2D2D2D" strokeWidth="1.8" />
-            <circle cx="9" cy="10" r="1" fill="#2D2D2D" />
-            <circle cx="15" cy="10" r="1" fill="#2D2D2D" />
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path
-                d="M8.5 14.5C9.4 15.5 10.5 16 12 16C13.5 16 14.6 15.5 15.5 14.5"
-                stroke="#2D2D2D"
-                strokeWidth="1.6"
+                d="M4 19L20 12L4 5L7 12L4 19Z"
+                stroke={active ? '#ffffff' : '#7BC9A5'}
+                strokeWidth="1.9"
+                strokeLinejoin="round"
                 strokeLinecap="round"
             />
         </svg>
     );
 }
 
-function StickerIcon() {
+function TagArrowIcon({ open }: { open: boolean }) {
     return (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <rect
-                x="4"
-                y="4"
-                width="16"
-                height="16"
-                rx="4"
-                stroke="#2D2D2D"
-                strokeWidth="1.8"
-            />
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path
-                d="M15 20C15 17.2 17.2 15 20 15"
-                stroke="#2D2D2D"
-                strokeWidth="1.8"
+                d={open ? 'M6 15L12 9L18 15' : 'M6 9L12 15L18 9'}
+                stroke="#111"
+                strokeWidth="2.2"
                 strokeLinecap="round"
-            />
-            <circle cx="9" cy="10" r="1" fill="#2D2D2D" />
-            <circle cx="15" cy="10" r="1" fill="#2D2D2D" />
-            <path
-                d="M8.7 14.2C9.5 14.9 10.5 15.3 12 15.3C13.5 15.3 14.5 14.9 15.3 14.2"
-                stroke="#2D2D2D"
-                strokeWidth="1.5"
-                strokeLinecap="round"
+                strokeLinejoin="round"
             />
         </svg>
     );
 }
 
-function ImageIcon() {
-    return (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <rect
-                x="3.5"
-                y="5"
-                width="17"
-                height="14"
-                rx="2.5"
-                stroke="#2D2D2D"
-                strokeWidth="1.8"
-            />
-            <circle cx="9" cy="10" r="1.4" fill="#2D2D2D" />
-            <path
-                d="M6.5 16L10.3 12.4C10.7 12 11.3 12 11.7 12.4L14 14.7"
-                stroke="#2D2D2D"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-            />
-            <path
-                d="M12.8 13.8L14.4 12.2C14.8 11.8 15.4 11.8 15.8 12.2L18 14.4"
-                stroke="#2D2D2D"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-            />
-        </svg>
-    );
+type PostLikeOverrideMap = Record<number, { isLiked: boolean; likeCount: number }>;
+
+type CommentLikeOverrideMap = Record<
+    number,
+    Record<number, { isLiked: boolean; likeCount: number }>
+>;
+
+function readJSON<T>(key: string, fallback: T): T {
+    try {
+        const saved = localStorage.getItem(key);
+        return saved ? JSON.parse(saved) : fallback;
+    } catch {
+        return fallback;
+    }
+}
+
+function safeCount(value: unknown) {
+    const numberValue = Number(value);
+    return Number.isFinite(numberValue) ? numberValue : 0;
 }
 
 export default function Gallery() {
-    const { id: paramId } = useParams<{ id?: string }>();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+
+    const initialPostId = searchParams.get('postId');
 
     const [galleryItems, setGalleryItems] = useState<GalleryListItem[]>([]);
     const [selectedPost, setSelectedPost] = useState<GalleryDetailItem | null>(null);
+
     const [isLoading, setIsLoading] = useState(true);
     const [isDetailLoading, setIsDetailLoading] = useState(false);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+
     const [commentInput, setCommentInput] = useState('');
     const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+
     const [searchText, setSearchText] = useState('');
     const [tagOptions, setTagOptions] = useState<string[]>(['전체']);
     const [selectedTag, setSelectedTag] = useState('전체');
-    const [currentPage, setCurrentPage] = useState<number>(0);
-    const [totalPages, setTotalPages] = useState<number>(0);
+    const [isTagsVisible, setIsTagsVisible] = useState(true);
+
+    const [currentPage, setCurrentPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
+
+    const [postLikeOverrides, setPostLikeOverrides] = useState<PostLikeOverrideMap>(() =>
+        readJSON<PostLikeOverrideMap>('gallery_post_like_overrides', {})
+    );
+
+    const [commentLikeOverrides, setCommentLikeOverrides] =
+        useState<CommentLikeOverrideMap>(() =>
+            readJSON<CommentLikeOverrideMap>('gallery_comment_like_overrides', {})
+        );
 
     const commentSectionRef = useRef<HTMLDivElement | null>(null);
     const commentInputRef = useRef<HTMLInputElement | null>(null);
+    const loadMoreRef = useRef<HTMLDivElement | null>(null);
+
+    const isLoggedIn = !!localStorage.getItem('access_token');
+    const isCommentTyping = commentInput.trim().length > 0;
+    const hasSearchOrTag = searchText.trim().length > 0 || selectedTag !== '전체';
 
     useEffect(() => {
-        if (!paramId) {
-            setSelectedPost(null);
-            return;
-        }
-        if (selectedPost?.id === Number(paramId)) return;
-        const fetchByParam = async () => {
-            try {
-                setIsDetailLoading(true);
-                const detail = await getGalleryDetail(Number(paramId));
-                setSelectedPost(detail);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            } catch (error) {
-                console.error('상세 조회 실패:', error);
-                navigate('/gallery');
-            } finally {
-                setIsDetailLoading(false);
-            }
-        };
-        fetchByParam();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [paramId]);
+        localStorage.setItem(
+            'gallery_post_like_overrides',
+            JSON.stringify(postLikeOverrides)
+        );
+    }, [postLikeOverrides]);
 
-    const isLoggedIn =
-        !!localStorage.getItem('access_token');
+    useEffect(() => {
+        localStorage.setItem(
+            'gallery_comment_like_overrides',
+            JSON.stringify(commentLikeOverrides)
+        );
+    }, [commentLikeOverrides]);
+
+    useEffect(() => {
+        setCurrentPage(0);
+        setGalleryItems([]);
+        setTotalPages(1);
+    }, [searchText, selectedTag]);
+
+    const requireLogin = (message: string) => {
+        if (isLoggedIn) return true;
+
+        alert(message);
+        navigate('/login');
+        return false;
+    };
+
+    const mergeLikeOverrides = useCallback(
+        (detail: GalleryDetailItem): GalleryDetailItem => {
+            const postOverride = postLikeOverrides[detail.id];
+            const commentOverrideMap = commentLikeOverrides[detail.id] ?? {};
+
+            return {
+                ...detail,
+                likeCount: safeCount(postOverride?.likeCount ?? detail.likeCount),
+                isLiked: postOverride?.isLiked ?? detail.isLiked ?? false,
+                comments: detail.comments.map((comment) => ({
+                    ...comment,
+                    likeCount: safeCount(
+                        commentOverrideMap[comment.id]?.likeCount ?? comment.likeCount
+                    ),
+                    isLiked:
+                        commentOverrideMap[comment.id]?.isLiked ??
+                        comment.isLiked ??
+                        false,
+                })),
+            };
+        },
+        [postLikeOverrides, commentLikeOverrides]
+    );
+
+    const syncListItemFromDetail = (detail: GalleryDetailItem) => {
+        setGalleryItems((prev) =>
+            prev.map((item) =>
+                item.id === detail.id
+                    ? {
+                        ...item,
+                        title: detail.title,
+                        description: detail.description,
+                        src: detail.src,
+                        author: detail.author,
+                        tags: detail.tags,
+                        likeCount: safeCount(detail.likeCount),
+                        isLiked: detail.isLiked,
+                    }
+                    : item
+            )
+        );
+    };
 
     useEffect(() => {
         const fetchGallery = async () => {
             try {
-                setIsLoading(true);
+                if (currentPage === 0) {
+                    setIsLoading(true);
+                } else {
+                    setIsLoadingMore(true);
+                }
+
+                const pageSize = hasSearchOrTag ? 200 : 20;
+
                 const [result, tags] = await Promise.all([
-                    getGalleryList(currentPage, 12),
-                    getGalleryTagNames(),
+                    getGalleryList(currentPage, pageSize, {
+                        search: searchText,
+                        tag: selectedTag,
+                    }),
+                    getGalleryTagNames().catch((tagError) => {
+                        console.warn('태그 목록 조회 실패:', tagError);
+                        return ['전체'];
+                    }),
                 ]);
-                setGalleryItems(result.items);
+
+                setGalleryItems((prev) => {
+                    if (currentPage === 0) return result.items;
+
+                    const merged = [...prev, ...result.items];
+
+                    return Array.from(
+                        new Map(merged.map((item) => [item.id, item])).values()
+                    );
+                });
+
                 setTotalPages(result.totalPages);
                 setTagOptions(tags);
             } catch (error) {
                 console.error('갤러리 목록 불러오기 실패:', error);
-                setGalleryItems([]);
+
+                if (currentPage === 0) {
+                    setGalleryItems([]);
+                }
             } finally {
                 setIsLoading(false);
+                setIsLoadingMore(false);
             }
         };
 
-        fetchGallery();
-    }, [currentPage]);
+        void fetchGallery();
+    }, [currentPage, searchText, selectedTag, hasSearchOrTag]);
 
-    const filteredGalleryItems = useMemo(() => {
-        return galleryItems
-            .filter((item) => {
-                const matchesTag =
-                    selectedTag === '전체' || item.tags.includes(selectedTag);
+    useEffect(() => {
+        if (selectedPost) return;
+        if (hasSearchOrTag) return;
+        if (!loadMoreRef.current) return;
+        if (isLoading || isLoadingMore) return;
+        if (currentPage >= totalPages - 1) return;
 
-                const query = searchText.trim().toLowerCase();
-                const matchesSearch =
-                    query.length === 0 ||
-                    item.title.toLowerCase().includes(query) ||
-                    (item.description ?? '').toLowerCase().includes(query) ||
-                    item.tags.some((tag) => tag.toLowerCase().includes(query));
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) {
+                    setCurrentPage((prev) => prev + 1);
+                }
+            },
+            { threshold: 0.25 }
+        );
 
-                return matchesTag && matchesSearch;
-            })
-            .slice()
-            .sort((a, b) => Number(b.id) - Number(a.id));
-    }, [galleryItems, selectedTag, searchText]);
+        observer.observe(loadMoreRef.current);
+
+        return () => observer.disconnect();
+    }, [selectedPost, hasSearchOrTag, isLoading, isLoadingMore, currentPage, totalPages]);
+
+    useEffect(() => {
+        if (!initialPostId) return;
+        if (selectedPost?.id === Number(initialPostId)) return;
+
+        const openInitialPost = async () => {
+            try {
+                setIsDetailLoading(true);
+
+                const detail = await getGalleryDetail(Number(initialPostId));
+                const mergedDetail = mergeLikeOverrides(detail);
+
+                setSelectedPost(mergedDetail);
+                setCommentInput('');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } catch (error) {
+                console.error('갤러리 상세 이동 실패:', error);
+            } finally {
+                setIsDetailLoading(false);
+            }
+        };
+
+        void openInitialPost();
+    }, [initialPostId, selectedPost?.id, mergeLikeOverrides]);
 
     const relatedItems = useMemo(() => {
         if (!selectedPost) return [];
@@ -313,11 +413,13 @@ export default function Gallery() {
     }, [galleryItems, selectedPost]);
 
     const openDetail = async (item: GalleryListItem) => {
-        navigate('/gallery/' + item.id);
         try {
             setIsDetailLoading(true);
+
             const detail = await getGalleryDetail(Number(item.id));
-            setSelectedPost(detail);
+            const mergedDetail = mergeLikeOverrides(detail);
+
+            setSelectedPost(mergedDetail);
             setCommentInput('');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         } catch (error) {
@@ -328,22 +430,28 @@ export default function Gallery() {
     };
 
     const closeDetail = () => {
-        navigate('/gallery');
         setSelectedPost(null);
         setCommentInput('');
+        navigate('/gallery', { replace: true });
     };
 
     const handleCreateComment = async () => {
         if (!selectedPost || !commentInput.trim() || isSubmittingComment) return;
+        if (!requireLogin('댓글 작성은 로그인 후 이용할 수 있습니다.')) return;
 
         try {
             setIsSubmittingComment(true);
 
-            await createComment(Number(selectedPost.id), commentInput.trim());
+            await createComment(
+                Number(selectedPost.id),
+                commentInput.trim(),
+                selectedPost.title
+            );
 
             const refreshedDetail = await getGalleryDetail(Number(selectedPost.id));
-            setSelectedPost(refreshedDetail);
+            const mergedDetail = mergeLikeOverrides(refreshedDetail);
 
+            setSelectedPost(mergedDetail);
             setCommentInput('');
 
             setTimeout(() => {
@@ -351,6 +459,7 @@ export default function Gallery() {
             }, 100);
         } catch (error) {
             console.error('댓글 작성 실패:', error);
+            alert('댓글 등록 중 오류가 발생했습니다.');
         } finally {
             setIsSubmittingComment(false);
         }
@@ -361,43 +470,116 @@ export default function Gallery() {
 
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-
-            if (isSubmittingComment) return;
-
             await handleCreateComment();
         }
     };
 
     const handleToggleGalleryLike = async () => {
         if (!selectedPost) return;
+        if (!requireLogin('좋아요는 로그인 후 이용할 수 있습니다.')) return;
+
+        const previousPost = selectedPost;
+
+        const currentLiked = selectedPost.isLiked;
+        const currentCount = safeCount(selectedPost.likeCount);
+        const nextLiked = !currentLiked;
+        const nextLikeCount = nextLiked ? currentCount + 1 : Math.max(currentCount - 1, 0);
+
+        const updatedPost: GalleryDetailItem = {
+            ...selectedPost,
+            isLiked: nextLiked,
+            likeCount: nextLikeCount,
+        };
+
+        setSelectedPost(updatedPost);
+        syncListItemFromDetail(updatedPost);
+
+        setPostLikeOverrides((prev) => ({
+            ...prev,
+            [selectedPost.id]: {
+                isLiked: nextLiked,
+                likeCount: nextLikeCount,
+            },
+        }));
+
         try {
-            await toggleGalleryLike(Number(selectedPost.id), selectedPost.isLiked, selectedPost.likeCount);
-            setSelectedPost(prev => prev ? {
-                ...prev,
-                isLiked: !prev.isLiked,
-                likeCount: prev.isLiked ? prev.likeCount - 1 : prev.likeCount + 1,
-            } : prev);
+            await toggleGalleryLike(Number(selectedPost.id), currentLiked);
         } catch (error) {
             console.error('게시글 좋아요 실패:', error);
+
+            setSelectedPost(previousPost);
+            syncListItemFromDetail(previousPost);
+
+            setPostLikeOverrides((prev) => ({
+                ...prev,
+                [previousPost.id]: {
+                    isLiked: previousPost.isLiked,
+                    likeCount: safeCount(previousPost.likeCount),
+                },
+            }));
         }
     };
 
     const handleToggleCommentLike = async (commentId: number) => {
         if (!selectedPost) return;
-        const comment = selectedPost.comments.find((c) => c.id === commentId);
-        if (!comment) return;
+        if (!requireLogin('댓글 좋아요는 로그인 후 이용할 수 있습니다.')) return;
+
+        const previousPost = selectedPost;
+
+        const targetComment = selectedPost.comments.find(
+            (comment) => comment.id === commentId
+        );
+
+        if (!targetComment) return;
+
+        const currentLiked = targetComment.isLiked;
+        const currentCount = safeCount(targetComment.likeCount);
+        const nextLiked = !currentLiked;
+        const nextLikeCount = nextLiked ? currentCount + 1 : Math.max(currentCount - 1, 0);
+
+        const nextComments = selectedPost.comments.map((comment) =>
+            comment.id === commentId
+                ? {
+                    ...comment,
+                    isLiked: nextLiked,
+                    likeCount: nextLikeCount,
+                }
+                : comment
+        );
+
+        setSelectedPost({
+            ...selectedPost,
+            comments: nextComments,
+        });
+
+        setCommentLikeOverrides((prev) => ({
+            ...prev,
+            [selectedPost.id]: {
+                ...(prev[selectedPost.id] ?? {}),
+                [commentId]: {
+                    isLiked: nextLiked,
+                    likeCount: nextLikeCount,
+                },
+            },
+        }));
+
         try {
-            await toggleCommentLike(Number(selectedPost.id), comment);
-            setSelectedPost(prev => prev ? {
-                ...prev,
-                comments: prev.comments.map(c =>
-                    c.id === commentId
-                        ? { ...c, isLiked: !c.isLiked, likeCount: c.isLiked ? c.likeCount - 1 : c.likeCount + 1 }
-                        : c
-                ),
-            } : prev);
+            await toggleCommentLike(Number(selectedPost.id), commentId, currentLiked);
         } catch (error) {
             console.error('댓글 좋아요 실패:', error);
+
+            setSelectedPost(previousPost);
+
+            setCommentLikeOverrides((prev) => ({
+                ...prev,
+                [previousPost.id]: {
+                    ...(prev[previousPost.id] ?? {}),
+                    [commentId]: {
+                        isLiked: targetComment.isLiked,
+                        likeCount: safeCount(targetComment.likeCount),
+                    },
+                },
+            }));
         }
     };
 
@@ -421,9 +603,9 @@ export default function Gallery() {
         <div className="gallery-container">
             <div className="gallery-sub-header">
                 <div className="search-bar-wrapper">
-          <span className="gallery-search-icon">
-            <SearchIcon />
-          </span>
+                    <span className="gallery-search-icon">
+                        <SearchIcon />
+                    </span>
                     <input
                         type="text"
                         placeholder="Search for..."
@@ -455,17 +637,32 @@ export default function Gallery() {
             </div>
 
             {!selectedPost && (
-                <div className="gallery-tag-bar">
-                    {tagOptions.map((tag) => (
-                        <button
-                            key={tag}
-                            type="button"
-                            className={`gallery-tag-chip ${selectedTag === tag ? 'active' : ''}`}
-                            onClick={() => setSelectedTag(tag)}
-                        >
-                            {tag}
-                        </button>
-                    ))}
+                <div className={`gallery-tag-area ${isTagsVisible ? 'open' : 'closed'}`}>
+                    <button
+                        type="button"
+                        className="gallery-tag-collapse-btn"
+                        onClick={() => setIsTagsVisible((prev) => !prev)}
+                        aria-label={isTagsVisible ? '태그 숨기기' : '태그 펼치기'}
+                    >
+                        <TagArrowIcon open={isTagsVisible} />
+                    </button>
+
+                    {isTagsVisible && (
+                        <div className="gallery-tag-bar gallery-tag-bordered">
+                            {tagOptions.map((tag) => (
+                                <button
+                                    key={tag}
+                                    type="button"
+                                    className={`gallery-tag-chip gallery-tag-border-chip ${
+                                        selectedTag === tag ? 'active' : ''
+                                    }`}
+                                    onClick={() => setSelectedTag(tag)}
+                                >
+                                    {tag}
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -475,7 +672,7 @@ export default function Gallery() {
                     <p>갤러리 목록을 불러오는 중입니다.</p>
                 </div>
             ) : !selectedPost ? (
-                filteredGalleryItems.length === 0 ? (
+                galleryItems.length === 0 ? (
                     <div className="gallery-empty-state">
                         <div style={{ fontSize: '50px', marginBottom: '15px' }}>📷</div>
                         <h3>검색 결과가 없습니다.</h3>
@@ -484,7 +681,7 @@ export default function Gallery() {
                 ) : (
                     <>
                         <main className="masonry-grid">
-                            {filteredGalleryItems.map((item) => (
+                            {galleryItems.map((item) => (
                                 <article
                                     className="masonry-item"
                                     key={item.id}
@@ -496,17 +693,22 @@ export default function Gallery() {
                                         className="masonry-img"
                                     />
                                     <div className="masonry-info">
-                                        <span className="masonry-title">{item.title || ''}</span>
+                                        <span className="masonry-title">
+                                            {item.title || ''}
+                                        </span>
                                         <span className="masonry-more">…</span>
                                     </div>
                                 </article>
                             ))}
                         </main>
-                        <Pagination
-                            currentPage={currentPage}
-                            totalPages={totalPages}
-                            onPageChange={(page) => setCurrentPage(page)}
-                        />
+
+                        <div ref={loadMoreRef} className="gallery-load-more-trigger" />
+
+                        {isLoadingMore && (
+                            <div className="gallery-load-more-text">
+                                사진을 더 불러오는 중입니다...
+                            </div>
+                        )}
                     </>
                 )
             ) : (
@@ -518,13 +720,16 @@ export default function Gallery() {
                             </button>
 
                             <div className="detail-left-actions">
-                                <span
-                                    className={`post-like-btn ${selectedPost.isLiked ? 'liked' : ''}`}
+                                <button
+                                    type="button"
+                                    className={`detail-icon-btn detail-like-btn ${
+                                        selectedPost.isLiked ? 'active' : ''
+                                    }`}
                                     onClick={handleToggleGalleryLike}
-                                    style={{ cursor: 'pointer' }}
                                 >
-                                    {selectedPost.isLiked ? '❤️' : '🤍'} 좋아요 {selectedPost.likeCount}
-                                </span>
+                                    <HeartIcon active={selectedPost.isLiked} />
+                                    <span>{safeCount(selectedPost.likeCount)}</span>
+                                </button>
 
                                 <button
                                     type="button"
@@ -534,7 +739,13 @@ export default function Gallery() {
                                     <CommentIcon />
                                 </button>
 
-                                <button type="button" className="detail-icon-btn">
+                                <button
+                                    type="button"
+                                    className="detail-icon-btn"
+                                    onClick={() => {
+                                        requireLogin('공유는 로그인 후 이용할 수 있습니다.');
+                                    }}
+                                >
                                     <ShareIcon />
                                 </button>
 
@@ -545,12 +756,18 @@ export default function Gallery() {
                         </div>
 
                         {isDetailLoading ? (
-                            <div className="gallery-detail-loading">게시글을 불러오는 중입니다.</div>
+                            <div className="gallery-detail-loading">
+                                게시글을 불러오는 중입니다.
+                            </div>
                         ) : (
                             <div className="gallery-detail-card">
                                 <div className="gallery-detail-save-wrap">
-                                    <button className="gallery-save-chip" type="button">
-                                        저장
+                                    <button
+                                        className="gallery-save-chip"
+                                        type="button"
+                                        onClick={handleToggleGalleryLike}
+                                    >
+                                        {selectedPost.isLiked ? '저장됨' : '저장'}
                                     </button>
                                 </div>
 
@@ -570,8 +787,8 @@ export default function Gallery() {
                                     <div className="gallery-detail-tag-list">
                                         {selectedPost.tags.map((tag) => (
                                             <span key={tag} className="gallery-detail-tag">
-                        #{tag}
-                      </span>
+                                                #{tag}
+                                            </span>
                                         ))}
                                     </div>
 
@@ -581,7 +798,9 @@ export default function Gallery() {
                                         </div>
 
                                         <div className="gallery-detail-author-texts">
-                                            <div className="gallery-detail-author-name">{selectedPost.author}</div>
+                                            <div className="gallery-detail-author-name">
+                                                {selectedPost.author}
+                                            </div>
                                             <div className="gallery-detail-author-time">1년</div>
                                         </div>
                                     </div>
@@ -606,8 +825,11 @@ export default function Gallery() {
                                                     아직 댓글이 없습니다.
                                                 </div>
                                             ) : (
-                                                selectedPost.comments.map((comment) => (
-                                                    <div key={comment.id} className="gallery-detail-comment-item">
+                                                selectedPost.comments.map((comment: CommentItem) => (
+                                                    <div
+                                                        key={comment.id}
+                                                        className="gallery-detail-comment-item"
+                                                    >
                                                         <div className="gallery-detail-comment-avatar">
                                                             {getAvatarText(comment.author)}
                                                         </div>
@@ -615,12 +837,12 @@ export default function Gallery() {
                                                         <div className="gallery-detail-comment-body">
                                                             <div className="gallery-detail-comment-main">
                                                                 <div className="gallery-detail-comment-author-line">
-                                  <span className="gallery-detail-comment-author">
-                                    {comment.author}
-                                  </span>
+                                                                    <span className="gallery-detail-comment-author">
+                                                                        {comment.author}
+                                                                    </span>
                                                                     <span className="gallery-detail-comment-time">
-                                    {comment.createdAt}
-                                  </span>
+                                                                        {comment.createdAt || '방금'}
+                                                                    </span>
                                                                 </div>
 
                                                                 <div className="gallery-detail-comment-text">
@@ -628,50 +850,90 @@ export default function Gallery() {
                                                                 </div>
 
                                                                 <div className="gallery-detail-comment-meta">
-                                                                    <span>답변</span>
+                                                                    <button
+                                                                        type="button"
+                                                                        className="gallery-comment-reply-btn"
+                                                                    >
+                                                                        답변
+                                                                    </button>
 
                                                                     <button
                                                                         type="button"
-                                                                        className={`action-btn ${comment.isLiked ? 'liked' : ''}`}
-                                                                        onClick={() => handleToggleCommentLike(comment.id)}
+                                                                        className={`comment-like-btn ${
+                                                                            comment.isLiked ? 'active' : ''
+                                                                        }`}
+                                                                        onClick={() =>
+                                                                            handleToggleCommentLike(comment.id)
+                                                                        }
                                                                     >
-                                                                        {comment.isLiked ? '❤️' : '🤍'} {comment.likeCount}
+                                                                        <HeartIcon
+                                                                            active={comment.isLiked}
+                                                                            size={18}
+                                                                        />
+                                                                        <span>
+                                                                            {safeCount(comment.likeCount)}
+                                                                        </span>
+                                                                    </button>
+
+                                                                    <button
+                                                                        type="button"
+                                                                        className="detail-comment-more-btn"
+                                                                    >
+                                                                        <MoreIcon />
                                                                     </button>
                                                                 </div>
                                                             </div>
-
-                                                            <button type="button" className="detail-comment-more-btn">
-                                                                <MoreIcon />
-                                                            </button>
                                                         </div>
                                                     </div>
                                                 ))
                                             )}
                                         </div>
 
-                                        <div className="gallery-detail-comment-input-wrap">
+                                        <div
+                                            className={`gallery-detail-comment-input-wrap gallery-comment-input-image-style ${
+                                                isCommentTyping ? 'typing' : ''
+                                            }`}
+                                        >
                                             <input
                                                 ref={commentInputRef}
                                                 type="text"
                                                 className="gallery-detail-comment-input"
-                                                placeholder={isSubmittingComment ? '등록 중...' : '댓글 추가'}
+                                                placeholder={
+                                                    isLoggedIn
+                                                        ? isSubmittingComment
+                                                            ? '등록 중...'
+                                                            : '댓글 추가'
+                                                        : '로그인 후 댓글을 작성할 수 있습니다.'
+                                                }
                                                 value={commentInput}
+                                                onFocus={() => {
+                                                    if (!isLoggedIn) {
+                                                        requireLogin(
+                                                            '댓글 작성은 로그인 후 이용할 수 있습니다.'
+                                                        );
+                                                    }
+                                                }}
                                                 onChange={(e) => setCommentInput(e.target.value)}
                                                 onKeyDown={handleCommentKeyDown}
+                                                readOnly={!isLoggedIn}
                                                 disabled={isSubmittingComment}
                                             />
 
-                                            <div className="gallery-detail-comment-tools">
-                                                <button type="button" className="detail-tool-btn">
-                                                    <SmileIcon />
-                                                </button>
-                                                <button type="button" className="detail-tool-btn">
-                                                    <StickerIcon />
-                                                </button>
-                                                <button type="button" className="detail-tool-btn">
-                                                    <ImageIcon />
-                                                </button>
-                                            </div>
+                                            <button
+                                                type="button"
+                                                className={`gallery-comment-send-btn ${
+                                                    isCommentTyping ? 'active' : ''
+                                                }`}
+                                                onClick={handleCreateComment}
+                                                disabled={
+                                                    !isLoggedIn ||
+                                                    !isCommentTyping ||
+                                                    isSubmittingComment
+                                                }
+                                                aria-label="댓글 등록"
+                                            >
+                                                <SendIcon active={isCommentTyping} />
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -693,7 +955,9 @@ export default function Gallery() {
                                         className="gallery-related-image"
                                     />
                                     <div className="gallery-related-footer">
-                                        <span className="gallery-related-title">{item.title || ''}</span>
+                                        <span className="gallery-related-title">
+                                            {item.title || ''}
+                                        </span>
                                         <span className="gallery-related-more">…</span>
                                     </div>
                                 </article>
