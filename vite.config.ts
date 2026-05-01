@@ -6,15 +6,15 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://3.38.12.226',
+        target: 'http://3.38.12.226:8080',
         changeOrigin: true,
       },
       '/uploads': {
-        target: 'http://3.38.12.226',
+        target: 'http://3.38.12.226:8080',
         changeOrigin: true,
       },
       '/images/posts': {
-        target: 'http://3.38.12.226',
+        target: 'http://3.38.12.226:8080',
         changeOrigin: true,
       },
     },
