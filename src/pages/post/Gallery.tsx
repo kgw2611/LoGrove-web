@@ -1,4 +1,5 @@
 import {
+    useCallback,
     useEffect,
     useMemo,
     useRef,
@@ -60,7 +61,13 @@ function UserIcon() {
 function ChevronDownIcon() {
     return (
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M6 9L12 15L18 9" stroke="#444" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+                d="M6 9L12 15L18 9"
+                stroke="#444"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
         </svg>
     );
 }
@@ -68,7 +75,13 @@ function ChevronDownIcon() {
 function BackIcon() {
     return (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M15 6L9 12L15 18" stroke="#2D2D2D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+                d="M15 6L9 12L15 18"
+                stroke="#2D2D2D"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
             <path d="M10 12H20" stroke="#2D2D2D" strokeWidth="2" strokeLinecap="round" />
         </svg>
     );
@@ -107,8 +120,19 @@ function ShareIcon() {
     return (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M12 16V4" stroke="#2D2D2D" strokeWidth="1.8" strokeLinecap="round" />
-            <path d="M8 8L12 4L16 8" stroke="#2D2D2D" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M5 14.5V17.2C5 18.2 5.8 19 6.8 19H17.2C18.2 19 19 18.2 19 17.2V14.5" stroke="#2D2D2D" strokeWidth="1.8" strokeLinecap="round" />
+            <path
+                d="M8 8L12 4L16 8"
+                stroke="#2D2D2D"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+            <path
+                d="M5 14.5V17.2C5 18.2 5.8 19 6.8 19H17.2C18.2 19 19 18.2 19 17.2V14.5"
+                stroke="#2D2D2D"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+            />
         </svg>
     );
 }
@@ -152,7 +176,11 @@ function TagArrowIcon({ open }: { open: boolean }) {
 }
 
 type PostLikeOverrideMap = Record<number, { isLiked: boolean; likeCount: number }>;
-type CommentLikeOverrideMap = Record<number, Record<number, { isLiked: boolean; likeCount: number }>>;
+
+type CommentLikeOverrideMap = Record<
+    number,
+    Record<number, { isLiked: boolean; likeCount: number }>
+>;
 
 function readJSON<T>(key: string, fallback: T): T {
     try {
@@ -176,15 +204,19 @@ export default function Gallery() {
 
     const [galleryItems, setGalleryItems] = useState<GalleryListItem[]>([]);
     const [selectedPost, setSelectedPost] = useState<GalleryDetailItem | null>(null);
+
     const [isLoading, setIsLoading] = useState(true);
     const [isDetailLoading, setIsDetailLoading] = useState(false);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
+
     const [commentInput, setCommentInput] = useState('');
     const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+
     const [searchText, setSearchText] = useState('');
     const [tagOptions, setTagOptions] = useState<string[]>(['전체']);
     const [selectedTag, setSelectedTag] = useState('전체');
     const [isTagsVisible, setIsTagsVisible] = useState(true);
+
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(1);
 
@@ -206,11 +238,17 @@ export default function Gallery() {
     const hasSearchOrTag = searchText.trim().length > 0 || selectedTag !== '전체';
 
     useEffect(() => {
-        localStorage.setItem('gallery_post_like_overrides', JSON.stringify(postLikeOverrides));
+        localStorage.setItem(
+            'gallery_post_like_overrides',
+            JSON.stringify(postLikeOverrides)
+        );
     }, [postLikeOverrides]);
 
     useEffect(() => {
-        localStorage.setItem('gallery_comment_like_overrides', JSON.stringify(commentLikeOverrides));
+        localStorage.setItem(
+            'gallery_comment_like_overrides',
+            JSON.stringify(commentLikeOverrides)
+        );
     }, [commentLikeOverrides]);
 
     useEffect(() => {
@@ -227,21 +265,29 @@ export default function Gallery() {
         return false;
     };
 
-    const mergeLikeOverrides = (detail: GalleryDetailItem): GalleryDetailItem => {
-        const postOverride = postLikeOverrides[detail.id];
-        const commentOverrideMap = commentLikeOverrides[detail.id] ?? {};
+    const mergeLikeOverrides = useCallback(
+        (detail: GalleryDetailItem): GalleryDetailItem => {
+            const postOverride = postLikeOverrides[detail.id];
+            const commentOverrideMap = commentLikeOverrides[detail.id] ?? {};
 
-        return {
-            ...detail,
-            likeCount: safeCount(postOverride?.likeCount ?? detail.likeCount),
-            isLiked: postOverride?.isLiked ?? detail.isLiked ?? false,
-            comments: detail.comments.map((comment) => ({
-                ...comment,
-                likeCount: safeCount(commentOverrideMap[comment.id]?.likeCount ?? comment.likeCount),
-                isLiked: commentOverrideMap[comment.id]?.isLiked ?? comment.isLiked ?? false,
-            })),
-        };
-    };
+            return {
+                ...detail,
+                likeCount: safeCount(postOverride?.likeCount ?? detail.likeCount),
+                isLiked: postOverride?.isLiked ?? detail.isLiked ?? false,
+                comments: detail.comments.map((comment) => ({
+                    ...comment,
+                    likeCount: safeCount(
+                        commentOverrideMap[comment.id]?.likeCount ?? comment.likeCount
+                    ),
+                    isLiked:
+                        commentOverrideMap[comment.id]?.isLiked ??
+                        comment.isLiked ??
+                        false,
+                })),
+            };
+        },
+        [postLikeOverrides, commentLikeOverrides]
+    );
 
     const syncListItemFromDetail = (detail: GalleryDetailItem) => {
         setGalleryItems((prev) =>
@@ -272,31 +318,36 @@ export default function Gallery() {
                 }
 
                 const pageSize = hasSearchOrTag ? 200 : 20;
-                const result = await getGalleryList(currentPage, 20, {
-                    search: searchText,
-                    tag: selectedTag,
-                });
 
-                let tags = ['전체'];
-
-                try {
-                    tags = await getGalleryTagNames();
-                } catch (tagError) {
-                    console.warn('태그 목록은 비로그인 상태에서 불러오지 못했습니다:', tagError);
-                }
+                const [result, tags] = await Promise.all([
+                    getGalleryList(currentPage, pageSize, {
+                        search: searchText,
+                        tag: selectedTag,
+                    }),
+                    getGalleryTagNames().catch((tagError) => {
+                        console.warn('태그 목록 조회 실패:', tagError);
+                        return ['전체'];
+                    }),
+                ]);
 
                 setGalleryItems((prev) => {
                     if (currentPage === 0) return result.items;
 
                     const merged = [...prev, ...result.items];
-                    return Array.from(new Map(merged.map((item) => [item.id, item])).values());
+
+                    return Array.from(
+                        new Map(merged.map((item) => [item.id, item])).values()
+                    );
                 });
 
                 setTotalPages(result.totalPages);
                 setTagOptions(tags);
             } catch (error) {
                 console.error('갤러리 목록 불러오기 실패:', error);
-                if (currentPage === 0) setGalleryItems([]);
+
+                if (currentPage === 0) {
+                    setGalleryItems([]);
+                }
             } finally {
                 setIsLoading(false);
                 setIsLoadingMore(false);
@@ -334,8 +385,11 @@ export default function Gallery() {
         const openInitialPost = async () => {
             try {
                 setIsDetailLoading(true);
+
                 const detail = await getGalleryDetail(Number(initialPostId));
-                setSelectedPost(mergeLikeOverrides(detail));
+                const mergedDetail = mergeLikeOverrides(detail);
+
+                setSelectedPost(mergedDetail);
                 setCommentInput('');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } catch (error) {
@@ -346,7 +400,7 @@ export default function Gallery() {
         };
 
         void openInitialPost();
-    }, [initialPostId, selectedPost?.id]);
+    }, [initialPostId, selectedPost?.id, mergeLikeOverrides]);
 
     const relatedItems = useMemo(() => {
         if (!selectedPost) return [];
@@ -363,7 +417,9 @@ export default function Gallery() {
             setIsDetailLoading(true);
 
             const detail = await getGalleryDetail(Number(item.id));
-            setSelectedPost(mergeLikeOverrides(detail));
+            const mergedDetail = mergeLikeOverrides(detail);
+
+            setSelectedPost(mergedDetail);
             setCommentInput('');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         } catch (error) {
@@ -393,7 +449,9 @@ export default function Gallery() {
             );
 
             const refreshedDetail = await getGalleryDetail(Number(selectedPost.id));
-            setSelectedPost(mergeLikeOverrides(refreshedDetail));
+            const mergedDetail = mergeLikeOverrides(refreshedDetail);
+
+            setSelectedPost(mergedDetail);
             setCommentInput('');
 
             setTimeout(() => {
@@ -420,6 +478,8 @@ export default function Gallery() {
         if (!selectedPost) return;
         if (!requireLogin('좋아요는 로그인 후 이용할 수 있습니다.')) return;
 
+        const previousPost = selectedPost;
+
         const currentLiked = selectedPost.isLiked;
         const currentCount = safeCount(selectedPost.likeCount);
         const nextLiked = !currentLiked;
@@ -433,6 +493,7 @@ export default function Gallery() {
 
         setSelectedPost(updatedPost);
         syncListItemFromDetail(updatedPost);
+
         setPostLikeOverrides((prev) => ({
             ...prev,
             [selectedPost.id]: {
@@ -443,9 +504,19 @@ export default function Gallery() {
 
         try {
             await toggleGalleryLike(Number(selectedPost.id), currentLiked);
-        } catch {
-            setSelectedPost(selectedPost);
-            syncListItemFromDetail(selectedPost);
+        } catch (error) {
+            console.error('게시글 좋아요 실패:', error);
+
+            setSelectedPost(previousPost);
+            syncListItemFromDetail(previousPost);
+
+            setPostLikeOverrides((prev) => ({
+                ...prev,
+                [previousPost.id]: {
+                    isLiked: previousPost.isLiked,
+                    likeCount: safeCount(previousPost.likeCount),
+                },
+            }));
         }
     };
 
@@ -453,7 +524,12 @@ export default function Gallery() {
         if (!selectedPost) return;
         if (!requireLogin('댓글 좋아요는 로그인 후 이용할 수 있습니다.')) return;
 
-        const targetComment = selectedPost.comments.find((comment) => comment.id === commentId);
+        const previousPost = selectedPost;
+
+        const targetComment = selectedPost.comments.find(
+            (comment) => comment.id === commentId
+        );
+
         if (!targetComment) return;
 
         const currentLiked = targetComment.isLiked;
@@ -489,8 +565,21 @@ export default function Gallery() {
 
         try {
             await toggleCommentLike(Number(selectedPost.id), commentId, currentLiked);
-        } catch {
-            setSelectedPost(selectedPost);
+        } catch (error) {
+            console.error('댓글 좋아요 실패:', error);
+
+            setSelectedPost(previousPost);
+
+            setCommentLikeOverrides((prev) => ({
+                ...prev,
+                [previousPost.id]: {
+                    ...(prev[previousPost.id] ?? {}),
+                    [commentId]: {
+                        isLiked: targetComment.isLiked,
+                        likeCount: safeCount(targetComment.likeCount),
+                    },
+                },
+            }));
         }
     };
 
@@ -654,7 +743,7 @@ export default function Gallery() {
                                     type="button"
                                     className="detail-icon-btn"
                                     onClick={() => {
-                                        if (!requireLogin('공유는 로그인 후 이용할 수 있습니다.')) return;
+                                        requireLogin('공유는 로그인 후 이용할 수 있습니다.');
                                     }}
                                 >
                                     <ShareIcon />
