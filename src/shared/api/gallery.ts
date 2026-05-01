@@ -1,4 +1,39 @@
+import axios from 'axios';
 import { apiClient } from './client';
+
+export const EXCLUDED_GALLERY_TAG_NAMES = [
+    'canon',
+    '캐논',
+    'sony',
+    '소니',
+    'nikon',
+    '니콘',
+    'leica',
+    '라이카',
+    'fujifilm',
+    '후지필름',
+    'hasselblad',
+    '핫셀블라드',
+    '하셀블라드',
+    'olympus',
+    '올림푸스',
+    'panasonic',
+    '파나소닉',
+    '기타',
+    '기타(etc)',
+    'etc',
+    'film',
+    '필름',
+    '인기순위',
+    '일상',
+    '거래',
+    '정보',
+    '질문',
+    '사진',
+    '출사지',
+    '이벤트',
+    '리뷰',
+];
 
 export interface GalleryListItem {
     id: number;
@@ -7,10 +42,15 @@ export interface GalleryListItem {
     description?: string;
     author: string;
     tags: string[];
+    likeCount: number;
+    isLiked: boolean;
+    createdAt?: string;
 }
 
 export interface CommentItem {
     id: number;
+    postId?: number;
+    postTitle?: string;
     author: string;
     content: string;
     createdAt: string;
@@ -20,8 +60,6 @@ export interface CommentItem {
 
 export interface GalleryDetailItem extends GalleryListItem {
     comments: CommentItem[];
-    likeCount: number;
-    isLiked: boolean;
 }
 
 export interface CreateGalleryPostPayload {
@@ -29,11 +67,31 @@ export interface CreateGalleryPostPayload {
     description: string;
     imageFiles?: File[];
     tagIds?: number[];
+    commentEnabled?: boolean;
+    shareEnabled?: boolean;
 }
 
 export interface TagItem {
     id: number;
     name: string;
+}
+
+export interface GalleryListResult {
+    items: GalleryListItem[];
+    totalPages: number;
+}
+
+export interface GalleryListOptions {
+    search?: string;
+    tag?: string;
+}
+
+export interface MyGalleryCommentItem {
+    id: number;
+    postId: number;
+    postTitle: string;
+    content: string;
+    createdAt: string;
 }
 
 type ApiResponse<T> = {
@@ -52,14 +110,19 @@ type RawTag = {
 type RawComment = {
     id?: number;
     commentId?: number;
+    postId?: number;
+    postTitle?: string;
+    title?: string;
     author?: string;
-    authorName?: string;
     nickname?: string;
     content?: string;
+    text?: string;
     createdAt?: string;
     createdDate?: string;
-    likeCount?: number;
+    likeCount?: number | string;
+    likes?: number | string;
     isLiked?: boolean;
+    liked?: boolean;
 };
 
 type RawPost = {
@@ -73,14 +136,32 @@ type RawPost = {
     imageUrl?: string;
     imageUrls?: string[];
     thumbnailUrl?: string;
-    tagNames?: string[];
     tags?: string[] | RawTag[];
-    likeCount?: number;
+    tagNames?: string[];
+    likeCount?: number | string;
+    likes?: number | string;
     isLiked?: boolean;
+    liked?: boolean;
+    createdAt?: string;
+    createdDate?: string;
     comments?: RawComment[];
 };
 
-type RawPostListResponse = RawPost[] | { content?: RawPost[]; totalPages?: number };
+type RawPostListResponse =
+    | RawPost[]
+    | {
+    content?: RawPost[];
+    totalPages?: number;
+};
+
+type RawCommentListResponse =
+    | RawComment[]
+    | {
+    content?: RawComment[];
+};
+
+const MY_GALLERY_POSTS_KEY = 'my_gallery_posts';
+const MY_GALLERY_COMMENTS_KEY = 'my_gallery_comments';
 
 function unwrapData<T>(payload: T | ApiResponse<T>): T {
     if (
@@ -88,147 +169,339 @@ function unwrapData<T>(payload: T | ApiResponse<T>): T {
         typeof payload === 'object' &&
         'data' in (payload as ApiResponse<T>)
     ) {
-        return ((payload as ApiResponse<T>).data ?? []) as T;
+        return (payload as ApiResponse<T>).data as T;
     }
 
     return payload as T;
 }
 
+function safeNumber(value: unknown, fallback = 0): number {
+    const numberValue = Number(value);
+    return Number.isFinite(numberValue) ? numberValue : fallback;
+}
+
+function normalizeTagName(name: string) {
+    return name.trim().toLowerCase();
+}
+
+export function isExcludedGalleryTag(name: string) {
+    return EXCLUDED_GALLERY_TAG_NAMES.map(normalizeTagName).includes(
+        normalizeTagName(name)
+    );
+}
+
 function normalizeTag(raw: RawTag): TagItem {
     return {
-        id: raw.id ?? raw.tagId ?? 0,
+        id: safeNumber(raw.id ?? raw.tagId),
         name: raw.name ?? raw.tagName ?? '',
     };
 }
 
 function extractTagNames(rawTags?: string[] | RawTag[]): string[] {
-    if (!rawTags) return [];
-
-    if (rawTags.length === 0) return [];
+    if (!rawTags || rawTags.length === 0) return [];
 
     if (typeof rawTags[0] === 'string') {
-        return rawTags as string[];
+        return (rawTags as string[])
+            .filter(Boolean)
+            .filter((tag) => !isExcludedGalleryTag(tag));
     }
 
     return (rawTags as RawTag[])
         .map((tag) => tag.name ?? tag.tagName ?? '')
-        .filter(Boolean);
+        .filter(Boolean)
+        .filter((tag) => !isExcludedGalleryTag(tag));
 }
 
-function normalizeComment(raw: RawComment): CommentItem {
+function normalizeImageUrl(raw?: string) {
+    if (!raw) return 'https://via.placeholder.com/400x500?text=No+Image';
+    return raw;
+}
+
+function normalizeComment(raw: RawComment, fallbackPostId?: number): CommentItem {
     return {
-        id: raw.id ?? raw.commentId ?? 0,
-        author: raw.authorName ?? raw.author ?? raw.nickname ?? '익명',
-        content: raw.content ?? '',
+        id: safeNumber(raw.id ?? raw.commentId, Date.now()),
+        postId: safeNumber(raw.postId ?? fallbackPostId, fallbackPostId ?? 0),
+        postTitle: raw.postTitle ?? raw.title ?? '',
+        author: raw.nickname ?? raw.author ?? '익명',
+        content: raw.content ?? raw.text ?? '',
         createdAt: raw.createdAt ?? raw.createdDate ?? '',
-        likeCount: raw.likeCount ?? 0,
-        isLiked: raw.isLiked ?? false,
+        likeCount: safeNumber(raw.likeCount ?? raw.likes),
+        isLiked: Boolean(raw.isLiked ?? raw.liked ?? false),
     };
 }
 
 function normalizeGalleryItem(raw: RawPost): GalleryListItem {
+    const id = safeNumber(raw.id ?? raw.postId);
+
     return {
-        id: raw.id ?? raw.postId ?? 0,
-        src:
-            raw.thumbnailUrl ||
-            raw.imageUrl ||
-            raw.imageUrls?.[0] ||
-            'https://via.placeholder.com/400x500?text=No+Image',
+        id,
+        src: normalizeImageUrl(raw.thumbnailUrl || raw.imageUrl || raw.imageUrls?.[0]),
         title: raw.title ?? '',
         description: raw.content ?? raw.description ?? '',
         author: raw.nickname ?? raw.author ?? '익명',
-        tags: raw.tagNames ?? extractTagNames(raw.tags),
+        tags: raw.tagNames
+            ? raw.tagNames.filter((tag) => !isExcludedGalleryTag(tag))
+            : extractTagNames(raw.tags),
+        likeCount: safeNumber(raw.likeCount ?? raw.likes),
+        isLiked: Boolean(raw.isLiked ?? raw.liked ?? false),
+        createdAt: raw.createdAt ?? raw.createdDate ?? '',
     };
 }
 
-function normalizeGalleryDetail(raw: RawPost): GalleryDetailItem {
+function normalizeGalleryDetail(
+    raw: RawPost,
+    commentsOverride?: CommentItem[]
+): GalleryDetailItem {
     const base = normalizeGalleryItem(raw);
 
     return {
         ...base,
-        likeCount: raw.likeCount ?? 0,
-        isLiked: raw.isLiked ?? false,
-        comments: (raw.comments ?? []).map(normalizeComment),
+        comments:
+            commentsOverride ??
+            (raw.comments ?? []).map((comment) => normalizeComment(comment, base.id)),
     };
 }
 
-export interface GalleryListResult {
-    items: GalleryListItem[];
-    totalPages: number;
+function getCurrentUserNameCandidates() {
+    return [
+        localStorage.getItem('nickname'),
+        localStorage.getItem('userName'),
+        localStorage.getItem('username'),
+        localStorage.getItem('name'),
+    ]
+        .filter(Boolean)
+        .map((value) => String(value).trim().toLowerCase());
 }
 
-export async function getGalleryList(page = 0, size = 12): Promise<GalleryListResult> {
-    const res = await apiClient.get('/posts', {
-        params: { board: 'GALLERY', page, size },
-    });
+function getCurrentUserName() {
+    return (
+        localStorage.getItem('nickname') ||
+        localStorage.getItem('userName') ||
+        localStorage.getItem('username') ||
+        localStorage.getItem('name') ||
+        '익명'
+    );
+}
 
-    const raw = unwrapData<RawPostListResponse>(res.data);
+function isMine(author?: string) {
+    if (!author) return false;
 
-    if (Array.isArray(raw)) {
-        return { items: raw.map(normalizeGalleryItem), totalPages: 1 };
+    const candidates = getCurrentUserNameCandidates();
+    if (candidates.length === 0) return false;
+
+    return candidates.includes(author.trim().toLowerCase());
+}
+
+function readLocalArray<T>(key: string): T[] {
+    try {
+        const saved = localStorage.getItem(key);
+        return saved ? JSON.parse(saved) : [];
+    } catch {
+        return [];
+    }
+}
+
+function writeLocalArray<T>(key: string, list: T[]) {
+    localStorage.setItem(key, JSON.stringify(list));
+}
+
+function saveMyGalleryPostLocal(post: GalleryListItem) {
+    const list = readLocalArray<GalleryListItem>(MY_GALLERY_POSTS_KEY);
+
+    const next = [post, ...list].filter(
+        (item, index, array) => array.findIndex((target) => target.id === item.id) === index
+    );
+
+    writeLocalArray(MY_GALLERY_POSTS_KEY, next);
+}
+
+function saveMyGalleryCommentLocal(comment: MyGalleryCommentItem) {
+    const list = readLocalArray<MyGalleryCommentItem>(MY_GALLERY_COMMENTS_KEY);
+
+    const next = [comment, ...list].filter(
+        (item, index, array) => array.findIndex((target) => target.id === item.id) === index
+    );
+
+    writeLocalArray(MY_GALLERY_COMMENTS_KEY, next);
+}
+
+export function getMyGalleryCommentsLocal(): MyGalleryCommentItem[] {
+    return readLocalArray<MyGalleryCommentItem>(MY_GALLERY_COMMENTS_KEY);
+}
+
+export function getMyGalleryPostsLocal(): GalleryListItem[] {
+    return readLocalArray<GalleryListItem>(MY_GALLERY_POSTS_KEY);
+}
+
+export async function getGalleryList(
+    page = 0,
+    size = 20,
+    options?: GalleryListOptions
+): Promise<GalleryListResult> {
+    const params: Record<string, string | number> = {
+        board: 'GALLERY',
+        page,
+        size,
+    };
+
+    if (options?.search?.trim()) {
+        params.keyword = options.search.trim();
+        params.search = options.search.trim();
     }
 
+    if (options?.tag && options.tag !== '전체') {
+        params.tag = options.tag;
+        params.tagName = options.tag;
+    }
+
+    const res = await apiClient.get('/posts', { params });
+    const raw = unwrapData<RawPostListResponse>(res.data);
+
+    let items: GalleryListItem[];
+    let totalPages = 1;
+
+    if (Array.isArray(raw)) {
+        items = raw.map(normalizeGalleryItem);
+    } else {
+        items = (raw?.content ?? []).map(normalizeGalleryItem);
+        totalPages = raw?.totalPages ?? 1;
+    }
+
+    const keyword = options?.search?.trim().toLowerCase() ?? '';
+    const selectedTag = options?.tag ?? '전체';
+
+    const filteredItems = items.filter((item) => {
+        const tagMatched =
+            selectedTag === '전체' || item.tags.some((tag) => tag === selectedTag);
+
+        const searchMatched =
+            !keyword ||
+            item.title.toLowerCase().includes(keyword) ||
+            (item.description ?? '').toLowerCase().includes(keyword) ||
+            item.tags.some((tag) => tag.toLowerCase().includes(keyword));
+
+        return tagMatched && searchMatched;
+    });
+
     return {
-        items: (raw.content ?? []).map(normalizeGalleryItem),
-        totalPages: (raw as { totalPages?: number }).totalPages ?? 1,
+        items: filteredItems,
+        totalPages,
     };
+}
+
+export async function getComments(postId: number): Promise<CommentItem[]> {
+    const res = await apiClient.get(`/posts/${postId}/comments`);
+    const raw = unwrapData<RawCommentListResponse>(res.data);
+
+    if (Array.isArray(raw)) {
+        return raw.map((comment) => normalizeComment(comment, postId));
+    }
+
+    return (raw?.content ?? []).map((comment) => normalizeComment(comment, postId));
 }
 
 export async function getGalleryDetail(postId: number): Promise<GalleryDetailItem> {
-    const [postRes, commentsRes] = await Promise.all([
+    const [postRes, comments] = await Promise.all([
         apiClient.get(`/posts/${postId}`),
-        apiClient.get(`/posts/${postId}/comments`).catch(() => ({ data: { data: [] } })),
+        getComments(postId).catch(() => []),
     ]);
+
     const raw = unwrapData<RawPost>(postRes.data);
-    const detail = normalizeGalleryDetail(raw); // isLiked가 postRes에 포함됨
-    const commentsRaw = unwrapData<RawComment[]>(commentsRes.data);
-    return {
-        ...detail,
-        comments: (Array.isArray(commentsRaw) ? commentsRaw : []).map(normalizeComment),
-    };
+
+    return normalizeGalleryDetail(raw, comments);
 }
 
-export async function createComment(postId: number, content: string): Promise<CommentItem> {
-    const res = await apiClient.post(`/posts/${postId}/comments`, {
-        content,
+export async function createComment(
+    postId: number,
+    content: string,
+    postTitle = ''
+): Promise<CommentItem> {
+    const res = await apiClient.post(`/posts/${postId}/comments`, { content });
+    const raw = unwrapData<unknown>(res.data);
+
+    let comment: CommentItem;
+
+    if (raw && typeof raw === 'object') {
+        comment = normalizeComment(raw as RawComment, postId);
+    } else {
+        comment = {
+            id: Date.now(),
+            postId,
+            postTitle,
+            author: getCurrentUserName(),
+            content,
+            createdAt: new Date().toISOString(),
+            likeCount: 0,
+            isLiked: false,
+        };
+    }
+
+    if (!comment.content) {
+        comment.content = content;
+    }
+
+    if (!comment.postTitle) {
+        comment.postTitle = postTitle;
+    }
+
+    saveMyGalleryCommentLocal({
+        id: comment.id,
+        postId,
+        postTitle,
+        content: comment.content,
+        createdAt: comment.createdAt || new Date().toISOString(),
     });
 
-    const raw = unwrapData<RawComment>(res.data);
-    return normalizeComment(raw);
+    return comment;
 }
 
 export async function toggleGalleryLike(
     postId: number,
-    currentIsLiked: boolean,
-    currentLikeCount: number,
-): Promise<{ likeCount: number; isLiked: boolean }> {
-    if (currentIsLiked) {
-        await apiClient.delete(`/posts/${postId}/like`);
-        return { likeCount: Math.max(currentLikeCount - 1, 0), isLiked: false };
-    }
+    currentLiked: boolean
+): Promise<void> {
+    try {
+        if (currentLiked) {
+            await apiClient.delete(`/posts/${postId}/like`);
+        } else {
+            await apiClient.post(`/posts/${postId}/like`);
+        }
+    } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 409) {
+            return;
+        }
 
-    await apiClient.post(`/posts/${postId}/like`);
-    return { likeCount: currentLikeCount + 1, isLiked: true };
+        throw error;
+    }
 }
 
 export async function toggleCommentLike(
     postId: number,
-    comment: CommentItem,
-): Promise<CommentItem> {
-    if (comment.isLiked) {
-        await apiClient.delete(`/posts/${postId}/comments/${comment.id}/like`);
-        return { ...comment, isLiked: false, likeCount: Math.max(comment.likeCount - 1, 0) };
-    }
+    commentId: number,
+    currentLiked: boolean
+): Promise<void> {
+    try {
+        if (currentLiked) {
+            await apiClient.delete(`/posts/${postId}/comments/${commentId}/like`);
+        } else {
+            await apiClient.post(`/posts/${postId}/comments/${commentId}/like`);
+        }
+    } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 409) {
+            return;
+        }
 
-    await apiClient.post(`/posts/${postId}/comments/${comment.id}/like`);
-    return { ...comment, isLiked: true, likeCount: comment.likeCount + 1 };
+        throw error;
+    }
 }
 
 export async function getTagList(): Promise<TagItem[]> {
     const res = await apiClient.get('/tags');
     const raw = unwrapData<RawTag[]>(res.data);
 
-    return (raw ?? []).map(normalizeTag);
+    return (raw ?? [])
+        .map(normalizeTag)
+        .filter((tag) => tag.id > 0 && tag.name)
+        .filter((tag) => !isExcludedGalleryTag(tag.name));
 }
 
 export async function getGalleryTagNames(): Promise<string[]> {
@@ -249,7 +522,7 @@ export async function recommendTagsByImage(file?: File): Promise<TagItem[]> {
     });
 
     const raw = unwrapData<{ tags?: string[] } | string[]>(recommendRes.data);
-    const recommendedNames = Array.isArray(raw) ? raw : (raw.tags ?? []);
+    const recommendedNames = Array.isArray(raw) ? raw : raw.tags ?? [];
 
     const allTags = await getTagList();
 
@@ -264,6 +537,10 @@ export async function createGalleryPost(
     formData.append('title', payload.title);
     formData.append('content', payload.description);
     formData.append('boardType', 'GALLERY');
+    formData.append('commentEnabled', String(payload.commentEnabled ?? true));
+    formData.append('shareEnabled', String(payload.shareEnabled ?? true));
+    formData.append('commentAllowed', String(payload.commentEnabled ?? true));
+    formData.append('shareAllowed', String(payload.shareEnabled ?? true));
 
     payload.tagIds?.forEach((tagId) => {
         formData.append('tagIds', String(tagId));
@@ -280,9 +557,39 @@ export async function createGalleryPost(
     });
 
     const raw = unwrapData<RawPost>(res.data);
+    const id = safeNumber(raw?.id ?? raw?.postId);
+
+    saveMyGalleryPostLocal({
+        id,
+        src: payload.imageFiles?.[0]
+            ? URL.createObjectURL(payload.imageFiles[0])
+            : 'https://via.placeholder.com/400x500?text=No+Image',
+        title: payload.title,
+        description: payload.description,
+        author: getCurrentUserName(),
+        tags: [],
+        likeCount: 0,
+        isLiked: false,
+        createdAt: new Date().toISOString(),
+    });
 
     return {
         success: true,
-        id: raw.id ?? raw.postId ?? 0,
+        id,
     };
+}
+
+export async function getMyGalleryPosts(): Promise<GalleryListItem[]> {
+    const localPosts = getMyGalleryPostsLocal();
+
+    try {
+        const result = await getGalleryList(0, 200);
+        const serverPosts = result.items.filter((item) => isMine(item.author));
+
+        return Array.from(
+            new Map([...localPosts, ...serverPosts].map((post) => [post.id, post])).values()
+        );
+    } catch {
+        return localPosts;
+    }
 }
