@@ -1,4 +1,4 @@
-import { useState, useEffect, type ChangeEvent, type MouseEvent } from 'react';
+import { useState, useEffect, useRef, type ChangeEvent, type MouseEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './MyPage.css';
@@ -14,6 +14,7 @@ interface UserDataType {
     name?: string;
     nickname?: string;
     bio?: string;
+    profileUrl?: string;
 }
 
 type MyBoardType = 'community' | 'forum' | 'gallery';
@@ -109,6 +110,9 @@ export default function MyPage() {
     const [editNickname, setEditNickname] = useState<string>('');
     const [isNicknameChecked, setIsNicknameChecked] = useState<boolean>(true);
 
+    const [profileImageUrl, setProfileImageUrl] = useState<string>('');
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
     const [myPosts, setMyPosts] = useState<MyPostType[]>([]);
     const [myComments, setMyComments] = useState<MyCommentType[]>([]);
 
@@ -131,12 +135,14 @@ export default function MyPage() {
                     name: data.name || '',
                     nickname: data.nickname || data.name || '숲속으로',
                     bio: data.bio || '한줄소개쓰는 공간',
+                    profileUrl: data.profileUrl || '',
                 };
 
                 setUserData(fetchedUser);
                 setUserName(fetchedUser.nickname!);
                 setEditNickname(fetchedUser.nickname!);
                 setBio(fetchedUser.bio!);
+                setProfileImageUrl(fetchedUser.profileUrl || '');
             } catch (error) {
                 console.error('내 정보 불러오기 실패:', error);
             }
@@ -260,7 +266,28 @@ export default function MyPage() {
         void fetchMyActivities();
     }, [userName]);
 
-    // 3. 한줄소개 저장
+    // 3. 프로필 이미지 변경
+    const handleProfileImageChange = async (e: ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('image', file);
+
+        try {
+            const token = localStorage.getItem('access_token');
+            const response = await axios.put('/api/users/me/profile-image', formData, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = response.data.data || response.data;
+            setProfileImageUrl(data.profileUrl || '');
+        } catch (error) {
+            console.error('프로필 이미지 변경 실패:', error);
+            alert('이미지 변경에 실패했습니다.');
+        }
+    };
+
+    // 4. 한줄소개 저장
     const handleSaveBio = async () => {
         try {
             const token = localStorage.getItem('access_token');
@@ -545,9 +572,16 @@ export default function MyPage() {
             <div className="profile-section">
                 <div className="profile-image-wrapper">
                     <img
-                        src="https://images.unsplash.com/photo-1518098268026-4e89f1a2cd8e?q=80&w=400&auto=format&fit=crop"
+                        src={profileImageUrl || 'https://images.unsplash.com/photo-1518098268026-4e89f1a2cd8e?q=80&w=400&auto=format&fit=crop'}
                         alt="프로필"
                         className="profile-image"
+                    />
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={handleProfileImageChange}
                     />
                 </div>
 
@@ -623,6 +657,21 @@ export default function MyPage() {
                             </button>
                         </div>
                     )}
+                    <button
+                        onClick={() => fileInputRef.current?.click()}
+                        style={{
+                            marginTop: '12px',
+                            padding: '6px 14px',
+                            background: 'none',
+                            border: '1px solid #ccc',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontSize: '13px',
+                            color: '#555',
+                        }}
+                    >
+                        프로필 이미지 수정
+                    </button>
                 </div>
             </div>
 

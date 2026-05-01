@@ -46,6 +46,7 @@ export default function Forum() {
     const [boardList, setBoardList] = useState<ForumPostType[]>([]);
     const [currentPage, setCurrentPage] = useState<number>(0);
     const [totalPages, setTotalPages] = useState<number>(0);
+    const [popularSidebar, setPopularSidebar] = useState<ForumPostType[]>([]);
 
     // 🔥 로컬 스토리지에서 댓글 뒤지던 allComments 상태는 완전히 삭제했습니다!
 
@@ -71,6 +72,29 @@ export default function Forum() {
             }
         };
         fetchMyInfo();
+    }, []);
+
+    useEffect(() => {
+        const fetchPopularSidebar = async () => {
+            try {
+                const response = await axios.get('/api/posts/popular?board=FORUM&days=7');
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const posts: ForumPostType[] = (response.data.data || []).slice(0, 5).map((post: any) => ({
+                    id: post.id || post.postId,
+                    brand: tagNameToBrand[post.tagNames?.[0]] ?? '',
+                    boardType: 'Q&A',
+                    title: post.title,
+                    author: post.authorName || post.author || '익명',
+                    date: post.createdAt ? new Date(post.createdAt).toLocaleDateString() : '방금 전',
+                    views: post.view || 0,
+                    commentCount: post.commentCount || 0,
+                }));
+                setPopularSidebar(posts);
+            } catch (error) {
+                console.error('인기 포럼 불러오기 실패:', error);
+            }
+        };
+        fetchPopularSidebar();
     }, []);
 
     useEffect(() => {
@@ -237,6 +261,18 @@ export default function Forum() {
                         <h4>실시간 인기 포럼</h4>
                         <hr className="dashed-line" />
                         <div className="popular-content">
+                            {popularSidebar.map((post, index) => (
+                                <div
+                                    key={post.id}
+                                    className="popular-item"
+                                    onClick={() => navigate(`/forum/${post.id}`)}
+                                    style={{ cursor: 'pointer' }}
+                                >
+                                    <span className="popular-rank">{index + 1}</span>
+                                    <span className="popular-title">{post.title}</span>
+                                    <span className="popular-views">{post.views}</span>
+                                </div>
+                            ))}
                         </div>
                     </div>
 

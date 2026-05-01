@@ -92,7 +92,7 @@ export default function Community() {
     useEffect(() => {
         const fetchPopularSidebar = async () => {
             try {
-                const response = await axios.get('/api/posts/popular?board=COMMUNITY');
+                const response = await axios.get('/api/posts/popular?board=COMMUNITY&days=7');
                 const postsData: Board[] = (response.data.data || []).slice(0, 5).map(formatPost);
                 setPopularSidebar(postsData);
             } catch (error) {
