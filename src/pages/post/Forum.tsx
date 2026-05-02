@@ -45,9 +45,6 @@ export default function Forum() {
 
     const [searchTerm, setSearchTerm] = useState<string>('');
 
-    // 🔥 1. 인기글 데이터를 담을 상태(State) 추가!
-    const [popularSidebar, setPopularSidebar] = useState<ForumPostType[]>([]);
-
     useEffect(() => {
         const fetchMyInfo = async () => {
             const token = localStorage.getItem('access_token');
@@ -308,12 +305,6 @@ export default function Forum() {
                                 </div>
                             ))}
                         </div>
-                    </div>
-
-                    {/* 태그 검색 영역 (기능이 없다면 UI만 남겨둠) */}
-                    <div className="sidebar-tag-search">
-                        <span className="search-icon">🔍 태그 검색</span>
-                        <span className="view-all">전체보기 ≡</span>
                     </div>
                 </aside>
             </div>
