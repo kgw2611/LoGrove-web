@@ -7,7 +7,6 @@ import {
     type KeyboardEvent,
 } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import axios from 'axios';
 import '../home/Home.css';
 import './Gallery.css';
 import {
