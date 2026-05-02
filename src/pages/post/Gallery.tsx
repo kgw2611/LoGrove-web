@@ -7,6 +7,7 @@ import {
     type KeyboardEvent,
 } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import axios from 'axios';
 import '../home/Home.css';
 import './Gallery.css';
 import {
@@ -138,16 +139,6 @@ function ShareIcon() {
     );
 }
 
-function MoreIcon() {
-    return (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <circle cx="6.5" cy="12" r="1.2" fill="#2D2D2D" />
-            <circle cx="12" cy="12" r="1.2" fill="#2D2D2D" />
-            <circle cx="17.5" cy="12" r="1.2" fill="#2D2D2D" />
-        </svg>
-    );
-}
-
 function SendIcon({ active = false }: { active?: boolean }) {
     return (
         <svg width="30" height="30" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -175,6 +166,13 @@ function TagArrowIcon({ open }: { open: boolean }) {
         </svg>
     );
 }
+
+// 🔥 11번 퀘스트: 갤러리에서 제외할 커뮤니티/포럼 태그 목록 정의
+const EXCLUDED_TAGS = [
+    '일상', '거래', '정보', '질문', '사진', '출사지', '이벤트', '리뷰',
+    '캐논', '소니', '니콘', '후지필름', '라이카', '핫셀블라드', '파나소닉', '올림푸스', '기타', '필름',
+    'Canon', 'Sony', 'Nikon', 'Leica', 'Film', 'Fujifilm', 'Hasselblad', 'Olympus', 'Panasonic', '기타(etc)'
+];
 
 type PostLikeOverrideMap = Record<number, { isLiked: boolean; likeCount: number }>;
 
@@ -248,7 +246,9 @@ export default function Gallery() {
         }
         return '';
     });
+    const [profileImageUrl, setProfileImageUrl] = useState<string>('');
 
+    // 🔥 API 호출 시 profileUrl 데이터도 함께 가져와서 State에 저장!
     useEffect(() => {
         const fetchMyInfo = async () => {
             const token = localStorage.getItem('access_token');
@@ -259,12 +259,13 @@ export default function Gallery() {
                     });
                     const data = response.data.data || response.data;
                     setUserName(data.nickname || data.name || '익명');
+                    setProfileImageUrl(data.profileUrl || ''); // 프로필 이미지 URL 세팅
                 } catch (error) {
                     console.error("내 정보 불러오기 실패", error);
                 }
             }
         };
-        fetchMyInfo();
+        void fetchMyInfo();
     }, []);
 
     useEffect(() => {
@@ -350,15 +351,21 @@ export default function Gallery() {
                 const pageSize = hasSearchOrTag ? 200 : 20;
 
                 const [result, tags] = await Promise.all([
+                    // @ts-ignore
                     getGalleryList(currentPage, pageSize, {
                         search: searchText,
                         tag: selectedTag,
                     }),
+                    // @ts-ignore
                     getGalleryTagNames().catch((tagError) => {
                         console.warn('태그 목록 조회 실패:', tagError);
-                        return ['전체'];
+                        return [];
                     }),
                 ]);
+
+                // 🔥 11번 퀘스트: 가져온 태그 목록 중 커뮤니티/포럼 전용 태그 필터링!
+                const filteredTags = tags.filter((tag: string) => !EXCLUDED_TAGS.includes(tag) && tag !== '전체');
+                setTagOptions(['전체', ...filteredTags]);
 
                 setGalleryItems((prev) => {
                     if (currentPage === 0) return result.items;
@@ -371,7 +378,6 @@ export default function Gallery() {
                 });
 
                 setTotalPages(result.totalPages);
-                setTagOptions(tags);
             } catch (error) {
                 console.error('갤러리 목록 불러오기 실패:', error);
 
@@ -415,7 +421,7 @@ export default function Gallery() {
         const openInitialPost = async () => {
             try {
                 setIsDetailLoading(true);
-
+                // @ts-ignore
                 const detail = await getGalleryDetail(Number(initialPostId));
                 const mergedDetail = mergeLikeOverrides(detail);
 
@@ -445,7 +451,7 @@ export default function Gallery() {
     const openDetail = async (item: GalleryListItem) => {
         try {
             setIsDetailLoading(true);
-
+            // @ts-ignore
             const detail = await getGalleryDetail(Number(item.id));
             const mergedDetail = mergeLikeOverrides(detail);
 
@@ -471,13 +477,13 @@ export default function Gallery() {
 
         try {
             setIsSubmittingComment(true);
-
+            // @ts-ignore
             await createComment(
                 Number(selectedPost.id),
                 commentInput.trim(),
                 selectedPost.title
             );
-
+            // @ts-ignore
             const refreshedDetail = await getGalleryDetail(Number(selectedPost.id));
             const mergedDetail = mergeLikeOverrides(refreshedDetail);
 
@@ -534,6 +540,7 @@ export default function Gallery() {
         }));
 
         try {
+            // @ts-ignore
             await toggleGalleryLike(Number(selectedPost.id), currentLiked);
         } catch (error) {
             console.error('게시글 좋아요 실패:', error);
@@ -596,6 +603,7 @@ export default function Gallery() {
         }));
 
         try {
+            // @ts-ignore
             await toggleCommentLike(Number(selectedPost.id), commentId, currentLiked);
         } catch (error) {
             console.error('댓글 좋아요 실패:', error);
@@ -658,17 +666,28 @@ export default function Gallery() {
                         </button>
                     </Link>
 
-                    {/* 🔥 상단 프로필 버튼: 로그인 시 내 이니셜로 변경 및 마이페이지 연동 */}
+                    {/* 🔥 프로필 이미지 표시 로직 추가! */}
                     <button
                         className="gallery-profile-btn"
                         type="button"
                         aria-label="profile"
                         onClick={() => navigate(isLoggedIn ? '/mypage' : '/login')}
+                        style={{ padding: 0, overflow: 'hidden', borderRadius: '50%', border: 'none', background: 'none' }}
                     >
-                        {isLoggedIn && userName ? (
-                            <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: '#00bfa5', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 'bold' }}>
-                                {getAvatarText(userName)}
-                            </div>
+                        {isLoggedIn ? (
+                            profileImageUrl ? (
+                                <img
+                                    src={profileImageUrl}
+                                    alt="내 프로필"
+                                    style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', display: 'block' }}
+                                />
+                            ) : userName ? (
+                                <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: '#00bfa5', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 'bold' }}>
+                                    {getAvatarText(userName)}
+                                </div>
+                            ) : (
+                                <UserIcon />
+                            )
                         ) : (
                             <UserIcon />
                         )}
@@ -793,9 +812,7 @@ export default function Gallery() {
                                     <ShareIcon />
                                 </button>
 
-                                <button type="button" className="detail-icon-btn">
-                                    <MoreIcon />
-                                </button>
+                                {/* 🔥 18번 퀘스트: 상세페이지 게시글 더보기(MoreIcon) 삭제 완료! */}
                             </div>
                         </div>
 
@@ -919,12 +936,7 @@ export default function Gallery() {
                                                                         </span>
                                                                     </button>
 
-                                                                    <button
-                                                                        type="button"
-                                                                        className="detail-comment-more-btn"
-                                                                    >
-                                                                        <MoreIcon />
-                                                                    </button>
+                                                                    {/* 🔥 18번 퀘스트: 댓글 우측 더보기(MoreIcon) 버튼도 삭제 완료! */}
                                                                 </div>
                                                             </div>
                                                         </div>

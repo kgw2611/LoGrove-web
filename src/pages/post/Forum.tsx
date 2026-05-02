@@ -306,12 +306,6 @@ export default function Forum() {
                             ))}
                         </div>
                     </div>
-
-                    {/* 태그 검색 영역 (기능이 없다면 UI만 남겨둠) */}
-                    <div className="sidebar-tag-search">
-                        <span className="search-icon">🔍 태그 검색</span>
-                        <span className="view-all">전체보기 ≡</span>
-                    </div>
                 </aside>
             </div>
         </div>
