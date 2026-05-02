@@ -17,6 +17,10 @@ export default defineConfig({
         target: 'http://3.38.12.226',
         changeOrigin: true,
       },
+      '/images/profiles': {
+        target: 'http://3.38.12.226',
+        changeOrigin: true,
+      },
     },
   },
 })
