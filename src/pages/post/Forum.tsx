@@ -45,9 +45,6 @@ export default function Forum() {
 
     const [searchTerm, setSearchTerm] = useState<string>('');
 
-    // 🔥 1. 인기글 데이터를 담을 상태(State) 추가!
-    const [popularSidebar, setPopularSidebar] = useState<ForumPostType[]>([]);
-
     useEffect(() => {
         const fetchMyInfo = async () => {
             const token = localStorage.getItem('access_token');
