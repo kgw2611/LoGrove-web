@@ -1,7 +1,7 @@
 import axios, { type InternalAxiosRequestConfig } from 'axios';
 
 export const apiClient = axios.create({
-    baseURL: "http://52.79.122.225:8080",
+    baseURL: "",
 });
 
 apiClient.interceptors.request.use(

@@ -5,11 +5,11 @@ import '../home/Home.css';
 import './Community.css';
 import './ForumDetail.css';
 
-// 이미지 경로에 백엔드 주소(8080)를 붙여주는 도우미 함수!
+// 🔥 이미지 경로에 새로운 백엔드 주소(3.38.12.226)를 붙여주도록 수정!
 const getImageUrl = (path?: string) => {
     if (!path) return '';
     if (path.startsWith('http')) return path;
-    return `http://52.79.122.225:8080${path.startsWith('/') ? '' : '/'}${path}`;
+    return `http://3.38.12.226:8080${path.startsWith('/') ? '' : '/'}${path}`;
 };
 
 interface CommentType {
@@ -42,7 +42,6 @@ export default function ForumDetail() {
 
     const [isLoggedIn] = useState<boolean>(() => !!localStorage.getItem('access_token'));
 
-    // 🔥 커뮤니티와 동일하게! 로컬스토리지 이름은 임시로 비워두고 서버에서 가져오도록 수정
     const [userName, setUserName] = useState<string>('');
 
     const [isEditingPost, setIsEditingPost] = useState<boolean>(false);
@@ -98,7 +97,10 @@ export default function ForumDetail() {
                     brand: data.tagName || data.tag || 'Canon',
                     boardType: data.boardType || 'Q&A',
                     date: data.createdAt ? new Date(data.createdAt).toLocaleDateString() : '방금 전',
-                    views: data.viewCount || data.views || 0,
+
+                    // 🔥 조회수 변수명 수정 완료! (data.view 우선 적용)
+                    views: data.view ?? data.viewCount ?? data.views ?? 0,
+
                     images: data.images || data.imageUrls || data.postImages || [],
                 };
 
@@ -114,7 +116,6 @@ export default function ForumDetail() {
             }
         };
 
-        // 🔥 마이페이지/커뮤니티와 동일하게 진짜 내 닉네임을 서버에서 당겨옵니다!
         const fetchMyInfo = async () => {
             const token = localStorage.getItem('access_token');
             if (token) {
@@ -293,12 +294,10 @@ export default function ForumDetail() {
         <div className="community-container">
             <div className="comm-content">
                 <main className="comm-main">
-                    <div className="comm-top-search" style={{marginBottom: '20px'}}>
-                        <span className="search-icon">🔍 태그 검색</span>
-                        <span className="view-all">전체보기 ≡</span>
-                    </div>
 
-                    <div className="post-nav-buttons">
+                    {/* 🔥 태그 검색 부분 삭제 완료! */}
+
+                    <div className="post-nav-buttons" style={{ marginTop: '20px' }}>
                         <button className="nav-btn">∧ 이전글</button>
                         <button className="nav-btn">∨ 다음글</button>
                         <button className="nav-btn list-btn" onClick={() => navigate('/forum')}>목록</button>
@@ -348,11 +347,10 @@ export default function ForumDetail() {
                                     <div className="author-details">
                                         <div className="author-name-row">
                                             <span className="author-name">{post.author}</span>
-                                            <button className="subscribe-btn">+ 구독</button>
-                                            <button className="chat-btn">1:1 채팅</button>
                                         </div>
                                         <div className="author-meta">
                                             <span>{post.date}</span>
+                                            {/* 🔥 조회수 정상 렌더링 */}
                                             <span>조회수 : {post.views}</span>
                                         </div>
                                     </div>
@@ -415,7 +413,6 @@ export default function ForumDetail() {
                                                     >
                                                         {comment.isLiked ? '❤️' : '🤍'} {comment.likes}
                                                     </button>
-                                                    {/* 🔥 여기서 서버에서 가져온 닉네임과 일치하면 버튼 렌더링! */}
                                                     {isLoggedIn && comment.author === userName && (
                                                         <>
                                                             <button className="action-btn" onClick={() => startEditing(comment)}>수정</button>
@@ -434,7 +431,6 @@ export default function ForumDetail() {
                             <div className="comment-input-author">{isLoggedIn ? userName : '로그인 해주세요'}</div>
                             <textarea placeholder={isLoggedIn ? "댓글을 남겨보세요" : "로그인 후 댓글을 작성할 수 있습니다."} value={newComment} onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setNewComment(e.target.value)} disabled={!isLoggedIn}></textarea>
                             <div className="comment-input-bottom">
-                                <div className="comment-icons">📷 😊</div>
                                 <button className="submit-comment-btn" onClick={handleCommentSubmit}>등록</button>
                             </div>
                         </div>

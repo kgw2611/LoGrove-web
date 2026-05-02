@@ -8,7 +8,7 @@ import './CommunityDetail.css';
 const getImageUrl = (path?: string) => {
     if (!path) return '';
     if (path.startsWith('http')) return path;
-    return `http://52.79.122.225:8080${path.startsWith('/') ? '' : '/'}${path}`;
+    return `http://3.38.12.226:8080${path.startsWith('/') ? '' : '/'}${path}`;
 };
 
 interface CommentType {
@@ -40,7 +40,6 @@ export default function CommunityDetail() {
 
     const [isLoggedIn] = useState<boolean>(() => !!localStorage.getItem('access_token'));
 
-    // 🔥 해결 1: 이름을 바꿀 수 있도록 setUserName을 부활시킵니다!
     const [userName, setUserName] = useState<string>(() => {
         const savedUserString = localStorage.getItem('user_db');
         if (savedUserString) {
@@ -102,14 +101,16 @@ export default function CommunityDetail() {
                     author: data.authorName || data.author || data.nickname || '익명',
                     tag: data.tagName || data.tag || data.boardType || 'COMMUNITY',
                     date: data.createdAt ? new Date(data.createdAt).toLocaleDateString() : '방금 전',
-                    views: data.viewCount || data.views || 0,
+
+                    // 🔥 정답 발견! data.view 로 변경 완료!
+                    views: data.view ?? data.viewCount ?? data.views ?? 0,
+
                     images: data.images || data.imageUrls || data.postImages || [],
                 };
 
                 setPost(formattedPost);
                 setEditPostTitle(formattedPost.title);
                 setEditPostContent(formattedPost.content);
-                // isLiked가 게시글 상세 응답에 포함되어 별도 /like API 호출 불필요
                 setPostLike({ count: data.likeCount || 0, isLiked: data.isLiked || false });
             } catch (error) {
                 console.error("게시글 상세 조회 실패:", error);
@@ -118,7 +119,6 @@ export default function CommunityDetail() {
             }
         };
 
-        // 🔥 해결 2: 내 진짜 닉네임을 서버에서 쫙 당겨와서 일치시킵니다!
         const fetchMyInfo = async () => {
             const token = localStorage.getItem('access_token');
             if (token) {
@@ -139,7 +139,7 @@ export default function CommunityDetail() {
             fetchComments();
         }
 
-        fetchMyInfo(); // 함수 실행!
+        fetchMyInfo();
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id, navigate]);
@@ -240,7 +240,7 @@ export default function CommunityDetail() {
         }
     };
 
-    // 🔥 5. 댓글 좋아요 / 좋아요 취소 — 게시글 좋아요와 동일한 optimistic update 패턴
+    // 댓글 좋아요
     const handleCommentLike = async (comment: CommentType) => {
         if (!isLoggedIn) return alert('로그인 후 이용 가능합니다.');
         const token = localStorage.getItem('access_token');
@@ -254,7 +254,6 @@ export default function CommunityDetail() {
                     headers: { Authorization: `Bearer ${token}` }
                 });
             }
-            // API 성공 후 즉시 로컬 상태 반영 (re-fetch 없이)
             setComments(prev => prev.map(c =>
                 c.id === comment.id
                     ? { ...c, isLiked: !c.isLiked, likes: c.isLiked ? c.likes - 1 : c.likes + 1 }
@@ -288,12 +287,8 @@ export default function CommunityDetail() {
         <div className="community-container">
             <div className="comm-content">
                 <main className="comm-main">
-                    <div className="comm-top-search" style={{marginBottom: '20px'}}>
-                        <span className="search-icon">🔍 태그 검색</span>
-                        <span className="view-all">전체보기 ≡</span>
-                    </div>
 
-                    <div className="post-nav-buttons">
+                    <div className="post-nav-buttons" style={{ marginTop: '20px' }}>
                         <button className="nav-btn">∧ 이전글</button>
                         <button className="nav-btn">∨ 다음글</button>
                         <button className="nav-btn list-btn" onClick={() => navigate('/community')}>목록</button>
@@ -342,8 +337,6 @@ export default function CommunityDetail() {
                                     <div className="author-details">
                                         <div className="author-name-row">
                                             <span className="author-name">{post.author}</span>
-                                            <button className="subscribe-btn">+ 구독</button>
-                                            <button className="chat-btn">1:1 채팅</button>
                                         </div>
                                         <div className="author-meta">
                                             <span>{post.date}</span>
@@ -429,7 +422,6 @@ export default function CommunityDetail() {
                             <div className="comment-input-author">{isLoggedIn ? userName : '로그인 해주세요'}</div>
                             <textarea placeholder={isLoggedIn ? "댓글을 남겨보세요" : "로그인 후 댓글을 작성할 수 있습니다."} value={newComment} onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setNewComment(e.target.value)} disabled={!isLoggedIn}></textarea>
                             <div className="comment-input-bottom">
-                                <div className="comment-icons">📷 😊</div>
                                 <button className="submit-comment-btn" onClick={handleCommentSubmit}>등록</button>
                             </div>
                         </div>

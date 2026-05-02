@@ -7,11 +7,11 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://52.79.122.225:8080',
+        target: 'http://3.38.12.226:8080', // 새 주소로 변경
         changeOrigin: true,
       },
       '/images/posts': {
-        target: 'http://52.79.122.225:8080',
+        target: 'http://3.38.12.226:8080', //  새 주소로 변경
         changeOrigin: true,
       },
     },

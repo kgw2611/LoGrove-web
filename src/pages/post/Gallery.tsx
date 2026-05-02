@@ -6,6 +6,7 @@ import {
     type KeyboardEvent,
 } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import axios from 'axios'; // 🔥 axios 추가!
 import '../home/Home.css';
 import './Gallery.css';
 import {
@@ -235,6 +236,36 @@ export default function Gallery() {
     const commentSectionRef = useRef<HTMLDivElement | null>(null);
     const commentInputRef = useRef<HTMLInputElement | null>(null);
 
+    const isLoggedIn = !!localStorage.getItem('access_token');
+
+    // 🔥 서버에서 내 유저 정보(닉네임) 불러와서 연동!
+    const [userName, setUserName] = useState<string>(() => {
+        const savedUserString = localStorage.getItem('user_db');
+        if (savedUserString) {
+            const parsedUser = JSON.parse(savedUserString);
+            return parsedUser.nickname || parsedUser.name || '';
+        }
+        return '';
+    });
+
+    useEffect(() => {
+        const fetchMyInfo = async () => {
+            const token = localStorage.getItem('access_token');
+            if (token) {
+                try {
+                    const response = await axios.get('/api/users/me', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const data = response.data.data || response.data;
+                    setUserName(data.nickname || data.name || '익명');
+                } catch (error) {
+                    console.error("내 정보 불러오기 실패", error);
+                }
+            }
+        };
+        fetchMyInfo();
+    }, []);
+
     useEffect(() => {
         if (!paramId) {
             setSelectedPost(null);
@@ -255,11 +286,8 @@ export default function Gallery() {
             }
         };
         fetchByParam();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [paramId]);
-
-    const isLoggedIn =
-        !!localStorage.getItem('access_token');
 
     useEffect(() => {
         const fetchGallery = async () => {
@@ -335,6 +363,7 @@ export default function Gallery() {
 
     const handleCreateComment = async () => {
         if (!selectedPost || !commentInput.trim() || isSubmittingComment) return;
+        if (!isLoggedIn) return alert('로그인 후 이용 가능합니다.');
 
         try {
             setIsSubmittingComment(true);
@@ -369,6 +398,7 @@ export default function Gallery() {
     };
 
     const handleToggleGalleryLike = async () => {
+        if (!isLoggedIn) return alert('로그인 후 이용 가능합니다.');
         if (!selectedPost) return;
         try {
             await toggleGalleryLike(Number(selectedPost.id), selectedPost.isLiked, selectedPost.likeCount);
@@ -383,6 +413,7 @@ export default function Gallery() {
     };
 
     const handleToggleCommentLike = async (commentId: number) => {
+        if (!isLoggedIn) return alert('로그인 후 이용 가능합니다.');
         if (!selectedPost) return;
         const comment = selectedPost.comments.find((c) => c.id === commentId);
         if (!comment) return;
@@ -421,9 +452,9 @@ export default function Gallery() {
         <div className="gallery-container">
             <div className="gallery-sub-header">
                 <div className="search-bar-wrapper">
-          <span className="gallery-search-icon">
-            <SearchIcon />
-          </span>
+                    <span className="gallery-search-icon">
+                        <SearchIcon />
+                    </span>
                     <input
                         type="text"
                         placeholder="Search for..."
@@ -444,8 +475,20 @@ export default function Gallery() {
                         </button>
                     </Link>
 
-                    <button className="gallery-profile-btn" type="button" aria-label="profile">
-                        <UserIcon />
+                    {/* 🔥 상단 프로필 버튼: 로그인 시 내 이니셜로 변경 및 마이페이지 연동 */}
+                    <button
+                        className="gallery-profile-btn"
+                        type="button"
+                        aria-label="profile"
+                        onClick={() => navigate(isLoggedIn ? '/mypage' : '/login')}
+                    >
+                        {isLoggedIn && userName ? (
+                            <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: '#00bfa5', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 'bold' }}>
+                                {getAvatarText(userName)}
+                            </div>
+                        ) : (
+                            <UserIcon />
+                        )}
                     </button>
 
                     <button className="gallery-dropdown-btn" type="button" aria-label="more">
@@ -650,15 +693,16 @@ export default function Gallery() {
                                         </div>
 
                                         <div className="gallery-detail-comment-input-wrap">
+                                            {/* 🔥 사용자 정보와 로그인 상태를 친절하게 안내하는 플레이스홀더! */}
                                             <input
                                                 ref={commentInputRef}
                                                 type="text"
                                                 className="gallery-detail-comment-input"
-                                                placeholder={isSubmittingComment ? '등록 중...' : '댓글 추가'}
+                                                placeholder={isLoggedIn ? (isSubmittingComment ? '등록 중...' : `${userName}님, 댓글을 추가해보세요!`) : '로그인 후 댓글을 작성할 수 있습니다.'}
                                                 value={commentInput}
                                                 onChange={(e) => setCommentInput(e.target.value)}
                                                 onKeyDown={handleCommentKeyDown}
-                                                disabled={isSubmittingComment}
+                                                disabled={isSubmittingComment || !isLoggedIn}
                                             />
 
                                             <div className="gallery-detail-comment-tools">
