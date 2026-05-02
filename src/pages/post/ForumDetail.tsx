@@ -9,7 +9,7 @@ import './ForumDetail.css';
 const getImageUrl = (path?: string) => {
     if (!path) return '';
     if (path.startsWith('http')) return path;
-    return `http://3.38.12.226:8080${path.startsWith('/') ? '' : '/'}${path}`;
+    return `${path.startsWith('/') ? '' : '/'}${path}`;
 };
 
 interface CommentType {

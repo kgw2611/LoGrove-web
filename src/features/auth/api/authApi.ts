@@ -25,11 +25,11 @@ export type LoginResponse = {
 
 // 1. 회원가입 API
 export const signupAPI = async (userData: SignupRequest): Promise<void> => {
-    await apiClient.post('/api/users', userData)
+    await apiClient.post('/users', userData)
 }
 
 // 2. 로그인 API
 export const loginAPI = async (credentials: LoginRequest): Promise<LoginResponse> => {
-    const response = await apiClient.post('/api/auth/login', credentials)
+    const response = await apiClient.post('/auth/login', credentials)
     return response.data.data
 }

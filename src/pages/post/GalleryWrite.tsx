@@ -99,7 +99,7 @@ export default function GalleryWrite() {
             }
         };
 
-        fetchTags();
+        void fetchTags();
     }, [isReady]);
 
     useEffect(() => {
@@ -222,9 +222,9 @@ export default function GalleryWrite() {
                 description: description.trim(),
                 imageFiles: [selectedFile],
                 tagIds: selectedTags.map((tag) => tag.id),
+                commentEnabled: allowComments,
+                shareEnabled: allowShare,
             });
-
-            console.log('댓글 허용:', allowComments, '공유 허용:', allowShare);
 
             alert('갤러리 글이 등록되었습니다.');
             navigate('/gallery');
@@ -269,7 +269,11 @@ export default function GalleryWrite() {
                                 />
 
                                 {previewUrl ? (
-                                    <img src={previewUrl} alt="preview" className="gallery-upload-preview" />
+                                    <img
+                                        src={previewUrl}
+                                        alt="preview"
+                                        className="gallery-upload-preview"
+                                    />
                                 ) : (
                                     <div className="gallery-upload-placeholder">
                                         <UploadIcon />
@@ -306,7 +310,7 @@ export default function GalleryWrite() {
 
                             <div className="gallery-tag-search-row">
                                 <span className="gallery-tag-search-inline-icon">
-                                  <SearchIcon />
+                                    <SearchIcon />
                                 </span>
                                 <input
                                     type="text"
@@ -318,17 +322,21 @@ export default function GalleryWrite() {
                             </div>
 
                             <div className="gallery-tag-panel">
-                                <div className="gallery-tag-panel-title">태그된 주제({selectedTags.length})개</div>
+                                <div className="gallery-tag-panel-title">
+                                    태그된 주제({selectedTags.length})개
+                                </div>
 
                                 <div className="gallery-selected-tags">
                                     {selectedTags.length === 0 ? (
-                                        <div className="gallery-empty-text">선택된 태그가 없습니다.</div>
+                                        <div className="gallery-empty-text">
+                                            선택된 태그가 없습니다.
+                                        </div>
                                     ) : (
                                         selectedTags.map((tag) => (
                                             <button
                                                 key={tag.id}
                                                 type="button"
-                                                className="gallery-tag-chip selected"
+                                                className="gallery-tag-chip selected bordered"
                                                 onClick={() => removeTag(tag.id)}
                                             >
                                                 {tag.name} ×
@@ -341,15 +349,21 @@ export default function GalleryWrite() {
 
                                 <div className="gallery-tag-list">
                                     {isLoadingTags ? (
-                                        <div className="gallery-empty-text">태그를 불러오는 중입니다.</div>
+                                        <div className="gallery-empty-text">
+                                            태그를 불러오는 중입니다.
+                                        </div>
                                     ) : filteredTags.length === 0 ? (
-                                        <div className="gallery-empty-text">일치하는 태그가 없습니다.</div>
+                                        <div className="gallery-empty-text">
+                                            일치하는 태그가 없습니다.
+                                        </div>
                                     ) : (
                                         filteredTags.map((tag) => (
                                             <button
                                                 key={tag.id}
                                                 type="button"
-                                                className={`gallery-tag-chip ${isTagSelected(tag.id) ? 'selected' : ''}`}
+                                                className={`gallery-tag-chip bordered ${
+                                                    isTagSelected(tag.id) ? 'selected' : ''
+                                                }`}
                                                 onClick={() => toggleTag(tag)}
                                             >
                                                 {tag.name}
@@ -376,7 +390,9 @@ export default function GalleryWrite() {
                                         <button
                                             key={tag.id}
                                             type="button"
-                                            className={`gallery-tag-chip ${isTagSelected(tag.id) ? 'selected' : ''}`}
+                                            className={`gallery-tag-chip bordered ${
+                                                isTagSelected(tag.id) ? 'selected' : ''
+                                            }`}
                                             onClick={() => toggleTag(tag)}
                                         >
                                             {tag.name}

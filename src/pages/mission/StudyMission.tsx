@@ -60,13 +60,13 @@ export default function StudyMission() {
     useEffect(() => {
         const fetchPhotoMissions = async () => {
             try {
-                const listResponse = await apiClient.get('/api/learning/photo')
+                const listResponse = await apiClient.get('/learning/photo')
                 const listData: MissionListItem[] = listResponse.data.data || listResponse.data || []
 
                 const detailedMissions = await Promise.all(
                     listData.map(async (item, index) => {
                         const missionId = item.id ?? item.missionId ?? 0
-                        const detailResponse = await apiClient.get(`/api/learning/${missionId}/photo`)
+                        const detailResponse = await apiClient.get(`/learning/${missionId}/photo`)
                         const detail: MissionDetailItem = detailResponse.data.data || detailResponse.data || {}
 
                         return {
@@ -143,7 +143,7 @@ export default function StudyMission() {
 
             try {
                 const response = await apiClient.post(
-                    `/api/learning/${selectedMission?.id}/photo/submit`,
+                    `/learning/${selectedMission?.id}/photo/submit`,
                     formData,
                     {
                         headers: {

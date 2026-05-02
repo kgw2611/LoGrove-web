@@ -1,7 +1,7 @@
 import axios, { type InternalAxiosRequestConfig } from 'axios';
 
 export const apiClient = axios.create({
-    baseURL: "",
+    baseURL: "/api",
 });
 
 apiClient.interceptors.request.use(
