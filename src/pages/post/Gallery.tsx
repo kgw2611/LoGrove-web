@@ -21,6 +21,7 @@ import {
     type GalleryDetailItem,
     type GalleryListItem,
 } from '../../shared/api/gallery';
+import axios from "axios";
 
 function SearchIcon() {
     return (
@@ -235,7 +236,8 @@ export default function Gallery() {
     const isCommentTyping = commentInput.trim().length > 0;
     const hasSearchOrTag = searchText.trim().length > 0 || selectedTag !== '전체';
 
-    // 🔥 프로필 이미지를 저장할 State 추가!
+
+    // 🔥 서버에서 내 유저 정보(닉네임) 불러와서 연동!
     const [userName, setUserName] = useState<string>(() => {
         const savedUserString = localStorage.getItem('user_db');
         if (savedUserString) {
