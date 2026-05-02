@@ -9,39 +9,12 @@ import {
     type TagItem,
 } from '../../shared/api/gallery';
 
+// 🔥 태그 검색에서 쓰이므로 남겨둡니다.
 function SearchIcon() {
     return (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <circle cx="11" cy="11" r="7" stroke="#6F6F6F" strokeWidth="2" />
             <path d="M20 20L16.65 16.65" stroke="#6F6F6F" strokeWidth="2" strokeLinecap="round" />
-        </svg>
-    );
-}
-
-function UserIcon() {
-    return (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <circle cx="12" cy="8" r="4" stroke="#B7BBC2" strokeWidth="1.8" />
-            <path
-                d="M5 19C6.3 16.7 8.7 15.5 12 15.5C15.3 15.5 17.7 16.7 19 19"
-                stroke="#B7BBC2"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-            />
-        </svg>
-    );
-}
-
-function ChevronDownIcon() {
-    return (
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path
-                d="M6 9L12 15L18 9"
-                stroke="#444"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
         </svg>
     );
 }
@@ -83,7 +56,9 @@ export default function GalleryWrite() {
 
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
-    const [searchText, setSearchText] = useState('');
+
+    // 🔥 상단 검색용 상태(searchText) 삭제 완료!
+
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState('');
     const [allTags, setAllTags] = useState<TagItem[]>([]);
@@ -265,31 +240,9 @@ export default function GalleryWrite() {
 
     return (
         <div className="gallery-write-page">
-            <div className="gallery-write-topbar">
-                <div className="search-bar-wrapper">
-                    <span className="gallery-search-icon">
-                        <SearchIcon />
-                    </span>
-                    <input
-                        type="text"
-                        placeholder="Search for..."
-                        className="gallery-search-input"
-                        value={searchText}
-                        onChange={(e) => setSearchText(e.target.value)}
-                    />
-                </div>
+            {/* 🔥 상단 검색바 영역(gallery-write-topbar) 완전 삭제 완료! */}
 
-                <div className="gallery-write-top-actions">
-                    <button className="gallery-profile-btn" type="button" aria-label="profile">
-                        <UserIcon />
-                    </button>
-                    <button className="gallery-dropdown-btn" type="button" aria-label="more">
-                        <ChevronDownIcon />
-                    </button>
-                </div>
-            </div>
-
-            <div className="gallery-write-shell">
+            <div className="gallery-write-shell" style={{ marginTop: '20px' }}>
                 <div className="gallery-write-back">
                     <Link to="/gallery" className="gallery-write-back-link">
                         <BackIcon />

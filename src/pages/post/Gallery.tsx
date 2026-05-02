@@ -237,6 +237,36 @@ export default function Gallery() {
     const isCommentTyping = commentInput.trim().length > 0;
     const hasSearchOrTag = searchText.trim().length > 0 || selectedTag !== '전체';
 
+    const isLoggedIn = !!localStorage.getItem('access_token');
+
+    // 🔥 서버에서 내 유저 정보(닉네임) 불러와서 연동!
+    const [userName, setUserName] = useState<string>(() => {
+        const savedUserString = localStorage.getItem('user_db');
+        if (savedUserString) {
+            const parsedUser = JSON.parse(savedUserString);
+            return parsedUser.nickname || parsedUser.name || '';
+        }
+        return '';
+    });
+
+    useEffect(() => {
+        const fetchMyInfo = async () => {
+            const token = localStorage.getItem('access_token');
+            if (token) {
+                try {
+                    const response = await axios.get('/api/users/me', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const data = response.data.data || response.data;
+                    setUserName(data.nickname || data.name || '익명');
+                } catch (error) {
+                    console.error("내 정보 불러오기 실패", error);
+                }
+            }
+        };
+        fetchMyInfo();
+    }, []);
+
     useEffect(() => {
         localStorage.setItem(
             'gallery_post_like_overrides',
@@ -475,6 +505,7 @@ export default function Gallery() {
     };
 
     const handleToggleGalleryLike = async () => {
+        if (!isLoggedIn) return alert('로그인 후 이용 가능합니다.');
         if (!selectedPost) return;
         if (!requireLogin('좋아요는 로그인 후 이용할 수 있습니다.')) return;
 
@@ -521,6 +552,7 @@ export default function Gallery() {
     };
 
     const handleToggleCommentLike = async (commentId: number) => {
+        if (!isLoggedIn) return alert('로그인 후 이용 가능합니다.');
         if (!selectedPost) return;
         if (!requireLogin('댓글 좋아요는 로그인 후 이용할 수 있습니다.')) return;
 
@@ -626,8 +658,20 @@ export default function Gallery() {
                         </button>
                     </Link>
 
-                    <button className="gallery-profile-btn" type="button" aria-label="profile">
-                        <UserIcon />
+                    {/* 🔥 상단 프로필 버튼: 로그인 시 내 이니셜로 변경 및 마이페이지 연동 */}
+                    <button
+                        className="gallery-profile-btn"
+                        type="button"
+                        aria-label="profile"
+                        onClick={() => navigate(isLoggedIn ? '/mypage' : '/login')}
+                    >
+                        {isLoggedIn && userName ? (
+                            <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: '#00bfa5', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 'bold' }}>
+                                {getAvatarText(userName)}
+                            </div>
+                        ) : (
+                            <UserIcon />
+                        )}
                     </button>
 
                     <button className="gallery-dropdown-btn" type="button" aria-label="more">

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import '../home/Home.css'
@@ -44,7 +44,6 @@ export default function Community() {
 
     const [isLoggedIn] = useState<boolean>(() => !!localStorage.getItem('access_token'))
 
-    // 사이드바 닉네임을 서버에서 받아오기 위해 빈 문자열로 세팅
     const [userName, setUserName] = useState<string>('')
 
     const [boardList, setBoardList] = useState<Board[]>([])
@@ -52,7 +51,9 @@ export default function Community() {
     const [totalPages, setTotalPages] = useState<number>(0)
     const [popularSidebar, setPopularSidebar] = useState<Board[]>([])
 
-    // 시작할 때 백엔드에서 내 진짜 정보(닉네임)를 가져옵니다!
+    // 🔥 1. 검색어 상태(State) 추가!
+    const [searchTerm, setSearchTerm] = useState<string>('')
+
     useEffect(() => {
         const fetchMyInfo = async () => {
             const token = localStorage.getItem('access_token');
@@ -65,7 +66,6 @@ export default function Community() {
                     setUserName(data.nickname || data.name || '익명');
                 } catch (error) {
                     console.error("내 정보 불러오기 실패", error);
-                    // 에러 나면 임시로 로컬 데이터 사용
                     const savedUserString = localStorage.getItem('user_db');
                     if (savedUserString) {
                         const savedUser = JSON.parse(savedUserString);
@@ -100,7 +100,7 @@ export default function Community() {
             }
         };
         fetchPopularSidebar();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -132,17 +132,30 @@ export default function Community() {
         };
 
         fetchPosts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentPage, activeTag])
 
     const handleTagChange = (tag: string) => {
         setActiveTag(tag)
         setCurrentPage(0)
+        setSearchTerm('') // 🔥 탭을 변경할 때 검색어도 깔끔하게 초기화!
     }
 
-    const filteredList = activeTag === '인기순위'
-        ? boardList
-        : boardList.slice().sort((a, b) => b.id - a.id)
+    // 🔥 2. 화면에 그려질 리스트를 검색어에 맞게 필터링!
+    const filteredList = useMemo(() => {
+        // 먼저 인기순위/일반 목록 정렬
+        let baseList = activeTag === '인기순위'
+            ? boardList
+            : boardList.slice().sort((a, b) => b.id - a.id);
+
+        // 검색어가 있으면 제목에 포함된 것만 골라내기
+        if (searchTerm.trim()) {
+            const lowerKeyword = searchTerm.toLowerCase();
+            baseList = baseList.filter(post => post.title.toLowerCase().includes(lowerKeyword));
+        }
+
+        return baseList;
+    }, [boardList, activeTag, searchTerm]);
 
     const categoryList = ['인기순위', '일상', '거래', '정보', '질문', '사진', '출사지', '이벤트', '리뷰']
 
@@ -178,10 +191,13 @@ export default function Community() {
                         <select className="filter-select">
                             <option>제목</option>
                         </select>
+                        {/* 🔥 3. 검색창에 onChange 이벤트 연결! */}
                         <input
                             type="text"
                             className="filter-input"
                             placeholder="검색어를 입력해주세요"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
 
@@ -215,7 +231,6 @@ export default function Community() {
                                         </td>
                                         <td className="title-cell">
                                             {row.title}
-                                            {/* 🔥 백엔드에서 받은 댓글 개수가 0보다 크면 숫자를 띄웁니다! */}
                                             {row.commentCount > 0 && (
                                                 <span style={{ color: '#ff5252', fontWeight: 'bold', marginLeft: '8px', fontSize: '13px' }}>
                                                         [{row.commentCount}]
@@ -234,7 +249,8 @@ export default function Community() {
                                     colSpan={6}
                                     style={{ padding: '60px 0', color: '#999', textAlign: 'center' }}
                                 >
-                                    아직 작성된 게시글이 없습니다.
+                                    {/* 🔥 4. 검색 결과가 없을 때 안내 텍스트 추가 */}
+                                    {searchTerm ? `"${searchTerm}"에 대한 검색 결과가 없습니다.` : '아직 작성된 게시글이 없습니다.'}
                                 </td>
                             </tr>
                         )}
@@ -266,7 +282,6 @@ export default function Community() {
                             )}
 
                             <div className="profile-name">
-                                {/* 🔥 백엔드 연동 완료! */}
                                 {isLoggedIn ? `${userName} 님` : '로그인 해주세요'}
                             </div>
                         </div>

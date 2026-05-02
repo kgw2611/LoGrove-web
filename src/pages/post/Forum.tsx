@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import '../home/Home.css';
@@ -6,18 +6,16 @@ import './Community.css';
 import './Forum.css';
 import Pagination from '../../shared/ui/Pagination';
 
-// 🔥 필요 없어진 로컬 스토리지용 CommentType, ReplyType 삭제!
-
 interface ForumPostType {
     id: number | string;
-    rowNumber?: number; // 서버에서 주는 글 번호용
+    rowNumber?: number;
     brand: string;
     boardType: string;
     title: string;
     author: string;
     date: string;
     views: number;
-    commentCount: number; // 🔥 백엔드에서 주는 댓글 개수를 담을 공간 추가!
+    commentCount: number;
 }
 
 const tagNameToBrand: Record<string, string> = {
@@ -37,10 +35,7 @@ export default function Forum() {
     const navigate = useNavigate();
 
     const [activeBrand, setActiveBrand] = useState<string>('Canon');
-
     const [isLoggedIn] = useState<boolean>(() => !!localStorage.getItem('access_token'));
-
-    // 🔥 수정 1: 사이드바 닉네임을 서버에서 받아오기 위해 빈 문자열로 세팅
     const [userName, setUserName] = useState<string>('');
 
     const [boardList, setBoardList] = useState<ForumPostType[]>([]);
@@ -48,9 +43,11 @@ export default function Forum() {
     const [totalPages, setTotalPages] = useState<number>(0);
     const [popularSidebar, setPopularSidebar] = useState<ForumPostType[]>([]);
 
-    // 🔥 로컬 스토리지에서 댓글 뒤지던 allComments 상태는 완전히 삭제했습니다!
+    const [searchTerm, setSearchTerm] = useState<string>('');
 
-    // 🔥 수정 2: 시작할 때 백엔드에서 내 진짜 정보(닉네임)를 가져옵니다!
+    // 🔥 1. 인기글 데이터를 담을 상태(State) 추가!
+    const [popularSidebar, setPopularSidebar] = useState<ForumPostType[]>([]);
+
     useEffect(() => {
         const fetchMyInfo = async () => {
             const token = localStorage.getItem('access_token');
@@ -72,6 +69,35 @@ export default function Forum() {
             }
         };
         fetchMyInfo();
+    }, []);
+
+    // 🔥 포스트 데이터 변환 함수 (인기글, 일반글 공통 사용)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const formatPost = (post: any, index?: number): ForumPostType => ({
+        id: post.id || post.postId,
+        rowNumber: index !== undefined ? index + 1 : post.rowNumber,
+        brand: tagNameToBrand[post.tagNames?.[0]] ?? '',
+        boardType: post.boardType || 'Q&A', // 백엔드에서 오는 게시판 타입이 있다면 사용, 없으면 기본값
+        title: post.title,
+        author: post.authorName || post.author || post.nickname || '익명',
+        date: post.createdAt ? new Date(post.createdAt).toLocaleDateString() : '방금 전',
+        views: post.view || 0,
+        commentCount: post.commentCount || post.commentsCount || 0
+    });
+
+    // 🔥 2. 포럼 인기글 데이터를 서버에서 가져오는 useEffect 추가!
+    useEffect(() => {
+        const fetchPopularSidebar = async () => {
+            try {
+                // 커뮤니티와 동일하게 인기글 API 호출, 단 board 파라미터를 FORUM으로!
+                const response = await axios.get('/api/posts/popular?board=FORUM');
+                const postsData: ForumPostType[] = (response.data.data || []).slice(0, 5).map(formatPost);
+                setPopularSidebar(postsData);
+            } catch (error) {
+                console.error('포럼 인기 게시글 사이드바 불러오기 실패:', error);
+            }
+        };
+        fetchPopularSidebar();
     }, []);
 
     useEffect(() => {
@@ -105,20 +131,9 @@ export default function Forum() {
                 const pageData = response.data.data;
                 const postsData = pageData?.content || response.data.content || response.data.data || [];
 
+                // 공통 포맷 함수 사용
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const formattedPosts: ForumPostType[] = postsData.map((post: any) => ({
-                    id: post.id || post.postId,
-                    rowNumber: post.rowNumber,
-                    brand: tagNameToBrand[post.tagNames?.[0]] ?? '',
-                    boardType: 'Q&A',
-                    title: post.title,
-                    author: post.authorName || post.author || post.nickname || '익명',
-                    date: post.createdAt ? new Date(post.createdAt).toLocaleDateString() : '방금 전',
-                    // 🔥 백엔드 변수명 `view`로 완벽 매칭!
-                    views: post.view || 0,
-                    // 🔥 백엔드에서 아직 안 보내주지만 미리 세팅해 둡니다! (댓글 개수)
-                    commentCount: post.commentCount || post.commentsCount || 0
-                }));
+                const formattedPosts: ForumPostType[] = postsData.map((post: any) => formatPost(post));
 
                 setBoardList(formattedPosts);
                 setTotalPages(pageData?.totalPages ?? 0);
@@ -130,15 +145,30 @@ export default function Forum() {
         fetchForumPosts();
     }, [currentPage]);
 
+    const handleBrandChange = (brand: string) => {
+        setActiveBrand(brand);
+        setCurrentPage(0);
+        setSearchTerm('');
+    };
+
     const brands: string[] = [
         'Canon', 'Sony', 'Nikon', 'Leica', 'Film',
         'Fujifilm', 'Hasselblad', 'Olympus', 'Panasonic', '기타(etc)'
     ];
 
-    const filteredList = boardList
-        .filter((board) => board.brand === activeBrand)
-        .slice()
-        .sort((a, b) => Number(b.id) - Number(a.id));
+    const filteredList = useMemo(() => {
+        let baseList = boardList
+            .filter((board) => board.brand === activeBrand)
+            .slice()
+            .sort((a, b) => Number(b.id) - Number(a.id));
+
+        if (searchTerm.trim()) {
+            const lowerKeyword = searchTerm.toLowerCase();
+            baseList = baseList.filter(post => post.title.toLowerCase().includes(lowerKeyword));
+        }
+
+        return baseList;
+    }, [boardList, activeBrand, searchTerm]);
 
     return (
         <div className="community-container">
@@ -150,7 +180,7 @@ export default function Forum() {
                                 <button
                                     key={brand}
                                     className={`brand-btn ${activeBrand === brand ? 'active' : ''}`}
-                                    onClick={() => setActiveBrand(brand)}
+                                    onClick={() => handleBrandChange(brand)}
                                 >
                                     {brand}
                                 </button>
@@ -167,7 +197,13 @@ export default function Forum() {
                             <select className="filter-select">
                                 <option>제목</option>
                             </select>
-                            <input type="text" className="filter-input" placeholder="검색어를 입력해주세요" />
+                            <input
+                                type="text"
+                                className="filter-input"
+                                placeholder="검색어를 입력해주세요"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
                         </div>
                     </div>
 
@@ -185,7 +221,7 @@ export default function Forum() {
                         {filteredList.length === 0 ? (
                             <tr>
                                 <td colSpan={5} style={{ padding: '60px 0', color: '#999', textAlign: 'center' }}>
-                                    아직 {activeBrand} 게시글이 없습니다.
+                                    {searchTerm ? `"${searchTerm}"에 대한 검색 결과가 없습니다.` : `아직 ${activeBrand} 게시글이 없습니다.`}
                                 </td>
                             </tr>
                         ) : (
@@ -202,7 +238,6 @@ export default function Forum() {
                                                 [{row.boardType}]
                                             </span>
                                             {row.title}
-                                            {/* 🔥 백엔드에서 받은 댓글 개수가 0보다 크면 숫자를 띄웁니다! */}
                                             {row.commentCount > 0 && (
                                                 <span style={{ color: '#ff5252', fontWeight: 'bold', marginLeft: '8px', fontSize: '13px' }}>
                                                     [{row.commentCount}]
@@ -241,7 +276,6 @@ export default function Forum() {
                             )}
 
                             <div className="profile-name">
-                                {/* 🔥 백엔드에서 갓 받아온 닉네임 연동! */}
                                 {isLoggedIn ? `${userName} 님` : '로그인 해주세요'}
                             </div>
                         </div>
@@ -276,6 +310,7 @@ export default function Forum() {
                         </div>
                     </div>
 
+                    {/* 태그 검색 영역 (기능이 없다면 UI만 남겨둠) */}
                     <div className="sidebar-tag-search">
                         <span className="search-icon">🔍 태그 검색</span>
                         <span className="view-all">전체보기 ≡</span>
