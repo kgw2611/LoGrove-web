@@ -36,6 +36,7 @@ interface ForumPostType {
     isEdited: boolean;
     views: number;
     images?: string[];
+    profileUrl?: string;
 }
 
 export default function ForumDetail() {
@@ -114,6 +115,7 @@ export default function ForumDetail() {
                     isEdited: !!postEdited,
                     views: data.view ?? data.viewCount ?? data.views ?? 0,
                     images: data.images || data.imageUrls || data.postImages || [],
+                    profileUrl: data.profileUrl || undefined,
                 };
 
                 setPost(formattedPost);
@@ -320,7 +322,6 @@ export default function ForumDetail() {
     };
 
     if (!post) return <div style={{textAlign: 'center', padding: '100px'}}>포럼 게시글을 불러오는 중입니다...</div>;
-    const profileImgSrc = "https://images.unsplash.com/photo-1518098268026-4e89f1a2cd8e?q=80&w=100&auto=format&fit=crop";
 
     return (
         <div className="community-container">
@@ -374,7 +375,9 @@ export default function ForumDetail() {
 
                                 <div className="post-author-info">
                                     <div className="author-avatar" style={{ overflow: 'hidden' }}>
-                                        <img src={profileImgSrc} alt="프로필" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        {post.profileUrl
+                                            ? <img src={getImageUrl(post.profileUrl)} alt="프로필" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            : <span style={{ fontSize: '28px', lineHeight: 1 }}>👤</span>}
                                     </div>
                                     <div className="author-details">
                                         <div className="author-name-row">
