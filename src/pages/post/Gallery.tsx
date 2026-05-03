@@ -11,11 +11,13 @@ import '../home/Home.css';
 import './Gallery.css';
 import {
     createComment,
+    deleteComment,
     getGalleryDetail,
     getGalleryList,
     getGalleryTagNames,
     toggleCommentLike,
     toggleGalleryLike,
+    updateComment,
     type CommentItem,
     type GalleryDetailItem,
     type GalleryListItem,
@@ -209,6 +211,10 @@ export default function Gallery() {
 
     const [commentInput, setCommentInput] = useState('');
     const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+    const [replyingToId, setReplyingToId] = useState<number | null>(null);
+    const [replyText, setReplyText] = useState('');
+    const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
+    const [editCommentText, setEditCommentText] = useState('');
 
     const [searchText, setSearchText] = useState('');
     const [tagOptions, setTagOptions] = useState<string[]>(['전체']);
@@ -557,6 +563,62 @@ export default function Gallery() {
         }
     };
 
+    const handleCreateReply = async (parentId: number) => {
+        if (!selectedPost || !replyText.trim() || isSubmittingComment) return;
+        if (!requireLogin('답글 작성은 로그인 후 이용할 수 있습니다.')) return;
+
+        try {
+            setIsSubmittingComment(true);
+            // @ts-ignore
+            await createComment(Number(selectedPost.id), replyText.trim(), selectedPost.title, parentId);
+            // @ts-ignore
+            const refreshedDetail = await getGalleryDetail(Number(selectedPost.id));
+            const mergedDetail = mergeLikeOverrides(refreshedDetail);
+            setSelectedPost(mergedDetail);
+            setReplyText('');
+            setReplyingToId(null);
+        } catch (error) {
+            console.error('답글 작성 실패:', error);
+            alert('답글 등록 중 오류가 발생했습니다.');
+        } finally {
+            setIsSubmittingComment(false);
+        }
+    };
+
+    const handleSaveEdit = async (commentId: number) => {
+        if (!editCommentText.trim()) return alert('내용을 입력해주세요.');
+        if (!selectedPost) return;
+        try {
+            // @ts-ignore
+            await updateComment(Number(selectedPost.id), commentId, editCommentText.trim());
+            // @ts-ignore
+            const refreshedDetail = await getGalleryDetail(Number(selectedPost.id));
+            const mergedDetail = mergeLikeOverrides(refreshedDetail);
+            setSelectedPost(mergedDetail);
+            setEditingCommentId(null);
+            setEditCommentText('');
+        } catch (error) {
+            console.error('댓글 수정 실패:', error);
+            alert('수정 권한이 없습니다.');
+        }
+    };
+
+    const handleDeleteComment = async (commentId: number) => {
+        if (!selectedPost) return;
+        if (!window.confirm('정말 이 댓글을 삭제하시겠습니까?')) return;
+        try {
+            // @ts-ignore
+            await deleteComment(Number(selectedPost.id), commentId);
+            // @ts-ignore
+            const refreshedDetail = await getGalleryDetail(Number(selectedPost.id));
+            const mergedDetail = mergeLikeOverrides(refreshedDetail);
+            setSelectedPost(mergedDetail);
+        } catch (error) {
+            console.error('댓글 삭제 실패:', error);
+            alert('삭제 권한이 없습니다.');
+        }
+    };
+
     const handleToggleCommentLike = async (commentId: number) => {
         if (!isLoggedIn) return alert('로그인 후 이용 가능합니다.');
         if (!selectedPost) return;
@@ -564,9 +626,9 @@ export default function Gallery() {
 
         const previousPost = selectedPost;
 
-        const targetComment = selectedPost.comments.find(
-            (comment) => comment.id === commentId
-        );
+        const targetComment =
+            selectedPost.comments.find((c) => c.id === commentId) ??
+            selectedPost.comments.flatMap((c) => c.replies).find((r) => r.id === commentId);
 
         if (!targetComment) return;
 
@@ -575,15 +637,14 @@ export default function Gallery() {
         const nextLiked = !currentLiked;
         const nextLikeCount = nextLiked ? currentCount + 1 : Math.max(currentCount - 1, 0);
 
-        const nextComments = selectedPost.comments.map((comment) =>
-            comment.id === commentId
-                ? {
-                    ...comment,
-                    isLiked: nextLiked,
-                    likeCount: nextLikeCount,
-                }
-                : comment
-        );
+        const toggleInList = (comments: typeof selectedPost.comments) =>
+            comments.map((comment) =>
+                comment.id === commentId
+                    ? { ...comment, isLiked: nextLiked, likeCount: nextLikeCount }
+                    : { ...comment, replies: comment.replies.map((r) => r.id === commentId ? { ...r, isLiked: nextLiked, likeCount: nextLikeCount } : r) }
+            );
+
+        const nextComments = toggleInList(selectedPost.comments);
 
         setSelectedPost({
             ...selectedPost,
@@ -853,8 +914,10 @@ export default function Gallery() {
                                     </div>
 
                                     <div className="gallery-detail-author-row">
-                                        <div className="gallery-detail-author-avatar">
-                                            {getAvatarText(selectedPost.author)}
+                                        <div className="gallery-detail-author-avatar" style={{ overflow: 'hidden', padding: 0 }}>
+                                            {selectedPost.authorProfileUrl
+                                                ? <img src={selectedPost.authorProfileUrl} alt="프로필" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                                                : getAvatarText(selectedPost.author)}
                                         </div>
 
                                         <div className="gallery-detail-author-texts">
@@ -886,59 +949,147 @@ export default function Gallery() {
                                                 </div>
                                             ) : (
                                                 selectedPost.comments.map((comment: CommentItem) => (
-                                                    <div
-                                                        key={comment.id}
-                                                        className="gallery-detail-comment-item"
-                                                    >
-                                                        <div className="gallery-detail-comment-avatar">
-                                                            {getAvatarText(comment.author)}
-                                                        </div>
+                                                    <div key={comment.id}>
+                                                        <div className="gallery-detail-comment-item">
+                                                            <div className="gallery-detail-comment-avatar" style={{ overflow: 'hidden', padding: 0 }}>
+                                                                {comment.profileUrl
+                                                                    ? <img src={comment.profileUrl} alt="프로필" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                                                                    : getAvatarText(comment.author)}
+                                                            </div>
 
-                                                        <div className="gallery-detail-comment-body">
-                                                            <div className="gallery-detail-comment-main">
-                                                                <div className="gallery-detail-comment-author-line">
-                                                                    <span className="gallery-detail-comment-author">
-                                                                        {comment.author}
-                                                                    </span>
-                                                                    <span className="gallery-detail-comment-time">
-                                                                        {comment.createdAt || '방금'}
-                                                                    </span>
-                                                                </div>
-
-                                                                <div className="gallery-detail-comment-text">
-                                                                    {comment.content}
-                                                                </div>
-
-                                                                <div className="gallery-detail-comment-meta">
-                                                                    <button
-                                                                        type="button"
-                                                                        className="gallery-comment-reply-btn"
-                                                                    >
-                                                                        답변
-                                                                    </button>
-
-                                                                    <button
-                                                                        type="button"
-                                                                        className={`comment-like-btn ${
-                                                                            comment.isLiked ? 'active' : ''
-                                                                        }`}
-                                                                        onClick={() =>
-                                                                            handleToggleCommentLike(comment.id)
-                                                                        }
-                                                                    >
-                                                                        <HeartIcon
-                                                                            active={comment.isLiked}
-                                                                            size={18}
-                                                                        />
-                                                                        <span>
-                                                                            {safeCount(comment.likeCount)}
-                                                                        </span>
-                                                                    </button>
-
-                                                                    {/* 🔥 18번 퀘스트: 댓글 우측 더보기(MoreIcon) 버튼도 삭제 완료! */}
+                                                            <div className="gallery-detail-comment-body">
+                                                                <div className="gallery-detail-comment-main">
+                                                                    <div className="gallery-detail-comment-author-line">
+                                                                        <span className="gallery-detail-comment-author">{comment.author}</span>
+                                                                        <span className="gallery-detail-comment-time">{comment.createdAt || '방금'}{comment.isEdited && <span style={{ marginLeft: '4px', fontSize: '11px', color: '#999' }}>(수정됨)</span>}</span>
+                                                                    </div>
+                                                                    {editingCommentId === comment.id ? (
+                                                                        <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
+                                                                            <input
+                                                                                type="text"
+                                                                                value={editCommentText}
+                                                                                onChange={(e) => setEditCommentText(e.target.value)}
+                                                                                onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) handleSaveEdit(comment.id); }}
+                                                                                style={{ flex: 1, padding: '6px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '13px', outline: 'none' }}
+                                                                            />
+                                                                            <button type="button" onClick={() => handleSaveEdit(comment.id)} style={{ padding: '6px 12px', background: '#7BC9A5', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '13px', cursor: 'pointer' }}>저장</button>
+                                                                            <button type="button" onClick={() => { setEditingCommentId(null); setEditCommentText(''); }} style={{ padding: '6px 12px', background: '#eee', color: '#555', border: 'none', borderRadius: '6px', fontSize: '13px', cursor: 'pointer' }}>취소</button>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <>
+                                                                            <div className="gallery-detail-comment-text">{comment.content}</div>
+                                                                            <div className="gallery-detail-comment-meta">
+                                                                                <button
+                                                                                    type="button"
+                                                                                    className="gallery-comment-reply-btn"
+                                                                                    onClick={() => { setReplyingToId(replyingToId === comment.id ? null : comment.id); setReplyText(''); }}
+                                                                                >
+                                                                                    답변
+                                                                                </button>
+                                                                                <button
+                                                                                    type="button"
+                                                                                    className={`comment-like-btn ${comment.isLiked ? 'active' : ''}`}
+                                                                                    onClick={() => handleToggleCommentLike(comment.id)}
+                                                                                >
+                                                                                    <HeartIcon active={comment.isLiked} size={18} />
+                                                                                    <span>{safeCount(comment.likeCount)}</span>
+                                                                                </button>
+                                                                                {isLoggedIn && comment.author === userName && (
+                                                                                    <>
+                                                                                        <button type="button" onClick={() => { setEditingCommentId(comment.id); setEditCommentText(comment.content); }} style={{ fontSize: '12px', color: '#888', background: 'none', border: 'none', cursor: 'pointer', padding: '0 4px' }}>수정</button>
+                                                                                        <button type="button" onClick={() => handleDeleteComment(comment.id)} style={{ fontSize: '12px', color: '#e53935', background: 'none', border: 'none', cursor: 'pointer', padding: '0 4px' }}>삭제</button>
+                                                                                    </>
+                                                                                )}
+                                                                            </div>
+                                                                        </>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         </div>
+
+                                                        {/* 대댓글 목록 */}
+                                                        {comment.replies.length > 0 && (
+                                                            <div style={{ paddingLeft: '44px', marginTop: '4px' }}>
+                                                                {comment.replies.map((reply) => (
+                                                                    <div key={reply.id} className="gallery-detail-comment-item" style={{ marginBottom: '8px' }}>
+                                                                        <div className="gallery-detail-comment-avatar" style={{ overflow: 'hidden', padding: 0 }}>
+                                                                            {reply.profileUrl
+                                                                                ? <img src={reply.profileUrl} alt="프로필" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                                                                                : getAvatarText(reply.author)}
+                                                                        </div>
+                                                                        <div className="gallery-detail-comment-body">
+                                                                            <div className="gallery-detail-comment-main">
+                                                                                <div className="gallery-detail-comment-author-line">
+                                                                                    <span className="gallery-detail-comment-author">{reply.author}</span>
+                                                                                    <span className="gallery-detail-comment-time">{reply.createdAt || '방금'}{reply.isEdited && <span style={{ marginLeft: '4px', fontSize: '11px', color: '#999' }}>(수정됨)</span>}</span>
+                                                                                </div>
+                                                                                {editingCommentId === reply.id ? (
+                                                                                    <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
+                                                                                        <input
+                                                                                            type="text"
+                                                                                            value={editCommentText}
+                                                                                            onChange={(e) => setEditCommentText(e.target.value)}
+                                                                                            onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) handleSaveEdit(reply.id); }}
+                                                                                            style={{ flex: 1, padding: '6px 10px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '13px', outline: 'none' }}
+                                                                                        />
+                                                                                        <button type="button" onClick={() => handleSaveEdit(reply.id)} style={{ padding: '6px 12px', background: '#7BC9A5', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '13px', cursor: 'pointer' }}>저장</button>
+                                                                                        <button type="button" onClick={() => { setEditingCommentId(null); setEditCommentText(''); }} style={{ padding: '6px 12px', background: '#eee', color: '#555', border: 'none', borderRadius: '6px', fontSize: '13px', cursor: 'pointer' }}>취소</button>
+                                                                                    </div>
+                                                                                ) : (
+                                                                                    <>
+                                                                                        <div className="gallery-detail-comment-text">{reply.content}</div>
+                                                                                        <div className="gallery-detail-comment-meta">
+                                                                                            <button
+                                                                                                type="button"
+                                                                                                className={`comment-like-btn ${reply.isLiked ? 'active' : ''}`}
+                                                                                                onClick={() => handleToggleCommentLike(reply.id)}
+                                                                                            >
+                                                                                                <HeartIcon active={reply.isLiked} size={18} />
+                                                                                                <span>{safeCount(reply.likeCount)}</span>
+                                                                                            </button>
+                                                                                            {isLoggedIn && reply.author === userName && (
+                                                                                                <>
+                                                                                                    <button type="button" onClick={() => { setEditingCommentId(reply.id); setEditCommentText(reply.content); }} style={{ fontSize: '12px', color: '#888', background: 'none', border: 'none', cursor: 'pointer', padding: '0 4px' }}>수정</button>
+                                                                                                    <button type="button" onClick={() => handleDeleteComment(reply.id)} style={{ fontSize: '12px', color: '#e53935', background: 'none', border: 'none', cursor: 'pointer', padding: '0 4px' }}>삭제</button>
+                                                                                                </>
+                                                                                            )}
+                                                                                        </div>
+                                                                                    </>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+
+                                                        {/* 답변 입력창 */}
+                                                        {replyingToId === comment.id && (
+                                                            <div style={{ paddingLeft: '44px', marginTop: '4px', marginBottom: '8px', display: 'flex', gap: '8px' }}>
+                                                                <input
+                                                                    type="text"
+                                                                    value={replyText}
+                                                                    onChange={(e) => setReplyText(e.target.value)}
+                                                                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) handleCreateReply(comment.id); }}
+                                                                    placeholder="답변을 입력하세요"
+                                                                    style={{ flex: 1, padding: '8px 12px', border: '1px solid #ddd', borderRadius: '20px', fontSize: '13px', outline: 'none' }}
+                                                                />
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleCreateReply(comment.id)}
+                                                                    style={{ padding: '8px 14px', background: '#7BC9A5', color: '#fff', border: 'none', borderRadius: '20px', fontSize: '13px', cursor: 'pointer' }}
+                                                                >
+                                                                    등록
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => { setReplyingToId(null); setReplyText(''); }}
+                                                                    style={{ padding: '8px 14px', background: '#eee', color: '#555', border: 'none', borderRadius: '20px', fontSize: '13px', cursor: 'pointer' }}
+                                                                >
+                                                                    취소
+                                                                </button>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 ))
                                             )}

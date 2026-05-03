@@ -41,6 +41,7 @@ export interface GalleryListItem {
     title: string;
     description?: string;
     author: string;
+    authorProfileUrl?: string;
     tags: string[];
     likeCount: number;
     isLiked: boolean;
@@ -54,8 +55,11 @@ export interface CommentItem {
     author: string;
     content: string;
     createdAt: string;
+    isEdited: boolean;
     likeCount: number;
     isLiked: boolean;
+    profileUrl?: string;
+    replies: CommentItem[];
 }
 
 export interface GalleryDetailItem extends GalleryListItem {
@@ -123,6 +127,9 @@ type RawComment = {
     likes?: number | string;
     isLiked?: boolean;
     liked?: boolean;
+    updatedAt?: string;
+    profileUrl?: string;
+    replies?: RawComment[];
 };
 
 type RawPost = {
@@ -133,6 +140,7 @@ type RawPost = {
     description?: string;
     author?: string;
     nickname?: string;
+    profileUrl?: string;
     imageUrl?: string;
     imageUrls?: string[];
     thumbnailUrl?: string;
@@ -218,15 +226,19 @@ function normalizeImageUrl(raw?: string) {
 }
 
 function normalizeComment(raw: RawComment, fallbackPostId?: number): CommentItem {
+    const isEdited = !!(raw.updatedAt && raw.createdAt && raw.updatedAt !== raw.createdAt);
     return {
         id: safeNumber(raw.id ?? raw.commentId, Date.now()),
         postId: safeNumber(raw.postId ?? fallbackPostId, fallbackPostId ?? 0),
         postTitle: raw.postTitle ?? raw.title ?? '',
         author: raw.nickname ?? raw.author ?? '익명',
         content: raw.content ?? raw.text ?? '',
-        createdAt: raw.createdAt ?? raw.createdDate ?? '',
+        createdAt: isEdited ? raw.updatedAt! : (raw.createdAt ?? raw.createdDate ?? ''),
+        isEdited,
         likeCount: safeNumber(raw.likeCount ?? raw.likes),
         isLiked: Boolean(raw.isLiked ?? raw.liked ?? false),
+        profileUrl: raw.profileUrl ?? undefined,
+        replies: (raw.replies ?? []).map((r) => normalizeComment(r, fallbackPostId)),
     };
 }
 
@@ -239,6 +251,7 @@ function normalizeGalleryItem(raw: RawPost): GalleryListItem {
         title: raw.title ?? '',
         description: raw.content ?? raw.description ?? '',
         author: raw.nickname ?? raw.author ?? '익명',
+        authorProfileUrl: raw.profileUrl ?? undefined,
         tags: raw.tagNames
             ? raw.tagNames.filter((tag) => !isExcludedGalleryTag(tag))
             : extractTagNames(raw.tags),
@@ -414,9 +427,12 @@ export async function getGalleryDetail(postId: number): Promise<GalleryDetailIte
 export async function createComment(
     postId: number,
     content: string,
-    postTitle = ''
+    postTitle = '',
+    parentId?: number
 ): Promise<CommentItem> {
-    const res = await apiClient.post(`/posts/${postId}/comments`, { content });
+    const body: Record<string, unknown> = { content };
+    if (parentId != null) body.parentId = parentId;
+    const res = await apiClient.post(`/posts/${postId}/comments`, body);
     const raw = unwrapData<unknown>(res.data);
 
     let comment: CommentItem;
@@ -431,8 +447,10 @@ export async function createComment(
             author: getCurrentUserName(),
             content,
             createdAt: new Date().toISOString(),
+            isEdited: false,
             likeCount: 0,
             isLiked: false,
+            replies: [],
         };
     }
 
@@ -453,6 +471,21 @@ export async function createComment(
     });
 
     return comment;
+}
+
+export async function updateComment(
+    postId: number,
+    commentId: number,
+    content: string
+): Promise<void> {
+    await apiClient.put(`/posts/${postId}/comments/${commentId}`, { content });
+}
+
+export async function deleteComment(
+    postId: number,
+    commentId: number
+): Promise<void> {
+    await apiClient.delete(`/posts/${postId}/comments/${commentId}`);
 }
 
 export async function toggleGalleryLike(
