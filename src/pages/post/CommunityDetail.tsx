@@ -17,8 +17,10 @@ interface CommentType {
     author: string;
     text: string;
     date: string;
+    isEdited: boolean;
     likes: number;
     isLiked: boolean;
+    profileUrl?: string;
     replies: CommentType[];
 }
 
@@ -29,6 +31,7 @@ interface PostType {
     author: string;
     tag: string;
     date: string;
+    isEdited: boolean;
     views: number;
     images?: string[];
 }
@@ -74,16 +77,21 @@ export default function CommunityDetail() {
             const data = response.data.data || response.data || [];
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const mapComment = (c: any): CommentType => ({
-                id: c.id || c.commentId,
-                postId: id,
-                author: c.authorName || c.nickname || '익명',
-                text: c.content || c.text,
-                date: c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '방금 전',
-                likes: c.likeCount || c.likes || 0,
-                isLiked: c.isLiked || false,
-                replies: (c.replies || []).map(mapComment),
-            });
+            const mapComment = (c: any): CommentType => {
+                const edited = c.updatedAt && c.createdAt && c.updatedAt !== c.createdAt;
+                return {
+                    id: c.id || c.commentId,
+                    postId: id,
+                    author: c.authorName || c.nickname || '익명',
+                    text: c.content || c.text,
+                    date: edited ? new Date(c.updatedAt).toLocaleDateString() : (c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '방금 전'),
+                    isEdited: !!edited,
+                    likes: c.likeCount || c.likes || 0,
+                    isLiked: c.isLiked || false,
+                    profileUrl: c.profileUrl || undefined,
+                    replies: (c.replies || []).map(mapComment),
+                };
+            };
             setComments(data.map(mapComment));
         } catch (error) {
             console.error("댓글 불러오기 실패:", error);
@@ -99,17 +107,16 @@ export default function CommunityDetail() {
                 });
                 const data = response.data.data || response.data;
 
+                const postEdited = data.updatedAt && data.createdAt && data.updatedAt !== data.createdAt;
                 const formattedPost: PostType = {
                     id: data.id || data.postId,
                     title: data.title,
                     content: data.content,
                     author: data.authorName || data.author || data.nickname || '익명',
                     tag: data.tagName || data.tag || data.boardType || 'COMMUNITY',
-                    date: data.createdAt ? new Date(data.createdAt).toLocaleDateString() : '방금 전',
-
-                    // 🔥 정답 발견! data.view 로 변경 완료!
+                    date: postEdited ? new Date(data.updatedAt).toLocaleDateString() : (data.createdAt ? new Date(data.createdAt).toLocaleDateString() : '방금 전'),
+                    isEdited: !!postEdited,
                     views: data.view ?? data.viewCount ?? data.views ?? 0,
-
                     images: data.images || data.imageUrls || data.postImages || [],
                 };
 
@@ -363,7 +370,7 @@ export default function CommunityDetail() {
                                             <span className="author-name">{post.author}</span>
                                         </div>
                                         <div className="author-meta">
-                                            <span>{post.date}</span>
+                                            <span>{post.date}{post.isEdited && <span style={{ marginLeft: '6px', fontSize: '12px', color: '#999' }}>(수정됨)</span>}</span>
                                             <span>조회수 : {post.views}</span>
                                         </div>
                                     </div>
@@ -408,7 +415,9 @@ export default function CommunityDetail() {
                                     {/* 댓글 */}
                                     <div className="comment-item">
                                         <div className="comment-avatar" style={{ overflow: 'hidden' }}>
-                                            <img src={profileImgSrc} alt="프로필" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            {comment.profileUrl
+                                                ? <img src={getImageUrl(comment.profileUrl)} alt="프로필" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                : <span style={{ fontSize: '24px', lineHeight: 1 }}>👤</span>}
                                         </div>
                                         <div className="comment-content">
                                             <div className="comment-author">{comment.author}</div>
@@ -421,7 +430,7 @@ export default function CommunityDetail() {
                                             ) : (
                                                 <>
                                                     <div className="comment-text">{comment.text}</div>
-                                                    <div className="comment-date">{comment.date}</div>
+                                                    <div className="comment-date">{comment.date}{comment.isEdited && <span style={{ marginLeft: '6px', fontSize: '12px', color: '#999' }}>(수정됨)</span>}</div>
                                                     <div className="comment-actions">
                                                         <button className={`action-btn ${comment.isLiked ? 'liked' : ''}`} onClick={() => handleCommentLike(comment)}>
                                                             {comment.isLiked ? '❤️' : '🤍'} {comment.likes}
@@ -445,7 +454,9 @@ export default function CommunityDetail() {
                                     {comment.replies.map(reply => (
                                         <div key={reply.id} className="comment-item" style={{ marginLeft: '40px', marginTop: '8px', background: '#f9f9f9', borderRadius: '8px', padding: '8px' }}>
                                             <div className="comment-avatar" style={{ overflow: 'hidden' }}>
-                                                <img src={profileImgSrc} alt="프로필" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                {reply.profileUrl
+                                                    ? <img src={getImageUrl(reply.profileUrl)} alt="프로필" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                    : <span style={{ fontSize: '24px', lineHeight: 1 }}>👤</span>}
                                             </div>
                                             <div className="comment-content">
                                                 <div className="comment-author">↳ {reply.author}</div>
@@ -458,7 +469,7 @@ export default function CommunityDetail() {
                                                 ) : (
                                                     <>
                                                         <div className="comment-text">{reply.text}</div>
-                                                        <div className="comment-date">{reply.date}</div>
+                                                        <div className="comment-date">{reply.date}{reply.isEdited && <span style={{ marginLeft: '6px', fontSize: '12px', color: '#999' }}>(수정됨)</span>}</div>
                                                         <div className="comment-actions">
                                                             <button className={`action-btn ${reply.isLiked ? 'liked' : ''}`} onClick={() => handleCommentLike(reply)}>
                                                                 {reply.isLiked ? '❤️' : '🤍'} {reply.likes}
