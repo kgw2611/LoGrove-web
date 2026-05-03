@@ -20,6 +20,7 @@ interface CommentType {
     date: string;
     likes: number;
     isLiked: boolean;
+    replies: CommentType[];
 }
 
 interface ForumPostType {
@@ -55,6 +56,9 @@ export default function ForumDetail() {
     const [newComment, setNewComment] = useState<string>('');
     const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
     const [editCommentText, setEditCommentText] = useState<string>('');
+    const [replyingToId, setReplyingToId] = useState<number | null>(null);
+    const [replyText, setReplyText] = useState<string>('');
+    const [myProfileUrl, setMyProfileUrl] = useState<string | null>(null);
 
     const fetchComments = async () => {
         try {
@@ -65,16 +69,17 @@ export default function ForumDetail() {
             const data = response.data.data || response.data || [];
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const formattedComments: CommentType[] = data.map((c: any) => ({
+            const mapComment = (c: any): CommentType => ({
                 id: c.id || c.commentId,
                 postId: id,
                 author: c.authorName || c.nickname || '익명',
                 text: c.content || c.text,
                 date: c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '방금 전',
                 likes: c.likeCount || c.likes || 0,
-                isLiked: c.isLiked || false
-            }));
-            setComments(formattedComments);
+                isLiked: c.isLiked || false,
+                replies: (c.replies || []).map(mapComment),
+            });
+            setComments(data.map(mapComment));
         } catch (error) {
             console.error("댓글 불러오기 실패:", error);
         }
@@ -125,6 +130,7 @@ export default function ForumDetail() {
                     });
                     const data = response.data.data || response.data;
                     setUserName(data.nickname || data.name || '익명');
+                    setMyProfileUrl(data.profileUrl || null);
                 } catch (error) {
                     console.error("내 정보 불러오기 실패", error);
                     // 실패 시 로컬 스토리지로 폴백
@@ -248,6 +254,25 @@ export default function ForumDetail() {
         }
     };
 
+    const handleReplySubmit = async (parentId: number) => {
+        if (!isLoggedIn) return alert('로그인 후 이용 가능합니다.');
+        if (!replyText.trim()) return alert('답글 내용을 입력해주세요.');
+
+        try {
+            const token = localStorage.getItem('access_token');
+            await axios.post(`/api/posts/${id}/comments`, { content: replyText, parentId }, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            setReplyText('');
+            setReplyingToId(null);
+            fetchComments();
+        } catch (error) {
+            console.error("답글 등록 실패:", error);
+            alert("답글을 등록하지 못했습니다.");
+        }
+    };
+
     const handleCommentLike = async (comment: CommentType) => {
         if (!isLoggedIn) return alert('로그인 후 이용 가능합니다.');
         try {
@@ -262,11 +287,11 @@ export default function ForumDetail() {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
             }
-            setComments(prev => prev.map(c =>
+            const toggleLike = (c: CommentType) =>
                 c.id === comment.id
                     ? { ...c, isLiked: !c.isLiked, likes: c.isLiked ? c.likes - 1 : c.likes + 1 }
-                    : c
-            ));
+                    : { ...c, replies: c.replies.map(r => r.id === comment.id ? { ...r, isLiked: !r.isLiked, likes: r.isLiked ? r.likes - 1 : r.likes + 1 } : r) };
+            setComments(prev => prev.map(toggleLike));
         } catch (error) {
             console.error("댓글 좋아요 처리 실패", error);
         }
@@ -413,6 +438,9 @@ export default function ForumDetail() {
                                                     >
                                                         {comment.isLiked ? '❤️' : '🤍'} {comment.likes}
                                                     </button>
+                                                    {isLoggedIn && (
+                                                        <button className="action-btn" onClick={() => setReplyingToId(replyingToId === comment.id ? null : comment.id)}>답글</button>
+                                                    )}
                                                     {isLoggedIn && comment.author === userName && (
                                                         <>
                                                             <button className="action-btn" onClick={() => startEditing(comment)}>수정</button>
@@ -421,6 +449,49 @@ export default function ForumDetail() {
                                                     )}
                                                 </div>
                                             </>
+                                        )}
+
+                                        {/* 대댓글 목록 */}
+                                        {comment.replies.length > 0 && (
+                                            <div style={{ marginTop: '10px', paddingLeft: '20px', borderLeft: '2px solid #eee' }}>
+                                                {comment.replies.map(reply => (
+                                                    <div key={reply.id} className="comment-item" style={{ marginBottom: '10px' }}>
+                                                        <div className="comment-avatar" style={{ overflow: 'hidden', width: '30px', height: '30px' }}>
+                                                            <img src={profileImgSrc} alt="프로필" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                        </div>
+                                                        <div className="comment-content">
+                                                            <div className="comment-author">{reply.author}</div>
+                                                            <div className="comment-text">{reply.text}</div>
+                                                            <div className="comment-date">{reply.date}</div>
+                                                            <div className="comment-actions">
+                                                                <button
+                                                                    className={`action-btn ${reply.isLiked ? 'liked' : ''}`}
+                                                                    onClick={() => handleCommentLike(reply)}
+                                                                >
+                                                                    {reply.isLiked ? '❤️' : '🤍'} {reply.likes}
+                                                                </button>
+                                                                {isLoggedIn && reply.author === userName && (
+                                                                    <button className="action-btn delete" onClick={() => handleDeleteComment(reply.id)}>삭제</button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {/* 답글 입력창 */}
+                                        {replyingToId === comment.id && (
+                                            <div style={{ marginTop: '10px', paddingLeft: '20px', display: 'flex', gap: '8px' }}>
+                                                <input
+                                                    style={{ flex: 1, padding: '8px 12px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px' }}
+                                                    placeholder="답글을 입력하세요"
+                                                    value={replyText}
+                                                    onChange={(e: ChangeEvent<HTMLInputElement>) => setReplyText(e.target.value)}
+                                                />
+                                                <button className="action-btn" onClick={() => handleReplySubmit(comment.id)}>등록</button>
+                                                <button className="cancel-btn" onClick={() => { setReplyingToId(null); setReplyText(''); }}>취소</button>
+                                            </div>
                                         )}
                                     </div>
                                 </div>
@@ -440,7 +511,13 @@ export default function ForumDetail() {
                     <div className="sidebar-box profile-box">
                         <div className="profile-info">
                             {isLoggedIn ? (
-                                <div className="profile-avatar" style={{ overflow: 'hidden' }}><img src={profileImgSrc} alt="프로필" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></div>
+                                <div className="profile-avatar" style={{ overflow: 'hidden' }}>
+                                    {myProfileUrl ? (
+                                        <img src={getImageUrl(myProfileUrl)} alt="프로필" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    ) : (
+                                        <span style={{ fontSize: '28px', lineHeight: 1 }}>👤</span>
+                                    )}
+                                </div>
                             ) : (<div className="profile-avatar">👤</div>)}
                             <div className="profile-name">{isLoggedIn ? `${userName} 님` : '로그인 해주세요'}</div>
                         </div>

@@ -42,6 +42,7 @@ export default function Forum() {
     const [currentPage, setCurrentPage] = useState<number>(0);
     const [totalPages, setTotalPages] = useState<number>(0);
     const [popularSidebar, setPopularSidebar] = useState<ForumPostType[]>([]);
+    const [myProfileUrl, setMyProfileUrl] = useState<string | null>(null);
 
     const [searchTerm, setSearchTerm] = useState<string>('');
 
@@ -55,6 +56,7 @@ export default function Forum() {
                     });
                     const data = response.data.data || response.data;
                     setUserName(data.nickname || data.name || '익명');
+                    setMyProfileUrl(data.profileUrl || null);
                 } catch (error) {
                     console.error("내 정보 불러오기 실패", error);
                     const savedUserString = localStorage.getItem('user_db');
@@ -262,11 +264,11 @@ export default function Forum() {
                         <div className="profile-info">
                             {isLoggedIn ? (
                                 <div className="profile-avatar" style={{ overflow: 'hidden' }}>
-                                    <img
-                                        src="https://images.unsplash.com/photo-1518098268026-4e89f1a2cd8e?q=80&w=100&auto=format&fit=crop"
-                                        alt="프로필"
-                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                    />
+                                    {myProfileUrl ? (
+                                        <img src={myProfileUrl} alt="프로필" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    ) : (
+                                        <span style={{ fontSize: '28px', lineHeight: 1 }}>👤</span>
+                                    )}
                                 </div>
                             ) : (
                                 <div className="profile-avatar">👤</div>

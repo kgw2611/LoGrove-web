@@ -19,6 +19,7 @@ interface CommentType {
     date: string;
     likes: number;
     isLiked: boolean;
+    replies: CommentType[];
 }
 
 interface PostType {
@@ -60,6 +61,9 @@ export default function CommunityDetail() {
     const [newComment, setNewComment] = useState<string>('');
     const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
     const [editCommentText, setEditCommentText] = useState<string>('');
+    const [replyingToId, setReplyingToId] = useState<number | null>(null);
+    const [replyText, setReplyText] = useState<string>('');
+    const [myProfileUrl, setMyProfileUrl] = useState<string | null>(null);
 
     const fetchComments = async () => {
         try {
@@ -70,16 +74,17 @@ export default function CommunityDetail() {
             const data = response.data.data || response.data || [];
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const formattedComments: CommentType[] = data.map((c: any) => ({
+            const mapComment = (c: any): CommentType => ({
                 id: c.id || c.commentId,
                 postId: id,
                 author: c.authorName || c.nickname || '익명',
                 text: c.content || c.text,
                 date: c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '방금 전',
                 likes: c.likeCount || c.likes || 0,
-                isLiked: c.isLiked || false
-            }));
-            setComments(formattedComments);
+                isLiked: c.isLiked || false,
+                replies: (c.replies || []).map(mapComment),
+            });
+            setComments(data.map(mapComment));
         } catch (error) {
             console.error("댓글 불러오기 실패:", error);
         }
@@ -128,6 +133,7 @@ export default function CommunityDetail() {
                     });
                     const data = response.data.data || response.data;
                     setUserName(data.nickname || data.name || '익명');
+                    setMyProfileUrl(data.profileUrl || null);
                 } catch (error) {
                     console.error("내 정보 불러오기 실패", error);
                 }
@@ -254,13 +260,31 @@ export default function CommunityDetail() {
                     headers: { Authorization: `Bearer ${token}` }
                 });
             }
-            setComments(prev => prev.map(c =>
+            const toggleLike = (c: CommentType) =>
                 c.id === comment.id
                     ? { ...c, isLiked: !c.isLiked, likes: c.isLiked ? c.likes - 1 : c.likes + 1 }
-                    : c
-            ));
+                    : { ...c, replies: c.replies.map(r => r.id === comment.id ? { ...r, isLiked: !r.isLiked, likes: r.isLiked ? r.likes - 1 : r.likes + 1 } : r) };
+            setComments(prev => prev.map(toggleLike));
         } catch (error) {
             console.error("댓글 좋아요 처리 실패", error);
+        }
+    };
+
+    // 답글 작성
+    const handleReplySubmit = async (parentId: number) => {
+        if (!isLoggedIn) return alert('로그인 후 이용 가능합니다.');
+        if (!replyText.trim()) return alert('답글 내용을 입력해주세요.');
+        try {
+            const token = localStorage.getItem('access_token');
+            await axios.post(`/api/posts/${id}/comments`, { content: replyText, parentId }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setReplyText('');
+            setReplyingToId(null);
+            fetchComments();
+        } catch (error) {
+            console.error('답글 등록 실패:', error);
+            alert('답글을 등록하지 못했습니다.');
         }
     };
 
@@ -380,40 +404,93 @@ export default function CommunityDetail() {
 
                         <div className="comments-section">
                             {comments.map(comment => (
-                                <div key={comment.id} className="comment-item" style={{ marginBottom: '15px' }}>
-                                    <div className="comment-avatar" style={{ overflow: 'hidden' }}>
-                                        <img src={profileImgSrc} alt="프로필" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                    </div>
-                                    <div className="comment-content">
-                                        <div className="comment-author">{comment.author}</div>
-
-                                        {editingCommentId === comment.id ? (
-                                            <div className="edit-input-box">
-                                                <input value={editCommentText} onChange={(e: ChangeEvent<HTMLInputElement>) => setEditCommentText(e.target.value)} />
-                                                <button className="edit-btn" onClick={() => handleEditSave(comment.id)}>저장</button>
-                                                <button className="cancel-btn" onClick={() => setEditingCommentId(null)}>취소</button>
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <div className="comment-text">{comment.text}</div>
-                                                <div className="comment-date">{comment.date}</div>
-                                                <div className="comment-actions">
-                                                    <button
-                                                        className={`action-btn ${comment.isLiked ? 'liked' : ''}`}
-                                                        onClick={() => handleCommentLike(comment)}
-                                                    >
-                                                        {comment.isLiked ? '❤️' : '🤍'} {comment.likes}
-                                                    </button>
-                                                    {isLoggedIn && comment.author === userName && (
-                                                        <>
-                                                            <button className="action-btn" onClick={() => startEditing(comment)}>수정</button>
-                                                            <button className="action-btn delete" onClick={() => handleDeleteComment(comment.id)}>삭제</button>
-                                                        </>
-                                                    )}
+                                <div key={comment.id} style={{ marginBottom: '15px' }}>
+                                    {/* 댓글 */}
+                                    <div className="comment-item">
+                                        <div className="comment-avatar" style={{ overflow: 'hidden' }}>
+                                            <img src={profileImgSrc} alt="프로필" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        </div>
+                                        <div className="comment-content">
+                                            <div className="comment-author">{comment.author}</div>
+                                            {editingCommentId === comment.id ? (
+                                                <div className="edit-input-box">
+                                                    <input value={editCommentText} onChange={(e: ChangeEvent<HTMLInputElement>) => setEditCommentText(e.target.value)} />
+                                                    <button className="edit-btn" onClick={() => handleEditSave(comment.id)}>저장</button>
+                                                    <button className="cancel-btn" onClick={() => setEditingCommentId(null)}>취소</button>
                                                 </div>
-                                            </>
-                                        )}
+                                            ) : (
+                                                <>
+                                                    <div className="comment-text">{comment.text}</div>
+                                                    <div className="comment-date">{comment.date}</div>
+                                                    <div className="comment-actions">
+                                                        <button className={`action-btn ${comment.isLiked ? 'liked' : ''}`} onClick={() => handleCommentLike(comment)}>
+                                                            {comment.isLiked ? '❤️' : '🤍'} {comment.likes}
+                                                        </button>
+                                                        {isLoggedIn && (
+                                                            <button className="action-btn" onClick={() => { setReplyingToId(comment.id); setReplyText(''); }}>답글</button>
+                                                        )}
+                                                        {isLoggedIn && comment.author === userName && (
+                                                            <>
+                                                                <button className="action-btn" onClick={() => startEditing(comment)}>수정</button>
+                                                                <button className="action-btn delete" onClick={() => handleDeleteComment(comment.id)}>삭제</button>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
                                     </div>
+
+                                    {/* 대댓글 목록 */}
+                                    {comment.replies.map(reply => (
+                                        <div key={reply.id} className="comment-item" style={{ marginLeft: '40px', marginTop: '8px', background: '#f9f9f9', borderRadius: '8px', padding: '8px' }}>
+                                            <div className="comment-avatar" style={{ overflow: 'hidden' }}>
+                                                <img src={profileImgSrc} alt="프로필" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            </div>
+                                            <div className="comment-content">
+                                                <div className="comment-author">↳ {reply.author}</div>
+                                                {editingCommentId === reply.id ? (
+                                                    <div className="edit-input-box">
+                                                        <input value={editCommentText} onChange={(e: ChangeEvent<HTMLInputElement>) => setEditCommentText(e.target.value)} />
+                                                        <button className="edit-btn" onClick={() => handleEditSave(reply.id)}>저장</button>
+                                                        <button className="cancel-btn" onClick={() => setEditingCommentId(null)}>취소</button>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <div className="comment-text">{reply.text}</div>
+                                                        <div className="comment-date">{reply.date}</div>
+                                                        <div className="comment-actions">
+                                                            <button className={`action-btn ${reply.isLiked ? 'liked' : ''}`} onClick={() => handleCommentLike(reply)}>
+                                                                {reply.isLiked ? '❤️' : '🤍'} {reply.likes}
+                                                            </button>
+                                                            {isLoggedIn && reply.author === userName && (
+                                                                <>
+                                                                    <button className="action-btn" onClick={() => startEditing(reply)}>수정</button>
+                                                                    <button className="action-btn delete" onClick={() => handleDeleteComment(reply.id)}>삭제</button>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {/* 답글 입력창 */}
+                                    {replyingToId === comment.id && (
+                                        <div style={{ marginLeft: '40px', marginTop: '8px', display: 'flex', gap: '8px' }}>
+                                            <input
+                                                type="text"
+                                                value={replyText}
+                                                onChange={(e: ChangeEvent<HTMLInputElement>) => setReplyText(e.target.value)}
+                                                placeholder="답글을 입력해주세요"
+                                                style={{ flex: 1, padding: '8px 12px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px' }}
+                                                onKeyDown={(e) => { if (e.key === 'Enter') handleReplySubmit(comment.id); }}
+                                            />
+                                            <button className="submit-comment-btn" onClick={() => handleReplySubmit(comment.id)}>등록</button>
+                                            <button className="cancel-btn" onClick={() => setReplyingToId(null)}>취소</button>
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -433,11 +510,11 @@ export default function CommunityDetail() {
                         <div className="profile-info">
                             {isLoggedIn ? (
                                 <div className="profile-avatar" style={{ overflow: 'hidden' }}>
-                                    <img
-                                        src="https://images.unsplash.com/photo-1518098268026-4e89f1a2cd8e?q=80&w=100&auto=format&fit=crop"
-                                        alt="프로필"
-                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                    />
+                                    {myProfileUrl ? (
+                                        <img src={getImageUrl(myProfileUrl)} alt="프로필" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    ) : (
+                                        <span style={{ fontSize: '28px', lineHeight: 1 }}>👤</span>
+                                    )}
                                 </div>
                             ) : (
                                 <div className="profile-avatar">👤</div>
