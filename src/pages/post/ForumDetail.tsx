@@ -12,6 +12,19 @@ const getImageUrl = (path?: string) => {
     return `${path.startsWith('/') ? '' : '/'}${path}`;
 };
 
+const tagNameToBrand: Record<string, string> = {
+    '캐논': 'Canon',
+    '소니': 'Sony',
+    '니콘': 'Nikon',
+    '후지필름': 'Fujifilm',
+    '라이카': 'Leica',
+    '핫셀블라드': 'Hasselblad',
+    '파나소닉': 'Panasonic',
+    '올림푸스': 'Olympus',
+    '기타': '기타(etc)',
+    '필름': 'Film',
+};
+
 interface CommentType {
     id: number;
     postId: string | undefined;
@@ -109,8 +122,8 @@ export default function ForumDetail() {
                     title: data.title,
                     content: data.content,
                     author: data.authorName || data.author || data.nickname || '익명',
-                    brand: data.tagName || data.tag || 'Canon',
-                    boardType: data.boardType || 'Q&A',
+                    brand: tagNameToBrand[data.tagNames?.[0]] || data.tagNames?.[0] || '',
+                    boardType: data.boardType || '',
                     date: postEdited ? new Date(data.updatedAt).toLocaleDateString() : (data.createdAt ? new Date(data.createdAt).toLocaleDateString() : '방금 전'),
                     isEdited: !!postEdited,
                     views: data.view ?? data.viewCount ?? data.views ?? 0,
@@ -338,7 +351,7 @@ export default function ForumDetail() {
 
                     <div className="post-detail-box">
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                            <div className="post-category">📷 {post.brand} &gt; {post.boardType}</div>
+                            <div className="post-category">📷 FORUM</div>
 
                             {isLoggedIn && post.author === userName && !isEditingPost && (
                                 <div style={{ display: 'flex', gap: '10px' }}>
@@ -369,7 +382,7 @@ export default function ForumDetail() {
                         ) : (
                             <>
                                 <h1 className="post-title">
-                                    <span style={{fontWeight: 'bold', marginRight: '8px', color: '#00bfa5'}}>[{post.boardType}]</span>
+                                    {post.brand && <span style={{fontWeight: 'bold', marginRight: '8px', color: '#00bfa5'}}>[{post.brand}]</span>}
                                     {post.title}
                                 </h1>
 
