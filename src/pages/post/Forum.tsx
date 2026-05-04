@@ -71,12 +71,13 @@ export default function Forum() {
     }, []);
 
     // 🔥 포스트 데이터 변환 함수 (인기글, 일반글 공통 사용)
+    const brandTagNames = Object.keys(tagNameToBrand);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const formatPost = (post: any, index?: number): ForumPostType => ({
         id: post.id || post.postId,
         rowNumber: index !== undefined ? index + 1 : post.rowNumber,
         brand: tagNameToBrand[post.tagNames?.[0]] ?? '',
-        boardType: post.boardType || 'Q&A', // 백엔드에서 오는 게시판 타입이 있다면 사용, 없으면 기본값
+        boardType: post.tagNames?.find((tag: string) => !brandTagNames.includes(tag)) ?? 'Q&A',
         title: post.title,
         author: post.authorName || post.author || post.nickname || '익명',
         date: post.createdAt ? new Date(post.createdAt).toLocaleDateString() : '방금 전',
@@ -224,18 +225,20 @@ export default function Forum() {
                                 </td>
                             </tr>
                         ) : (
-                            filteredList.map((row) => {
+                            filteredList.map((row, index) => {
                                 return (
                                     <tr
                                         key={row.id}
                                         onClick={() => navigate(`/forum/${row.id}`)}
                                         style={{ cursor: 'pointer' }}
                                     >
-                                        <td>{row.rowNumber || row.id}</td>
+                                        <td>{filteredList.length - index}</td>
                                         <td className="title-cell">
-                                            <span style={{ color: '#00bfa5', fontWeight: 'bold', marginRight: '8px' }}>
-                                                [{row.boardType}]
-                                            </span>
+                                            {row.brand && (
+                                                <span style={{ color: '#00bfa5', fontWeight: 'bold', marginRight: '6px' }}>
+                                                    [{row.brand}]
+                                                </span>
+                                            )}
                                             {row.title}
                                             {row.commentCount > 0 && (
                                                 <span style={{ color: '#ff5252', fontWeight: 'bold', marginLeft: '8px', fontSize: '13px' }}>

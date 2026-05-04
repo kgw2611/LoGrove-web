@@ -28,7 +28,6 @@ export default function ForumWrite() {
     const navigate = useNavigate();
 
     // 입력 상태(State) 관리
-    const [board, setBoard] = useState<string>(''); // 세부 카테고리 (Q&A, 정보공유)
     const [camera, setCamera] = useState<string>(''); // 카메라 브랜드
     const [title, setTitle] = useState<string>('');
     const [content, setContent] = useState<string>('');
@@ -68,7 +67,6 @@ export default function ForumWrite() {
 
     // 🔥 "등록" 버튼: 백엔드 서버로 전송
     const handleSubmit = async () => {
-        if (!board) return alert('게시판 카테고리를 선택해주세요.');
         if (!camera) return alert('카메라 종류를 선택해주세요.');
         if (!title.trim()) return alert('제목을 입력해주세요.');
         if (!content.trim()) return alert('내용을 입력해주세요.');
@@ -130,36 +128,23 @@ export default function ForumWrite() {
             <div className="write-content">
                 <main className="write-main">
                     <div className="editor-top">
-                        <div style={{ display: 'flex', gap: '16px' }}>
-                            <select
-                                className="board-select"
-                                style={{ flex: 1 }}
-                                value={board}
-                                onChange={(e: ChangeEvent<HTMLSelectElement>) => setBoard(e.target.value)}
-                            >
-                                <option value="">게시판을 선택해 주세요</option>
-                                <option value="Q&A">Q&A (질문/답변)</option>
-                                <option value="정보공유">정보공유</option>
-                            </select>
-
-                            <select
-                                className="board-select"
-                                style={{ flex: 1 }}
-                                value={camera}
-                                onChange={(e: ChangeEvent<HTMLSelectElement>) => setCamera(e.target.value)}
-                            >
-                                <option value="">카메라 종류를 선택해 주세요</option>
-                                <option value="Canon">Canon</option>
-                                <option value="Sony">Sony</option>
-                                <option value="Leica">Leica</option>
-                                <option value="Film">Film</option>
-                                <option value="Fujifilm">Fujifilm</option>
-                                <option value="Hasselblad">Hasselblad</option>
-                                <option value="Olympus">Olympus</option>
-                                <option value="Panasonic">Panasonic</option>
-                                <option value="기타(etc)">기타(etc)</option>
-                            </select>
-                        </div>
+                        <select
+                            className="board-select"
+                            value={camera}
+                            onChange={(e: ChangeEvent<HTMLSelectElement>) => setCamera(e.target.value)}
+                        >
+                            <option value="">카메라 종류를 선택해 주세요</option>
+                            <option value="Canon">Canon</option>
+                            <option value="Sony">Sony</option>
+                            <option value="Nikon">Nikon</option>
+                            <option value="Fujifilm">Fujifilm</option>
+                            <option value="Leica">Leica</option>
+                            <option value="Hasselblad">Hasselblad</option>
+                            <option value="Olympus">Olympus</option>
+                            <option value="Panasonic">Panasonic</option>
+                            <option value="Film">Film</option>
+                            <option value="기타(etc)">기타(etc)</option>
+                        </select>
                         <input
                             type="text"
                             className="title-input"
