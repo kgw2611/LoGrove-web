@@ -22,11 +22,12 @@ jobs:
             git fetch origin
             git reset --hard origin/main
 
+            rm -rf dist
             npm install
             npm run build
 
-            sudo rm -rf /var/www/html/*
-            sudo cp -r dist/* /var/www/html/
+            sudo rm -rf /var/www/logrove-web/*
+            sudo cp -r dist/* /var/www/logrove-web/
 
             sudo nginx -t
             sudo systemctl reload nginx
