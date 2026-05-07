@@ -226,7 +226,7 @@ function normalizeImageUrl(raw?: string) {
 }
 
 function normalizeComment(raw: RawComment, fallbackPostId?: number): CommentItem {
-    const isEdited = !!(raw.updatedAt && raw.createdAt && raw.updatedAt !== raw.createdAt);
+    const isEdited = !!raw.updatedAt;
     return {
         id: safeNumber(raw.id ?? raw.commentId, Date.now()),
         postId: safeNumber(raw.postId ?? fallbackPostId, fallbackPostId ?? 0),

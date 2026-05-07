@@ -79,13 +79,13 @@ export default function CommunityDetail() {
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const mapComment = (c: any): CommentType => {
-                const edited = c.updatedAt && c.createdAt && c.updatedAt !== c.createdAt;
+                const edited = !!c.updatedAt;
                 return {
                     id: c.id || c.commentId,
                     postId: id,
                     author: c.authorName || c.nickname || '익명',
                     text: c.content || c.text,
-                    date: edited ? new Date(c.updatedAt).toLocaleDateString() : (c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '방금 전'),
+                    date: c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '방금 전',
                     isEdited: !!edited,
                     likes: c.likeCount || c.likes || 0,
                     isLiked: c.isLiked || false,
@@ -108,14 +108,14 @@ export default function CommunityDetail() {
                 });
                 const data = response.data.data || response.data;
 
-                const postEdited = data.updatedAt && data.createdAt && data.updatedAt !== data.createdAt;
+                const postEdited = !!data.updatedAt;
                 const formattedPost: PostType = {
                     id: data.id || data.postId,
                     title: data.title,
                     content: data.content,
                     author: data.authorName || data.author || data.nickname || '익명',
                     tag: data.tagName || data.tag || data.boardType || 'COMMUNITY',
-                    date: postEdited ? new Date(data.updatedAt).toLocaleDateString() : (data.createdAt ? new Date(data.createdAt).toLocaleDateString() : '방금 전'),
+                    date: data.createdAt ? new Date(data.createdAt).toLocaleDateString() : '방금 전',
                     isEdited: !!postEdited,
                     views: data.view ?? data.viewCount ?? data.views ?? 0,
                     images: data.images || data.imageUrls || data.postImages || [],

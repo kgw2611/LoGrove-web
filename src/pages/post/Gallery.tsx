@@ -924,7 +924,11 @@ export default function Gallery() {
                                             <div className="gallery-detail-author-name">
                                                 {selectedPost.author}
                                             </div>
-                                            <div className="gallery-detail-author-time">1년</div>
+                                            <div className="gallery-detail-author-time">
+                                                {selectedPost.createdAt
+                                                    ? new Date(selectedPost.createdAt).toLocaleDateString('ko-KR')
+                                                    : ''}
+                                            </div>
                                         </div>
                                     </div>
 
