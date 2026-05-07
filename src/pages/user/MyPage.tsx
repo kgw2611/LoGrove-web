@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef, type ChangeEvent, type MouseEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import './MyPage.css';
+
+const LEVEL_THRESHOLDS = [0, 500, 1500, 3000, 5500, 9000, 13300];
 
 // --- 타입 정의 ---
 interface UserDataType {
@@ -11,6 +13,9 @@ interface UserDataType {
     nickname?: string;
     bio?: string;
     profileUrl?: string;
+    exp?: number;
+    level?: number;
+    progress?: number;
 }
 
 type MyBoardType = 'community' | 'forum' | 'gallery';
@@ -31,6 +36,15 @@ interface MyCommentType {
     text: string;
     date: string;
     type: MyBoardType;
+}
+
+interface GalleryImageType {
+    id: number;
+    imageUrl: string;
+    source: 'gallery' | 'mission';
+    title: string;
+    createdAt: string;
+    referenceId: number;
 }
 
 // 백엔드 응답을 유연하게 받기 위한 타입
@@ -95,8 +109,10 @@ function uniqueByTypeAndId<T extends { id: number | string; type: MyBoardType }>
 
 export default function MyPage() {
     const navigate = useNavigate();
+    const location = useLocation();
+    const initialTab = (location.state as { tab?: string } | null)?.tab ?? 'posts';
 
-    const [activeTab, setActiveTab] = useState<string>('posts');
+    const [activeTab, setActiveTab] = useState<string>(initialTab);
     const [infoTab, setInfoTab] = useState<string>('account');
     const [isPwModalOpen, setIsPwModalOpen] = useState<boolean>(false);
 
@@ -113,6 +129,7 @@ export default function MyPage() {
 
     const [myPosts, setMyPosts] = useState<MyPostType[]>([]);
     const [myComments, setMyComments] = useState<MyCommentType[]>([]);
+    const [myGallery, setMyGallery] = useState<GalleryImageType[]>([]);
 
     // 1. 백엔드에서 내 정보 가져오기
     useEffect(() => {
@@ -134,6 +151,9 @@ export default function MyPage() {
                     nickname: data.nickname || data.name || '숲속으로',
                     bio: data.bio || '한줄소개쓰는 공간',
                     profileUrl: data.profileUrl || '',
+                    exp: typeof data.exp === 'number' ? data.exp : 0,
+                    level: typeof data.level === 'number' ? data.level : 1,
+                    progress: typeof data.progress === 'number' ? data.progress : 0,
                 };
 
                 setUserData(fetchedUser);
@@ -213,6 +233,18 @@ export default function MyPage() {
                 setMyComments(uniqueByTypeAndId(formattedComments));
             } catch (error) {
                 console.error('내가 쓴 댓글 불러오기 실패:', error);
+            }
+
+            // --- 나의 갤러리 가져오기 ---
+            try {
+                const galleryRes = await axios.get('/api/users/me/mygallery', {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                const galleryData: GalleryImageType[] =
+                    galleryRes.data.data || galleryRes.data?.content || [];
+                setMyGallery(galleryData);
+            } catch (error) {
+                console.error('나의 갤러리 불러오기 실패:', error);
             }
         };
 
@@ -539,7 +571,27 @@ export default function MyPage() {
                 </div>
 
                 <div className="profile-info">
-                    <h1 className="profile-nickname">{userName}</h1>
+                    <div className="profile-nickname-row">
+                        <span className="profile-level-badge">Lv.{userData.level ?? 1}</span>
+                        <h1 className="profile-nickname">{userName}</h1>
+                    </div>
+
+                    {(() => {
+                        const lv = userData.level ?? 1;
+                        const prog = userData.progress ?? 0;
+                        const maxProg = lv < LEVEL_THRESHOLDS.length
+                            ? LEVEL_THRESHOLDS[lv] - LEVEL_THRESHOLDS[lv - 1]
+                            : LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length - 1] - LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length - 2];
+                        const pct = Math.min(100, Math.round((prog / maxProg) * 100));
+                        return (
+                            <div className="profile-xp-bar-wrapper">
+                                <div className="profile-xp-bar-track">
+                                    <div className="profile-xp-bar-fill" style={{ width: `${pct}%` }} />
+                                </div>
+                                <span className="profile-xp-text">{prog} / {maxProg} XP</span>
+                            </div>
+                        );
+                    })()}
 
                     {isEditingBio ? (
                         <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
@@ -648,6 +700,12 @@ export default function MyPage() {
                     onClick={() => setActiveTab('quizzes')}
                 >
                     내가 푼 문제
+                </button>
+                <button
+                    className={`tab-btn ${activeTab === 'gallery' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('gallery')}
+                >
+                    나의 갤러리
                 </button>
                 <button
                     className={`tab-btn ${activeTab === 'info' ? 'active' : ''}`}
@@ -776,6 +834,35 @@ export default function MyPage() {
                                     </li>
                                 ))}
                             </ul>
+                        )}
+                    </div>
+                )}
+
+                {activeTab === 'gallery' && (
+                    <div>
+                        <h3 style={{ marginBottom: '20px' }}>
+                            나의 갤러리 총 {myGallery.length}장
+                        </h3>
+                        {myGallery.length === 0 ? (
+                            <p style={{ color: '#999', textAlign: 'center', padding: '40px 0' }}>
+                                저장된 이미지가 없습니다.
+                            </p>
+                        ) : (
+                            <div className="my-gallery-grid">
+                                {myGallery.map((img) => (
+                                    <div key={`${img.source}-${img.id}`} className="my-gallery-item">
+                                        <div className="my-gallery-image-box">
+                                            <img src={img.imageUrl} alt={img.title} />
+                                        </div>
+                                        <div className="my-gallery-label">
+                                            <span className={`my-gallery-source ${img.source}`}>
+                                                {img.source === 'gallery' ? '갤러리' : '미션'}
+                                            </span>
+                                            <span className="my-gallery-title">{img.title}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         )}
                     </div>
                 )}

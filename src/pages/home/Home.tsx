@@ -85,10 +85,12 @@ export default function Home() {
                         </div>
                     </div>
 
-                    {/* 세 번째 카드: 갤러리 */}
-                    <Link
-                        to="/gallery"
-                        style={{ textDecoration: 'none', color: 'inherit' }}
+                    {/* 세 번째 카드: 나의 갤러리 */}
+                    <div
+                        onClick={() => isLoggedIn
+                            ? navigate('/mypage', { state: { tab: 'gallery' } })
+                            : navigate('/login')}
+                        style={{ cursor: 'pointer', color: 'inherit' }}
                     >
                         <div className="feature-card card-blue">
                             <div className="card-badge badge-blue">기록</div>
@@ -104,7 +106,7 @@ export default function Home() {
                             </p>
                             <div className="card-link">갤러리 가기 &rarr;</div>
                         </div>
-                    </Link>
+                    </div>
                 </div>
             </section>
         </div>

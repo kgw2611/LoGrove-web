@@ -21,6 +21,10 @@ export default defineConfig({
         target: 'http://3.38.12.226',
         changeOrigin: true,
       },
+      '/images/submissions': {
+        target: 'http://3.38.12.226',
+        changeOrigin: true,
+      },
     },
   },
 })
