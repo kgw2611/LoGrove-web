@@ -33,16 +33,6 @@ type GradingResult = {
     feedback?: string
 }
 
-const getDefaultMissionImage = (theme?: string) => {
-    const map: Record<string, string> = {
-        '3분할': '/images/3divisions.png',
-        '황금비율': '/images/golden ratio.png',
-        '소실점': '/images/vanishing point.png',
-        '야경사진': '/images/night view.png',
-    }
-    return theme ? (map[theme] ?? '/images/mission-illustration.png') : '/images/mission-illustration.png'
-}
-
 
 export default function StudyMission() {
     const navigate = useNavigate()
@@ -69,7 +59,7 @@ export default function StudyMission() {
                     level: (item.level ?? 0) as number,
                     state: item.state as 'INCOMPLETE' | 'COMPLETED' | undefined,
                     sampleUrl: (item.sampleUrl ?? item.sample_url) as string | undefined,
-                    color: idx % 2 === 0 ? 'green' : 'purple',
+                    color: item.state === 'COMPLETED' ? 'purple' : 'green',
                 }))
                 setCards(mapped)
             })
@@ -170,7 +160,7 @@ export default function StudyMission() {
                                     </div>
                                 </div>
                                 <div className="mission-card-image-box">
-                                    <img src={card.sampleUrl || getDefaultMissionImage(card.theme)} alt={card.theme} />
+                                    <img src={card.sampleUrl || '/images/mission-illustration.png'} alt={card.theme} />
                                 </div>
                             </div>
                         ))
