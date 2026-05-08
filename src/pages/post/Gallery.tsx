@@ -61,20 +61,6 @@ function UserIcon() {
     );
 }
 
-function ChevronDownIcon() {
-    return (
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path
-                d="M6 9L12 15L18 9"
-                stroke="#444"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-        </svg>
-    );
-}
-
 function BackIcon() {
     return (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -168,7 +154,6 @@ function TagArrowIcon({ open }: { open: boolean }) {
     );
 }
 
-// 🔥 11번 퀘스트: 갤러리에서 제외할 커뮤니티/포럼 태그 목록 정의
 const EXCLUDED_TAGS = [
     '일상', '거래', '정보', '질문', '사진', '출사지', '이벤트', '리뷰',
     '캐논', '소니', '니콘', '후지필름', '라이카', '핫셀블라드', '파나소닉', '올림푸스', '기타', '필름',
@@ -241,8 +226,6 @@ export default function Gallery() {
     const isCommentTyping = commentInput.trim().length > 0;
     const hasSearchOrTag = searchText.trim().length > 0 || selectedTag !== '전체';
 
-
-    // 🔥 서버에서 내 유저 정보(닉네임) 불러와서 연동!
     const [userName, setUserName] = useState<string>(() => {
         const savedUserString = localStorage.getItem('user_db');
         if (savedUserString) {
@@ -253,7 +236,6 @@ export default function Gallery() {
     });
     const [profileImageUrl, setProfileImageUrl] = useState<string>('');
 
-    // 🔥 API 호출 시 profileUrl 데이터도 함께 가져와서 State에 저장!
     useEffect(() => {
         const fetchMyInfo = async () => {
             const token = localStorage.getItem('access_token');
@@ -264,7 +246,7 @@ export default function Gallery() {
                     });
                     const data = response.data.data || response.data;
                     setUserName(data.nickname || data.name || '익명');
-                    setProfileImageUrl(data.profileUrl || ''); // 프로필 이미지 URL 세팅
+                    setProfileImageUrl(data.profileUrl || '');
                 } catch (error) {
                     console.error("내 정보 불러오기 실패", error);
                 }
@@ -368,7 +350,6 @@ export default function Gallery() {
                     }),
                 ]);
 
-                // 🔥 11번 퀘스트: 가져온 태그 목록 중 커뮤니티/포럼 전용 태그 필터링!
                 const filteredTags = tags.filter((tag: string) => !EXCLUDED_TAGS.includes(tag) && tag !== '전체');
                 setTagOptions(['전체', ...filteredTags]);
 
@@ -701,93 +682,118 @@ export default function Gallery() {
 
     return (
         <div className="gallery-container">
-            <div className="gallery-sub-header">
-                <div className="search-bar-wrapper">
-                    <span className="gallery-search-icon">
-                        <SearchIcon />
-                    </span>
-                    <input
-                        type="text"
-                        placeholder="Search for..."
-                        className="gallery-search-input"
-                        value={searchText}
-                        onChange={(e) => setSearchText(e.target.value)}
-                    />
-                </div>
 
-                <div className="gallery-actions">
-                    <Link
-                        to={isLoggedIn ? '/gallery/write' : '/login'}
-                        className="gallery-write-link"
-                    >
-                        <button className="gallery-write-btn" type="button">
-                            <WritingIcon />
-                            <span>writing</span>
-                        </button>
-                    </Link>
+            {/* 🔥 검색창 영역: 위쪽 회색 여백을 제거하고 헤더에 바짝 붙이는 마법의 코드! */}
+            <div
+                style={{
+                    position: 'sticky',
+                    top: '64px', /* 글로벌 헤더 높이에 맞게 조절 (기존 46px -> 70px) */
+                    zIndex: 100,
+                    backgroundColor: '#ffffff',
+                    borderBottom: '1px solid #eaeaea',
 
-                    {/* 🔥 프로필 이미지 표시 로직 추가! */}
-                    <button
-                        className="gallery-profile-btn"
-                        type="button"
-                        aria-label="profile"
-                        onClick={() => navigate(isLoggedIn ? '/mypage' : '/login')}
-                        style={{ padding: 0, overflow: 'hidden', borderRadius: '50%', border: 'none', background: 'none' }}
-                    >
-                        {isLoggedIn ? (
-                            profileImageUrl ? (
-                                <img
-                                    src={profileImageUrl}
-                                    alt="내 프로필"
-                                    style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', display: 'block' }}
-                                />
-                            ) : userName ? (
-                                <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: '#00bfa5', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 'bold' }}>
-                                    {getAvatarText(userName)}
-                                </div>
+                    /* 🔥 핵심: 부모 요소(gallery-container)의 패딩으로 인해 생기는 위쪽 회색 공백을 강제로 무시하고 위로 끌어올림! */
+                    marginTop: '-40px',
+
+                    /* 양옆 회색 공간 없이 화면 끝까지 배경 채우는 마법의 코드 */
+                    marginLeft: 'calc(-50vw + 50%)',
+                    marginRight: 'calc(-50vw + 50%)',
+                    paddingLeft: 'calc(50vw - 50%)',
+                    paddingRight: 'calc(50vw - 50%)',
+                    boxSizing: 'border-box',
+
+                    paddingTop: '25px', /* 끌어올린 대신 안쪽 여백을 조금 줘서 글씨가 덜 답답하게 함 */
+                    paddingBottom: '10px',
+                    marginBottom: '15px',
+                    transition: 'all 0.3s ease',
+                }}
+            >
+                <div className="gallery-sub-header" style={{ marginBottom: isTagsVisible ? '10px' : '0' }}>
+                    <div className="search-bar-wrapper">
+                        <span className="gallery-search-icon">
+                            <SearchIcon />
+                        </span>
+                        <input
+                            type="text"
+                            placeholder="Search for..."
+                            className="gallery-search-input"
+                            value={searchText}
+                            onChange={(e) => setSearchText(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="gallery-actions">
+                        <Link
+                            to={isLoggedIn ? '/gallery/write' : '/login'}
+                            className="gallery-write-link"
+                        >
+                            <button className="gallery-write-btn" type="button">
+                                <WritingIcon />
+                                <span>writing</span>
+                            </button>
+                        </Link>
+
+                        <button
+                            className="gallery-profile-btn"
+                            type="button"
+                            aria-label="profile"
+                            onClick={() => navigate(isLoggedIn ? '/mypage' : '/login')}
+                            style={{ padding: 0, overflow: 'hidden', borderRadius: '50%', border: 'none', background: 'none' }}
+                        >
+                            {isLoggedIn ? (
+                                profileImageUrl ? (
+                                    <img
+                                        src={profileImageUrl}
+                                        alt="내 프로필"
+                                        style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', display: 'block' }}
+                                    />
+                                ) : userName ? (
+                                    <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: '#00bfa5', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 'bold' }}>
+                                        {getAvatarText(userName)}
+                                    </div>
+                                ) : (
+                                    <UserIcon />
+                                )
                             ) : (
                                 <UserIcon />
-                            )
-                        ) : (
-                            <UserIcon />
+                            )}
+                        </button>
+
+
+                    </div>
+                </div>
+
+                {!selectedPost && (
+                    <div className={`gallery-tag-area ${isTagsVisible ? 'open' : 'closed'}`} style={{ margin: 0 }}>
+                        <button
+                            type="button"
+                            className="gallery-tag-collapse-btn"
+                            onClick={() => setIsTagsVisible((prev) => !prev)}
+                            aria-label={isTagsVisible ? '태그 숨기기' : '태그 펼치기'}
+                            style={{ zIndex: 101 }}
+                        >
+                            <TagArrowIcon open={isTagsVisible} />
+                        </button>
+
+                        {isTagsVisible && (
+                            <div className="gallery-tag-bar gallery-tag-bordered" style={{ paddingBottom: '5px' }}>
+                                {tagOptions.map((tag) => (
+                                    <button
+                                        key={tag}
+                                        type="button"
+                                        className={`gallery-tag-chip gallery-tag-border-chip ${
+                                            selectedTag === tag ? 'active' : ''
+                                        }`}
+                                        onClick={() => setSelectedTag(tag)}
+                                    >
+                                        {tag}
+                                    </button>
+                                ))}
+                            </div>
                         )}
-                    </button>
-
-                    <button className="gallery-dropdown-btn" type="button" aria-label="more">
-                        <ChevronDownIcon />
-                    </button>
-                </div>
+                    </div>
+                )}
             </div>
-
-            {!selectedPost && (
-                <div className={`gallery-tag-area ${isTagsVisible ? 'open' : 'closed'}`}>
-                    <button
-                        type="button"
-                        className="gallery-tag-collapse-btn"
-                        onClick={() => setIsTagsVisible((prev) => !prev)}
-                        aria-label={isTagsVisible ? '태그 숨기기' : '태그 펼치기'}
-                    >
-                        <TagArrowIcon open={isTagsVisible} />
-                    </button>
-
-                    {isTagsVisible && (
-                        <div className="gallery-tag-bar gallery-tag-bordered">
-                            {tagOptions.map((tag) => (
-                                <button
-                                    key={tag}
-                                    type="button"
-                                    className={`gallery-tag-chip gallery-tag-border-chip ${
-                                        selectedTag === tag ? 'active' : ''
-                                    }`}
-                                    onClick={() => setSelectedTag(tag)}
-                                >
-                                    {tag}
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            )}
 
             {isLoading ? (
                 <div className="gallery-loading-state">
@@ -871,8 +877,6 @@ export default function Gallery() {
                                 >
                                     <ShareIcon />
                                 </button>
-
-                                {/* 🔥 18번 퀘스트: 상세페이지 게시글 더보기(MoreIcon) 삭제 완료! */}
                             </div>
                         </div>
 
