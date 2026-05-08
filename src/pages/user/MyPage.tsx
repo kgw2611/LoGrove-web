@@ -47,6 +47,22 @@ interface GalleryImageType {
     referenceId: number;
 }
 
+interface SolvedMissionType {
+    missionId: number;
+    question: string;
+    state: string;
+}
+
+interface PhotoSubmissionType {
+    resultId: number;
+    missionId: number;
+    theme: string;
+    score: number;
+    result: 'PASS' | 'FAIL';
+    resultUrl: string | null;
+    submittedAt: string;
+}
+
 // 백엔드 응답을 유연하게 받기 위한 타입
 type RawMyActivity = Record<string, unknown>;
 
@@ -130,6 +146,8 @@ export default function MyPage() {
     const [myPosts, setMyPosts] = useState<MyPostType[]>([]);
     const [myComments, setMyComments] = useState<MyCommentType[]>([]);
     const [myGallery, setMyGallery] = useState<GalleryImageType[]>([]);
+    const [myMissions, setMyMissions] = useState<SolvedMissionType[]>([]);
+    const [myPhotoSubmissions, setMyPhotoSubmissions] = useState<PhotoSubmissionType[]>([]);
 
     // 1. 백엔드에서 내 정보 가져오기
     useEffect(() => {
@@ -245,6 +263,26 @@ export default function MyPage() {
                 setMyGallery(galleryData);
             } catch (error) {
                 console.error('나의 갤러리 불러오기 실패:', error);
+            }
+
+            // --- 단계별 미션 완료 목록 ---
+            try {
+                const missionsRes = await axios.get('/api/users/me/missionlist', {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                setMyMissions(missionsRes.data.data || missionsRes.data || []);
+            } catch (error) {
+                console.error('미션 목록 불러오기 실패:', error);
+            }
+
+            // --- 사진 미션 제출 이력 ---
+            try {
+                const photoRes = await axios.get('/api/users/me/photolist', {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                setMyPhotoSubmissions(photoRes.data.data || photoRes.data || []);
+            } catch (error) {
+                console.error('사진 미션 이력 불러오기 실패:', error);
             }
         };
 
@@ -868,14 +906,83 @@ export default function MyPage() {
                 )}
 
                 {activeTab === 'quizzes' && (
-                    <div
-                        style={{
-                            color: '#999',
-                            textAlign: 'center',
-                            padding: '40px 0',
-                        }}
-                    >
-                        준비 중인 기능입니다.
+                    <div>
+                        {/* 단계별 미션 */}
+                        <h3 style={{ marginBottom: '16px' }}>
+                            단계별 미션 완료 {myMissions.filter(m => m.state === 'COMPLETED').length}개
+                        </h3>
+                        {myMissions.filter(m => m.state === 'COMPLETED').length === 0 ? (
+                            <p style={{ color: '#999', padding: '20px 0 40px' }}>완료한 단계별 미션이 없습니다.</p>
+                        ) : (
+                            <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 48px' }}>
+                                {myMissions.filter(m => m.state === 'COMPLETED').map(m => (
+                                    <li
+                                        key={m.missionId}
+                                        style={{
+                                            borderBottom: '1px solid #eee',
+                                            padding: '14px 0',
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                        }}
+                                    >
+                                        <span style={{ fontSize: '15px', color: '#333' }}>{m.question}</span>
+                                        <span style={{
+                                            fontSize: '12px', fontWeight: 700,
+                                            color: '#00bfa5', background: '#e6fcf5',
+                                            padding: '3px 10px', borderRadius: '20px', whiteSpace: 'nowrap', marginLeft: '12px',
+                                        }}>완료</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+
+                        {/* 사진 미션 */}
+                        <h3 style={{ marginBottom: '16px' }}>
+                            사진 미션 제출 이력 {myPhotoSubmissions.length}개
+                        </h3>
+                        {myPhotoSubmissions.length === 0 ? (
+                            <p style={{ color: '#999', padding: '20px 0' }}>제출한 사진 미션이 없습니다.</p>
+                        ) : (
+                            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                                {myPhotoSubmissions.map(p => (
+                                    <li
+                                        key={p.resultId}
+                                        style={{
+                                            borderBottom: '1px solid #eee',
+                                            padding: '14px 0',
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            gap: '12px',
+                                        }}
+                                    >
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                                            {p.resultUrl && (
+                                                <img
+                                                    src={p.resultUrl}
+                                                    alt={p.theme}
+                                                    style={{ width: '52px', height: '52px', objectFit: 'cover', borderRadius: '6px', flexShrink: 0 }}
+                                                />
+                                            )}
+                                            <div>
+                                                <div style={{ fontSize: '15px', color: '#333', marginBottom: '4px' }}>#{p.theme}</div>
+                                                <div style={{ fontSize: '13px', color: '#999' }}>{formatDate(p.submittedAt)}</div>
+                                            </div>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+                                            <span style={{ fontSize: '14px', color: '#555' }}>{p.score}점</span>
+                                            <span style={{
+                                                fontSize: '12px', fontWeight: 700,
+                                                color: p.result === 'PASS' ? '#00bfa5' : '#e53935',
+                                                background: p.result === 'PASS' ? '#e6fcf5' : '#fce8e8',
+                                                padding: '3px 10px', borderRadius: '20px',
+                                            }}>{p.result}</span>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
                     </div>
                 )}
 
