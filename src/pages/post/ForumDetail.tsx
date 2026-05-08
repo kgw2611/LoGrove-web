@@ -344,8 +344,6 @@ export default function ForumDetail() {
                     {/* 🔥 태그 검색 부분 삭제 완료! */}
 
                     <div className="post-nav-buttons" style={{ marginTop: '20px' }}>
-                        <button className="nav-btn">∧ 이전글</button>
-                        <button className="nav-btn">∨ 다음글</button>
                         <button className="nav-btn list-btn" onClick={() => navigate('/forum')}>목록</button>
                     </div>
 

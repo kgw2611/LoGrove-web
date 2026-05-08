@@ -1,16 +1,8 @@
 import { useState, useRef, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios'; // 🔥 백엔드 통신을 위한 axios 추가
+import axios from 'axios';
 import '../home/Home.css';
 import './CommunityWrite.css';
-
-// 타입 정의
-interface Toggles {
-    comment: boolean;
-    share: boolean;
-    scrap: boolean;
-    source: boolean;
-}
 
 const communityTagIdMap: Record<string, number> = {
     '일상': 1,
@@ -31,21 +23,12 @@ export default function CommunityWrite() {
     const [title, setTitle] = useState<string>('');
     const [content, setContent] = useState<string>('');
 
-    // 🔥 1. 사진 파일 관리를 위한 상태 추가
+    // 사진 파일 관리를 위한 상태 추가
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // 우측 토글 스위치 상태 관리
-    const [toggles, setToggles] = useState<Toggles>({
-        comment: true, share: true, scrap: false, source: true
-    });
-
-    const handleToggle = (key: keyof Toggles) => {
-        setToggles(prev => ({ ...prev, [key]: !prev[key] }));
-    };
-
-    // 🔥 2. 사진 첨부 기능
+    // 사진 첨부 기능
     const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -65,7 +48,7 @@ export default function CommunityWrite() {
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
-    // 🔥 3. "등록" 버튼: 백엔드 서버로 찐 전송!
+    // "등록" 버튼: 백엔드 서버로 전송
     const handleSubmit = async () => {
         if (!board) return alert('게시판 카테고리를 선택해주세요.');
         if (!title.trim()) return alert('제목을 입력해주세요.');
@@ -74,7 +57,6 @@ export default function CommunityWrite() {
         // 파일과 글자를 같이 보내는 FormData 상자 생성
         const formData = new FormData();
 
-        // 🚨 이전에 우리가 찾아낸 정답! 커뮤니티 글쓰기이므로 무조건 COMMUNITY로 고정!
         formData.append('boardType', 'COMMUNITY');
         formData.append('title', title);
         formData.append('content', content);
@@ -130,9 +112,9 @@ export default function CommunityWrite() {
             </div>
 
             {/* 글쓰기 메인 영역 */}
-            <div className="write-content">
-                {/* 왼쪽: 에디터 영역 */}
-                <main className="write-main">
+            {/* 사이드바가 사라졌으므로 메인 영역이 100% 너비를 차지하도록 조정 */}
+            <div className="write-content" style={{ display: 'block' }}>
+                <main className="write-main" style={{ width: '100%', maxWidth: '1000px', margin: '0 auto' }}>
                     <div className="editor-top">
                         <select className="board-select" value={board} onChange={(e: ChangeEvent<HTMLSelectElement>) => setBoard(e.target.value)}>
                             <option value="">게시판을 선택해 주세요</option>
@@ -151,7 +133,6 @@ export default function CommunityWrite() {
                     {/* 에디터 툴바 */}
                     <div className="editor-toolbar">
                         <div className="toolbar-icons">
-                            {/* 🔥 4. 숨겨진 파일 인풋 & 버튼 연결 */}
                             <input type="file" accept="image/*" ref={fileInputRef} style={{ display: 'none' }} onChange={handleImageUpload} />
                             <button onClick={() => fileInputRef.current?.click()}>🖼️ 사진</button>
 
@@ -173,17 +154,35 @@ export default function CommunityWrite() {
                         </div>
                     </div>
 
-                    {/* 본문 입력 및 이미지 미리보기 영역 */}
-                    <div className="textarea-container" style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '20px' }}>
+                    {/* 🔥 텍스트 영역 글박스 스타일링 */}
+                    <div className="textarea-container" style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        flex: 1,
+                        padding: '20px',
+                        border: '1px solid #EAEAEA', /* 윤곽선 추가 */
+                        borderRadius: '0 0 12px 12px', /* 하단 모서리 둥글게 */
+                        backgroundColor: '#FCFCFC', /* 살짝 배경색을 줘서 박스 느낌 강조 */
+                        minHeight: '500px', /* 충분한 높이 확보 */
+                        boxShadow: 'inset 0px 2px 4px rgba(0,0,0,0.02)' /* 살짝 파인듯한 느낌 */
+                    }}>
                         <textarea
                             className="content-textarea"
                             placeholder="내용을 입력하세요"
                             value={content}
                             onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setContent(e.target.value)}
-                            style={{ flex: 1, border: 'none', resize: 'none', outline: 'none', minHeight: '300px' }}
+                            style={{
+                                flex: 1,
+                                border: 'none',
+                                resize: 'none',
+                                outline: 'none',
+                                background: 'transparent',
+                                fontSize: '15px',
+                                lineHeight: '1.6'
+                            }}
                         ></textarea>
 
-                        {/* 🔥 5. 첨부된 사진 미리보기 창 */}
+                        {/* 첨부된 사진 미리보기 창 */}
                         {previewImage && (
                             <div className="image-preview" style={{ position: 'relative', display: 'inline-block', marginTop: '20px', maxWidth: '300px' }}>
                                 <img src={previewImage} alt="미리보기" style={{ width: '100%', borderRadius: '8px', border: '1px solid #eee' }} />
@@ -198,26 +197,7 @@ export default function CommunityWrite() {
                             </div>
                         )}
                     </div>
-
                 </main>
-
-                {/* 오른쪽: 설정 사이드바 */}
-                <aside className="write-sidebar">
-                    <div className="setting-box gray-box">
-                        <div className="setting-title">공개설정 ⌄</div>
-                        <div className="setting-list">
-                            <label><input type="radio" name="visibility" /> 멤버공개</label>
-                            <label><input type="radio" name="visibility" defaultChecked /> 전체공개</label>
-                        </div>
-                    </div>
-
-                    <div className="setting-box gray-box">
-                        <div className="toggle-row"><span className="toggle-label">댓글달기 허용</span><label className="switch"><input type="checkbox" checked={toggles.comment} onChange={() => handleToggle('comment')} /><span className="slider round"></span></label></div>
-                        <div className="toggle-row"><span className="toggle-label">공유 허용</span><label className="switch"><input type="checkbox" checked={toggles.share} onChange={() => handleToggle('share')} /><span className="slider round"></span></label></div>
-                        <div className="toggle-row"><span className="toggle-label">스크랩 허용</span><label className="switch"><input type="checkbox" checked={toggles.scrap} onChange={() => handleToggle('scrap')} /><span className="slider round"></span></label></div>
-                        <div className="toggle-row"><span className="toggle-label">자동출처 사용</span><label className="switch"><input type="checkbox" checked={toggles.source} onChange={() => handleToggle('source')} /><span className="slider round"></span></label></div>
-                    </div>
-                </aside>
             </div>
         </div>
     );

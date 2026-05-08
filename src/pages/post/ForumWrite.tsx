@@ -2,14 +2,7 @@ import { useState, useRef, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios'; // 🔥 백엔드 통신용 axios
 import '../home/Home.css';
-import './CommunityWrite.css';
-
-interface Toggles {
-    comment: boolean;
-    share: boolean;
-    scrap: boolean;
-    source: boolean;
-}
+import './CommunityWrite.css'; // (CSS 파일은 CommunityWrite와 동일하게 쓴다고 가정)
 
 const brandTagIdMap: Record<string, number> = {
     'Canon': 9,
@@ -36,15 +29,6 @@ export default function ForumWrite() {
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-
-    // 토글 스위치
-    const [toggles, setToggles] = useState<Toggles>({
-        comment: true, share: true, scrap: true, source: true
-    });
-
-    const handleToggle = (key: keyof Toggles) => {
-        setToggles(prev => ({ ...prev, [key]: !prev[key] }));
-    };
 
     // 🔥 사진 첨부 기능
     const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
@@ -125,8 +109,10 @@ export default function ForumWrite() {
                 </div>
             </div>
 
-            <div className="write-content">
-                <main className="write-main">
+            {/* 글쓰기 메인 영역 */}
+            {/* 사이드바가 사라졌으므로 메인 영역이 100% 너비를 차지하도록 조정 */}
+            <div className="write-content" style={{ display: 'block' }}>
+                <main className="write-main" style={{ width: '100%', maxWidth: '1000px', margin: '0 auto' }}>
                     <div className="editor-top">
                         <select
                             className="board-select"
@@ -177,16 +163,35 @@ export default function ForumWrite() {
                         </div>
                     </div>
 
-                    {/* 본문 및 이미지 미리보기 */}
-                    <div className="textarea-container" style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '20px' }}>
+                    {/* 🔥 텍스트 영역 글박스 스타일링 */}
+                    <div className="textarea-container" style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        flex: 1,
+                        padding: '20px',
+                        border: '1px solid #EAEAEA', /* 윤곽선 추가 */
+                        borderRadius: '0 0 12px 12px', /* 하단 모서리 둥글게 */
+                        backgroundColor: '#FCFCFC', /* 살짝 배경색을 줘서 박스 느낌 강조 */
+                        minHeight: '500px', /* 충분한 높이 확보 */
+                        boxShadow: 'inset 0px 2px 4px rgba(0,0,0,0.02)' /* 살짝 파인듯한 느낌 */
+                    }}>
                         <textarea
                             className="content-textarea"
                             placeholder="내용을 입력하세요"
                             value={content}
                             onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setContent(e.target.value)}
-                            style={{ flex: 1, border: 'none', resize: 'none', outline: 'none', minHeight: '300px' }}
+                            style={{
+                                flex: 1,
+                                border: 'none',
+                                resize: 'none',
+                                outline: 'none',
+                                background: 'transparent',
+                                fontSize: '15px',
+                                lineHeight: '1.6'
+                            }}
                         ></textarea>
 
+                        {/* 첨부된 사진 미리보기 창 */}
                         {previewImage && (
                             <div className="image-preview" style={{ position: 'relative', display: 'inline-block', marginTop: '20px', maxWidth: '300px' }}>
                                 <img src={previewImage} alt="미리보기" style={{ width: '100%', borderRadius: '8px', border: '1px solid #eee' }} />
@@ -203,23 +208,6 @@ export default function ForumWrite() {
                     </div>
 
                 </main>
-
-                <aside className="write-sidebar">
-                    <div className="setting-box gray-box">
-                        <div className="setting-title">공개설정 ⌄</div>
-                        <div className="setting-list">
-                            <label><input type="radio" name="visibility" /> 멤버공개</label>
-                            <label><input type="radio" name="visibility" defaultChecked /> 전체공개</label>
-                        </div>
-                    </div>
-
-                    <div className="setting-box gray-box">
-                        <div className="toggle-row"><span className="toggle-label">댓글달기 허용</span><label className="switch"><input type="checkbox" checked={toggles.comment} onChange={() => handleToggle('comment')} /><span className="slider round"></span></label></div>
-                        <div className="toggle-row"><span className="toggle-label">공유 허용</span><label className="switch"><input type="checkbox" checked={toggles.share} onChange={() => handleToggle('share')} /><span className="slider round"></span></label></div>
-                        <div className="toggle-row"><span className="toggle-label">스크랩 허용</span><label className="switch"><input type="checkbox" checked={toggles.scrap} onChange={() => handleToggle('scrap')} /><span className="slider round"></span></label></div>
-                        <div className="toggle-row"><span className="toggle-label">자동출처 사용</span><label className="switch"><input type="checkbox" checked={toggles.source} onChange={() => handleToggle('source')} /><span className="slider round"></span></label></div>
-                    </div>
-                </aside>
             </div>
         </div>
     );

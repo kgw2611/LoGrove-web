@@ -321,8 +321,6 @@ export default function CommunityDetail() {
                 <main className="comm-main">
 
                     <div className="post-nav-buttons" style={{ marginTop: '20px' }}>
-                        <button className="nav-btn">∧ 이전글</button>
-                        <button className="nav-btn">∨ 다음글</button>
                         <button className="nav-btn list-btn" onClick={() => navigate('/community')}>목록</button>
                     </div>
 
