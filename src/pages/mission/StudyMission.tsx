@@ -121,6 +121,34 @@ export default function StudyMission() {
         }
     }
 
+    const getDefaultMissionImage = (theme: string) => {
+        const imageMap: Record<string, string> = {
+            '3분할': '/images/samples/3분할.png',
+            '중앙배치': '/images/samples/중앙배치.png',
+            '중앙 배치': '/images/samples/중앙배치.png',
+            '대칭': '/images/samples/대칭.png',
+            '여백': '/images/samples/여백.png',
+            '소실점': '/images/samples/소실점.png',
+            '야경': '/images/samples/야경.png',
+            '윤슬': '/images/samples/윤슬.jpg',
+            '인물': '/images/samples/인물.jpg',
+            '꽃': '/images/samples/꽃.jpg',
+            '고양이': '/images/samples/고양이.png',
+            '건축물': '/images/samples/건축물.png',
+            '골든아워': '/images/samples/골든아워.png',
+            '로우앵글': '/images/samples/로우앵글.png',
+            '리딩라인': '/images/samples/리딩라인.png',
+            '반영': '/images/samples/반영.png',
+            '패턴': '/images/samples/패턴.png',
+            '프레이밍': '/images/samples/프레이밍.png',
+            '하늘': '/images/samples/하늘.png',
+            '하이앵글': '/images/samples/하이앵글.png',
+            '흑백': '/images/samples/흑백.png',
+        }
+
+        return imageMap[theme] || '/images/mission-illustration.png'
+    }
+
     const sampleImg = detail?.sampleUrl ?? detail?.sample_url ?? undefined
     const modalSampleImg = sampleImg
     const passScore = detail?.passScore ?? detail?.pass_score ?? null
