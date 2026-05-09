@@ -132,6 +132,11 @@
     display: flex;
     flex-direction: column;
     gap: 20px;
+
+    /* 👇 스크롤 따라오게 만드는 마법의 3줄 👇 */
+    position: sticky;
+    top: 90px; /* 글로벌 헤더 높이에 맞게 조절 (원하시면 70px 등으로 변경 가능) */
+    align-self: flex-start; /* 부모 높이만큼 늘어나는 것을 방지 */
 }
 
 .sidebar-box {

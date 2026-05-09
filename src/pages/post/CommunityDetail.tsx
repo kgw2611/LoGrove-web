@@ -37,6 +37,13 @@ interface PostType {
     profileUrl?: string;
 }
 
+// 🔥 인기 게시글 사이드바용 타입 추가
+interface SidebarBoard {
+    id: number;
+    title: string;
+    views: number;
+}
+
 export default function CommunityDetail() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -68,6 +75,9 @@ export default function CommunityDetail() {
     const [replyingToId, setReplyingToId] = useState<number | null>(null);
     const [replyText, setReplyText] = useState<string>('');
     const [myProfileUrl, setMyProfileUrl] = useState<string | null>(null);
+
+    // 🔥 인기 게시글 목록 상태
+    const [popularSidebar, setPopularSidebar] = useState<SidebarBoard[]>([]);
 
     const fetchComments = async () => {
         try {
@@ -152,12 +162,33 @@ export default function CommunityDetail() {
         if (id) {
             fetchPostDetail();
             fetchComments();
+            window.scrollTo({ top: 0, behavior: 'smooth' }); // 🔥 다른 글로 이동 시 맨 위로 스크롤
         }
 
         fetchMyInfo();
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id, navigate]);
+
+    // 🔥 실시간 인기 게시글 불러오기 (한 번만 실행)
+    useEffect(() => {
+        const fetchPopularSidebar = async () => {
+            try {
+                const response = await axios.get('/api/posts/popular?board=COMMUNITY&days=7');
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const postsData: SidebarBoard[] = (response.data.data || []).slice(0, 5).map((post: any) => ({
+                    id: post.id || post.postId,
+                    title: post.title,
+                    views: post.view || post.viewCount || post.views || 0,
+                }));
+                setPopularSidebar(postsData);
+            } catch (error) {
+                console.error('인기 게시글 사이드바 불러오기 실패:', error);
+            }
+        };
+        fetchPopularSidebar();
+    }, []);
+
 
     // 게시글 삭제
     const handleDeletePost = async () => {
@@ -398,7 +429,6 @@ export default function CommunityDetail() {
                         )}
 
                         <div className="post-footer-actions">
-                            <div className="more-posts-link"><span className="author-name-bold">{post.author}</span> 님의 게시글 더보기 &gt;</div>
                             <div className="like-comment-count">
                                 <span
                                     className={`post-like-btn ${postLike.isLiked ? 'liked' : ''}`}
@@ -547,6 +577,27 @@ export default function CommunityDetail() {
                             </Link>
                         )}
                     </div>
+
+                    {/* 🔥 찐으로 추가된 인기 게시판 사이드바 */}
+                    <div className="sidebar-box popular-box">
+                        <h4>실시간 인기 게시판</h4>
+                        <hr className="dashed-line" />
+                        <div className="popular-content">
+                            {popularSidebar.map((post, index) => (
+                                <div
+                                    key={post.id}
+                                    className="popular-item"
+                                    onClick={() => navigate(`/community/${post.id}`)}
+                                    style={{ cursor: 'pointer' }}
+                                >
+                                    <span className="popular-rank">{index + 1}</span>
+                                    <span className="popular-title">{post.title}</span>
+                                    <span className="popular-views">{post.views}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
                 </aside>
             </div>
         </div>

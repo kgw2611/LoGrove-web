@@ -52,6 +52,13 @@ interface ForumPostType {
     profileUrl?: string;
 }
 
+// 🔥 인기 게시글 사이드바용 타입 추가
+interface SidebarBoard {
+    id: number;
+    title: string;
+    views: number;
+}
+
 export default function ForumDetail() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -76,6 +83,9 @@ export default function ForumDetail() {
     const [replyingToId, setReplyingToId] = useState<number | null>(null);
     const [replyText, setReplyText] = useState<string>('');
     const [myProfileUrl, setMyProfileUrl] = useState<string | null>(null);
+
+    // 🔥 인기 포럼 목록 상태 추가
+    const [popularSidebar, setPopularSidebar] = useState<SidebarBoard[]>([]);
 
     const fetchComments = async () => {
         try {
@@ -168,12 +178,33 @@ export default function ForumDetail() {
         if (id) {
             fetchPostDetail();
             fetchComments();
+            window.scrollTo({ top: 0, behavior: 'smooth' }); // 🔥 다른 글로 이동 시 스크롤 맨 위로!
         }
 
         fetchMyInfo(); // 내 이름 불러오기 함수 실행!
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id, navigate]);
+
+    // 🔥 실시간 인기 포럼 게시글 불러오기 (최초 1회 실행)
+    useEffect(() => {
+        const fetchPopularSidebar = async () => {
+            try {
+                // 커뮤니티와 달리 board 파라미터를 FORUM으로 지정
+                const response = await axios.get('/api/posts/popular?board=FORUM&days=7');
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const postsData: SidebarBoard[] = (response.data.data || []).slice(0, 5).map((post: any) => ({
+                    id: post.id || post.postId,
+                    title: post.title,
+                    views: post.view || post.viewCount || post.views || 0,
+                }));
+                setPopularSidebar(postsData);
+            } catch (error) {
+                console.error('인기 포럼 사이드바 불러오기 실패:', error);
+            }
+        };
+        fetchPopularSidebar();
+    }, []);
 
     const handleDeletePost = async () => {
         if (window.confirm('정말 이 포럼 게시글을 삭제하시겠습니까? (댓글도 함께 사라집니다)')) {
@@ -341,8 +372,6 @@ export default function ForumDetail() {
             <div className="comm-content">
                 <main className="comm-main">
 
-                    {/* 🔥 태그 검색 부분 삭제 완료! */}
-
                     <div className="post-nav-buttons" style={{ marginTop: '20px' }}>
                         <button className="nav-btn list-btn" onClick={() => navigate('/forum')}>목록</button>
                     </div>
@@ -396,7 +425,6 @@ export default function ForumDetail() {
                                         </div>
                                         <div className="author-meta">
                                             <span>{post.date}{post.isEdited && <span style={{ marginLeft: '6px', fontSize: '12px', color: '#999' }}>(수정됨)</span>}</span>
-                                            {/* 🔥 조회수 정상 렌더링 */}
                                             <span>조회수 : {post.views}</span>
                                         </div>
                                     </div>
@@ -423,7 +451,6 @@ export default function ForumDetail() {
                         )}
 
                         <div className="post-footer-actions">
-                            <div className="more-posts-link"><span className="author-name-bold">{post.author}</span> 님의 게시글 더보기 &gt;</div>
                             <div className="like-comment-count">
                                 <span className={`post-like-btn ${postLike.isLiked ? 'liked' : ''}`} onClick={handlePostLike}>
                                     {postLike.isLiked ? '❤️' : '🤍'} 좋아요 {postLike.count}
@@ -532,6 +559,7 @@ export default function ForumDetail() {
                         </div>
                     </div>
                 </main>
+
                 <aside className="comm-sidebar">
                     <div className="sidebar-box profile-box">
                         <div className="profile-info">
@@ -552,6 +580,27 @@ export default function ForumDetail() {
                             <Link to="/login" style={{textDecoration: 'none'}}><button className="write-btn">로그인 하러 가기</button></Link>
                         )}
                     </div>
+
+                    {/* 🔥 찐으로 추가된 인기 게시판 사이드바 */}
+                    <div className="sidebar-box popular-box">
+                        <h4>실시간 인기 포럼</h4>
+                        <hr className="dashed-line" />
+                        <div className="popular-content">
+                            {popularSidebar.map((post, index) => (
+                                <div
+                                    key={post.id}
+                                    className="popular-item"
+                                    onClick={() => navigate(`/forum/${post.id}`)}
+                                    style={{ cursor: 'pointer' }}
+                                >
+                                    <span className="popular-rank">{index + 1}</span>
+                                    <span className="popular-title">{post.title}</span>
+                                    <span className="popular-views">{post.views}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
                 </aside>
             </div>
         </div>
