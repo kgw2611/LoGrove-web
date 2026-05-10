@@ -133,7 +133,7 @@ export default function MyPage() {
     const [isPwModalOpen, setIsPwModalOpen] = useState<boolean>(false);
 
     const [userData, setUserData] = useState<UserDataType>({});
-    const [userName, setUserName] = useState<string>('숲속으로');
+    const [userName, setUserName] = useState<string>('');
     const [bio, setBio] = useState<string>('한줄소개쓰는 공간');
     const [isEditingBio, setIsEditingBio] = useState<boolean>(false);
 
@@ -166,7 +166,7 @@ export default function MyPage() {
                     userId: data.loginId || data.userId || data.username || '',
                     email: data.email || '',
                     name: data.name || '',
-                    nickname: data.nickname || data.name || '숲속으로',
+                    nickname: data.nickname || data.name || '',
                     bio: data.bio || '한줄소개쓰는 공간',
                     profileUrl: data.profileUrl || '',
                     exp: typeof data.exp === 'number' ? data.exp : 0,
@@ -179,8 +179,14 @@ export default function MyPage() {
                 setEditNickname(fetchedUser.nickname!);
                 setBio(fetchedUser.bio!);
                 setProfileImageUrl(fetchedUser.profileUrl || '');
-            } catch (error) {
+            } catch (error: unknown) {
                 console.error('내 정보 불러오기 실패:', error);
+                if (axios.isAxiosError(error) && error.response?.status === 401) {
+                    localStorage.removeItem('access_token');
+                    localStorage.removeItem('userId');
+                    localStorage.removeItem('nickname');
+                    navigate('/login');
+                }
             }
         };
 
@@ -189,7 +195,7 @@ export default function MyPage() {
 
     // 2. 백엔드에서 '내가 쓴 글' & '내가 쓴 댓글' 가져오기 (갤러리 포함)
     useEffect(() => {
-        if (userName === '숲속으로') return;
+        if (!userName) return;
 
         const fetchMyActivities = async () => {
             const token = localStorage.getItem('access_token');

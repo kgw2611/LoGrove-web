@@ -6,7 +6,7 @@ import {
     useState,
     type KeyboardEvent,
 } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import '../home/Home.css';
 import './Gallery.css';
 import {
@@ -183,9 +183,10 @@ function safeCount(value: unknown) {
 
 export default function Gallery() {
     const navigate = useNavigate();
+    const { id: paramId } = useParams<{ id: string }>();
     const [searchParams] = useSearchParams();
 
-    const initialPostId = searchParams.get('postId');
+    const initialPostId = paramId ?? searchParams.get('postId');
 
     const [galleryItems, setGalleryItems] = useState<GalleryListItem[]>([]);
     const [selectedPost, setSelectedPost] = useState<GalleryDetailItem | null>(null);
@@ -254,6 +255,13 @@ export default function Gallery() {
         };
         void fetchMyInfo();
     }, []);
+
+    useEffect(() => {
+        if (!paramId) {
+            setSelectedPost(null);
+            setCommentInput('');
+        }
+    }, [paramId]);
 
     useEffect(() => {
         localStorage.setItem(
@@ -435,6 +443,7 @@ export default function Gallery() {
     }, [galleryItems, selectedPost]);
 
     const openDetail = async (item: GalleryListItem) => {
+        navigate(`/gallery/${item.id}`);
         try {
             setIsDetailLoading(true);
             // @ts-ignore

@@ -1,12 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import './Header.css';
+
+function clearAuthStorage() {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('nickname');
+}
 
 export default function Header() {
     const navigate = useNavigate();
 
-    // 무조건 false가 아니라, 로컬 스토리지에 'isLoggedIn' 도장이 있는지 확인합니다!
     const [isLoggedIn, setIsLoggedIn] = useState<boolean>(!!localStorage.getItem('access_token'));
+
+    useEffect(() => {
+        const token = localStorage.getItem('access_token');
+        if (!token) return;
+
+        axios.get('/api/users/me', {
+            headers: { Authorization: `Bearer ${token}` },
+        }).catch((err) => {
+            if (axios.isAxiosError(err) && err.response?.status === 401) {
+                clearAuthStorage();
+                setIsLoggedIn(false);
+            }
+        });
+    }, []);
 
     // "Get started" 버튼 클릭 시 작동하는 함수
     const handleStartClick = () => {
@@ -23,18 +43,10 @@ export default function Header() {
         window.location.href = '/'; // 완벽한 새로고침을 위해 a 태그 기본 동작 활용
     };
 
-    // 🔥 대망의 로그아웃 함수!
     const handleLogout = () => {
         if (window.confirm('정말 로그아웃 하시겠습니까?')) {
-            // 1. 로컬 스토리지에서 로그인 도장 지우기!
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('userId');
-            localStorage.removeItem('nickname');
-
-            // 2. 상태를 false로 변경
+            clearAuthStorage();
             setIsLoggedIn(false);
-
-            // 3. 홈 화면으로 쫓아내고 새로고침
             alert('안전하게 로그아웃 되었습니다.');
             navigate('/');
             window.location.reload();
