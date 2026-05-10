@@ -54,6 +54,7 @@ export default function StudyStep() {
     const [shortAnswer, setShortAnswer] = useState('')
     const [quizResult, setQuizResult] = useState<QuizResult | null>(null)
     const [submitting, setSubmitting] = useState(false)
+    const [wasAlreadyCompleted, setWasAlreadyCompleted] = useState(false)
 
     useEffect(() => {
         apiClient.get('/learning/stair')
@@ -65,6 +66,7 @@ export default function StudyStep() {
     const openDetail = async (item: StairItem) => {
         const id = item.missionId ?? item.id ?? 0
         setSelected({ ...item, missionId: id })
+        setWasAlreadyCompleted(item.state === 'COMPLETED')
         setQuizDetail(null)
         setSelectedChoice(null)
         setShortAnswer('')
@@ -90,6 +92,7 @@ export default function StudyStep() {
         setShortAnswer('')
         setQuizResult(null)
         setSubmitting(false)
+        setWasAlreadyCompleted(false)
     }
 
     const handleSubmit = async () => {
@@ -255,7 +258,9 @@ export default function StudyStep() {
                                 {quizResult && (
                                     <div className="quiz-result">
                                         <p className={`quiz-result-title ${quizResult.isCorrect ? 'result-correct' : 'result-wrong'}`}>
-                                            {quizResult.isCorrect ? `정답입니다! +${selected.point ?? 0}p` : '틀렸습니다'}
+                                            {quizResult.isCorrect
+                                                ? (wasAlreadyCompleted ? '정답입니다!' : `정답입니다! +${selected.point ?? 0}p`)
+                                                : '틀렸습니다'}
                                         </p>
                                         {quizResult.commentary && (
                                             <p className="quiz-commentary">{quizResult.commentary}</p>
