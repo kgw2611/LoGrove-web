@@ -49,10 +49,13 @@ export default function Community() {
     const [boardList, setBoardList] = useState<Board[]>([])
     const [currentPage, setCurrentPage] = useState<number>(0)
     const [totalPages, setTotalPages] = useState<number>(0)
+
+    // 🔥 1. 전체 게시글 개수를 저장할 상태 추가 (페이지네이션 번호 계산용)
+    const [totalElements, setTotalElements] = useState<number>(0)
+
     const [popularSidebar, setPopularSidebar] = useState<Board[]>([])
     const [myProfileUrl, setMyProfileUrl] = useState<string | null>(null)
 
-    // 🔥 1. 검색어 상태(State) 추가!
     const [searchTerm, setSearchTerm] = useState<string>('')
 
     useEffect(() => {
@@ -128,6 +131,9 @@ export default function Community() {
 
                 setBoardList(postsData);
                 setTotalPages(pageData?.totalPages ?? 0);
+
+                // 🔥 2. 서버에서 넘어온 전체 게시글 개수 저장 (없으면 현재 배열 길이로 대체)
+                setTotalElements(pageData?.totalElements ?? pageData?.content?.length ?? 0);
             } catch (error) {
                 console.error('게시글 목록 불러오기 실패:', error);
             }
@@ -140,17 +146,14 @@ export default function Community() {
     const handleTagChange = (tag: string) => {
         setActiveTag(tag)
         setCurrentPage(0)
-        setSearchTerm('') // 🔥 탭을 변경할 때 검색어도 깔끔하게 초기화!
+        setSearchTerm('')
     }
 
-    // 🔥 2. 화면에 그려질 리스트를 검색어에 맞게 필터링!
     const filteredList = useMemo(() => {
-        // 먼저 인기순위/일반 목록 정렬
         let baseList = activeTag === '인기순위'
             ? boardList
             : boardList.slice().sort((a, b) => b.id - a.id);
 
-        // 검색어가 있으면 제목에 포함된 것만 골라내기
         if (searchTerm.trim()) {
             const lowerKeyword = searchTerm.toLowerCase();
             baseList = baseList.filter(post => post.title.toLowerCase().includes(lowerKeyword));
@@ -193,7 +196,6 @@ export default function Community() {
                         <select className="filter-select">
                             <option>제목</option>
                         </select>
-                        {/* 🔥 3. 검색창에 onChange 이벤트 연결! */}
                         <input
                             type="text"
                             className="filter-input"
@@ -216,14 +218,21 @@ export default function Community() {
                         </thead>
                         <tbody>
                         {filteredList.length > 0 ? (
-                            filteredList.map((row) => {
+                            filteredList.map((row, index) => {
+                                // 🔥 3. 번호 역순 계산 (최신 글이 높은 번호, 예전 글이 1번)
+                                const isSearching = searchTerm.trim().length > 0;
+                                const displayNum = (activeTag === '인기순위' || isSearching)
+                                    ? filteredList.length - index // 검색/인기순위는 화면에 뜬 개수 기준 역순
+                                    : (totalElements > 0 ? totalElements - (currentPage * 15) - index : filteredList.length - index); // 일반 목록은 전체 개수 기준 역순
+
                                 return (
                                     <tr
                                         key={row.id}
                                         onClick={() => navigate(`/community/${row.id}`)}
                                         style={{ cursor: 'pointer' }}
                                     >
-                                        <td>{row.rowNumber}</td>
+                                        {/* 🔥 4. 기존 row.rowNumber 대신 새로 계산한 displayNum 출력 */}
+                                        <td>{displayNum}</td>
                                         <td>
                                             {row.tag && (
                                                 <span className={`table-tag ${getTagClass(row.tag)}`}>
@@ -251,7 +260,6 @@ export default function Community() {
                                     colSpan={6}
                                     style={{ padding: '60px 0', color: '#999', textAlign: 'center' }}
                                 >
-                                    {/* 🔥 4. 검색 결과가 없을 때 안내 텍스트 추가 */}
                                     {searchTerm ? `"${searchTerm}"에 대한 검색 결과가 없습니다.` : '아직 작성된 게시글이 없습니다.'}
                                 </td>
                             </tr>
