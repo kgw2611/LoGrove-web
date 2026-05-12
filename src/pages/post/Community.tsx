@@ -40,7 +40,7 @@ const categoryToTagId: Record<string, number> = {
 
 export default function Community() {
     const navigate = useNavigate()
-    const [activeTag, setActiveTag] = useState<string>('인기순위')
+    const [activeTag, setActiveTag] = useState<string>('전체 글')
 
     const [isLoggedIn] = useState<boolean>(() => !!localStorage.getItem('access_token'))
 
@@ -111,14 +111,6 @@ export default function Community() {
     useEffect(() => {
         const fetchPosts = async () => {
             try {
-                if (activeTag === '인기순위') {
-                    const response = await axios.get('/api/posts/popular?board=COMMUNITY');
-                    const postsData: Board[] = (response.data.data || []).map(formatPost);
-                    setBoardList(postsData);
-                    setTotalPages(0);
-                    return;
-                }
-
                 const tagId = categoryToTagId[activeTag];
                 const url = tagId
                     ? `/api/posts?board=COMMUNITY&tagIds=${tagId}&page=${currentPage}&size=15`
@@ -150,9 +142,7 @@ export default function Community() {
     }
 
     const filteredList = useMemo(() => {
-        let baseList = activeTag === '인기순위'
-            ? boardList
-            : boardList.slice().sort((a, b) => b.id - a.id);
+        let baseList = boardList.slice().sort((a, b) => b.id - a.id);
 
         if (searchTerm.trim()) {
             const lowerKeyword = searchTerm.toLowerCase();
@@ -162,7 +152,7 @@ export default function Community() {
         return baseList;
     }, [boardList, activeTag, searchTerm]);
 
-    const categoryList = ['인기순위', '일상', '거래', '정보', '질문', '사진', '출사지', '이벤트', '리뷰']
+    const categoryList = ['전체 글', '일상', '거래', '정보', '질문', '사진', '출사지', '이벤트', '리뷰']
 
     const getTagClass = (tag?: string) => {
         switch (tag) {
@@ -221,8 +211,8 @@ export default function Community() {
                             filteredList.map((row, index) => {
                                 // 🔥 3. 번호 역순 계산 (최신 글이 높은 번호, 예전 글이 1번)
                                 const isSearching = searchTerm.trim().length > 0;
-                                const displayNum = (activeTag === '인기순위' || isSearching)
-                                    ? filteredList.length - index // 검색/인기순위는 화면에 뜬 개수 기준 역순
+                                const displayNum = isSearching
+                                    ? filteredList.length - index // 검색은 화면에 뜬 개수 기준 역순
                                     : (totalElements > 0 ? totalElements - (currentPage * 15) - index : filteredList.length - index); // 일반 목록은 전체 개수 기준 역순
 
                                 return (
@@ -266,13 +256,11 @@ export default function Community() {
                         )}
                         </tbody>
                     </table>
-                    {activeTag !== '인기순위' && (
-                        <Pagination
-                            currentPage={currentPage}
-                            totalPages={totalPages}
-                            onPageChange={(page) => setCurrentPage(page)}
-                        />
-                    )}
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={(page) => setCurrentPage(page)}
+                    />
                 </main>
 
                 {/* 오른쪽: 사이드바 영역 */}

@@ -496,3 +496,12 @@
 .mission-back-btn:hover {
     background: #f6fff9;
 }
+
+.category-complete-text {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 12px;
+    color: #2f9e63;
+    font-size: 14px;
+    font-weight: 800;
+}
