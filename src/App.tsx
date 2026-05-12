@@ -15,6 +15,8 @@ import ForumDetail from './pages/post/ForumDetail.tsx';
 import Study from './pages/mission/Study.tsx';
 import StudyStep from './pages/mission/StudyStep.tsx';
 import StudyMission from './pages/mission/StudyMission.tsx';
+import StairDetail from './pages/mission/StairDetail.tsx';
+import PhotoDetail from './pages/mission/PhotoDetail.tsx';
 
 export default function App() {
     return (
@@ -46,7 +48,9 @@ export default function App() {
                     {/* 학습 관련 라우트 */}
                     <Route path="/study" element={<Study />} />
                     <Route path="/study/step" element={<StudyStep />} />
+                    <Route path="/study/step/:id" element={<StairDetail />} />
                     <Route path="/study/mission" element={<StudyMission />} />
+                    <Route path="/study/mission/:id" element={<PhotoDetail />} />
                 </Route>
             </Routes>
         </BrowserRouter>

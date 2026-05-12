@@ -469,3 +469,39 @@
     cursor: default;
     opacity: 0.55;
 }
+
+/* --- 전용 상세 페이지 --- */
+.mission-detail-page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 20px 72px;
+}
+
+.mission-page-panel {
+    margin: 0 auto;
+}
+
+.mission-back-btn {
+    margin-bottom: 18px;
+    padding: 8px 16px;
+    border: 1px solid #d9eadf;
+    border-radius: 6px;
+    background: #fff;
+    color: #4E5A53;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.mission-back-btn:hover {
+    background: #f6fff9;
+}
+
+.category-complete-text {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 12px;
+    color: #2f9e63;
+    font-size: 14px;
+    font-weight: 800;
+}
