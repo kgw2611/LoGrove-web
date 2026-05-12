@@ -48,6 +48,7 @@ export default function StudyMission() {
     const [previewImage, setPreviewImage] = useState<string | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [result, setResult] = useState<GradingResult | null>(null)
+    const [wasAlreadyCompleted, setWasAlreadyCompleted] = useState(false)
 
     useEffect(() => {
         apiClient.get('/learning/photo')
@@ -75,6 +76,7 @@ export default function StudyMission() {
         setImageFile(null)
         setPreviewImage(null)
         setResult(null)
+        setWasAlreadyCompleted(card.state === 'COMPLETED')
         try {
             const res = await apiClient.get(`/learning/${card.missionId}/photo`)
             setDetail(res.data.data || res.data || {})
@@ -85,7 +87,10 @@ export default function StudyMission() {
         }
     }
 
-    const closeModal = () => setSelectedCard(null)
+    const closeModal = () => {
+        setSelectedCard(null)
+        setWasAlreadyCompleted(false)
+    }
 
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
@@ -278,7 +283,7 @@ export default function StudyMission() {
                                                         {passScore && ` (기준: ${passScore}점)`}
                                                     </p>
                                                 )}
-                                                {result.result === 'PASS' && (
+                                                {result.result === 'PASS' && !wasAlreadyCompleted && (
                                                     <p className="result-xp-gained">
                                                         +{PHOTO_LEVEL_POINT[selectedCard!.level] ?? 0} XP 획득!
                                                     </p>
