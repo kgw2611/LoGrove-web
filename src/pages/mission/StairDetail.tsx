@@ -136,7 +136,12 @@ export default function StairDetail() {
         }
     }
 
-    const canGoNext = quizResult?.isCorrect && !CATEGORY_LAST.has(missionId)
+    const handleRetryQuiz = () => {
+        // Keep this page open and clear only the submitted answer/result.
+        setQuizResult(null)
+        setSelectedChoice(null)
+        setShortAnswer('')
+    }
 
     return (
         <div className="step-container">
@@ -213,14 +218,6 @@ export default function StairDetail() {
                             </div>
 
                             <div className="modal-footer">
-                                {canGoNext && (
-                                    <button
-                                        className="btn-submit"
-                                        onClick={() => navigate(`/study/step/${missionId + 1}`)}
-                                    >
-                                        다음 문제
-                                    </button>
-                                )}
                                 {quizResult?.isCorrect && CATEGORY_LAST.has(missionId) && (
                                     <span className="category-complete-text">카테고리 완료</span>
                                 )}
@@ -234,6 +231,22 @@ export default function StairDetail() {
                                         }
                                     >
                                         {submitting ? '제출 중...' : '제출'}
+                                    </button>
+                                )}
+                                {quizResult && !quizResult.isCorrect && (
+                                    <button
+                                        className="btn-submit"
+                                        onClick={handleRetryQuiz}
+                                    >
+                                        다시 풀기
+                                    </button>
+                                )}
+                                {quizResult && (
+                                    <button
+                                        className="btn-cancel"
+                                        onClick={() => navigate('/study/step')}
+                                    >
+                                        닫기
                                     </button>
                                 )}
                             </div>

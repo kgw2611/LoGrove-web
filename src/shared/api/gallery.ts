@@ -424,6 +424,17 @@ export async function getGalleryDetail(postId: number): Promise<GalleryDetailIte
     return normalizeGalleryDetail(raw, comments);
 }
 
+export async function updateGalleryPost(
+    postId: number,
+    payload: { title: string; content: string }
+): Promise<void> {
+    await apiClient.put(`/posts/${postId}`, payload);
+}
+
+export async function deleteGalleryPost(postId: number): Promise<void> {
+    await apiClient.delete(`/posts/${postId}`);
+}
+
 export async function createComment(
     postId: number,
     content: string,
