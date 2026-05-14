@@ -1349,6 +1349,7 @@
   align-items: flex-start;
   gap: 12px;
   width: 100%;
+  min-height: 44px;
   margin: 18px 0 34px;
   padding-right: 0;
 }
@@ -1364,6 +1365,7 @@
   color: #6f6f6f;
   font-size: 16px;
   font-weight: 600;
+  line-height: 1;
   cursor: pointer;
   transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
 }
@@ -1379,12 +1381,15 @@
   max-height: 0;
   opacity: 0;
   overflow: hidden;
+  align-self: flex-start;
   transition: max-height 0.35s ease, opacity 0.25s ease;
 }
 
 .gallery-tag-bar-collapse.open {
-  max-height: 200px;
+  max-height: 160px;
   opacity: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .gallery-detail-tag-list {

@@ -762,7 +762,7 @@ export default function Gallery() {
                     transition: 'all 0.3s ease',
                 }}
             >
-                <div className="gallery-sub-header" style={{ marginBottom: isTagsVisible ? '10px' : '0' }}>
+                <div className="gallery-sub-header" style={{ marginBottom: '10px' }}>
                     <div className="search-bar-wrapper">
                         <span className="gallery-search-icon">
                             <SearchIcon />

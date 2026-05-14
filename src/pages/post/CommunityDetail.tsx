@@ -4,12 +4,16 @@ import axios from 'axios';
 import '../home/Home.css';
 import './Community.css';
 import './CommunityDetail.css';
+import RichPostEditor from '../../widgets/editor/RichPostEditor';
+import PostContentRenderer from '../../widgets/editor/PostContentRenderer';
 
 const getImageUrl = (path?: string) => {
     if (!path) return '';
     if (path.startsWith('http')) return path;
     return `${path.startsWith('/') ? '' : '/'}${path}`;
 };
+
+const hasInlineImage = (content: string) => /<img\s/i.test(content);
 
 interface CommentType {
     id: number;
@@ -375,10 +379,10 @@ export default function CommunityDetail() {
                                     onChange={(e: ChangeEvent<HTMLInputElement>) => setEditPostTitle(e.target.value)}
                                     style={{ fontSize: '20px', padding: '10px', border: '1px solid #ddd', borderRadius: '8px' }}
                                 />
-                                <textarea
-                                    value={editPostContent}
-                                    onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setEditPostContent(e.target.value)}
-                                    style={{ minHeight: '200px', padding: '15px', border: '1px solid #ddd', borderRadius: '8px', fontSize: '15px', resize: 'none', fontFamily: 'inherit' }}
+                                <RichPostEditor
+                                    initialContent={editPostContent}
+                                    onChange={setEditPostContent}
+                                    placeholder="내용을 수정하세요."
                                 />
                                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
                                     <button onClick={handleSavePost} style={{ padding: '8px 16px', background: '#111', color: '#fff', borderRadius: '6px', border: 'none', cursor: 'pointer' }}>저장</button>
@@ -411,7 +415,8 @@ export default function CommunityDetail() {
                                 <hr className="post-divider" />
 
                                 <div className="post-body">
-                                    {post.images && post.images.length > 0 && (
+                                    {/* Legacy attached images are shown only when content does not already include inline images. */}
+                                    {!hasInlineImage(post.content) && post.images && post.images.length > 0 && (
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '20px' }}>
                                             {post.images.map((imgUrl, index) => (
                                                 <img
@@ -423,7 +428,7 @@ export default function CommunityDetail() {
                                             ))}
                                         </div>
                                     )}
-                                    <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>{post.content}</div>
+                                    <PostContentRenderer html={post.content} />
                                 </div>
                             </>
                         )}
