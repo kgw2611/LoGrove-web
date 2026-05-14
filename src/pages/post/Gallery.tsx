@@ -11,6 +11,7 @@ import '../home/Home.css';
 import './Gallery.css';
 import {
     createComment,
+    deleteGalleryPost,
     deleteComment,
     getGalleryDetail,
     getGalleryList,
@@ -18,6 +19,7 @@ import {
     toggleCommentLike,
     toggleGalleryLike,
     updateComment,
+    updateGalleryPost,
     type CommentItem,
     type GalleryDetailItem,
     type GalleryListItem,
@@ -140,20 +142,6 @@ function SendIcon({ active = false }: { active?: boolean }) {
     );
 }
 
-function TagArrowIcon({ open }: { open: boolean }) {
-    return (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path
-                d={open ? 'M6 15L12 9L18 15' : 'M6 9L12 15L18 9'}
-                stroke="#111"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-        </svg>
-    );
-}
-
 const EXCLUDED_TAGS = [
     '일상', '거래', '정보', '질문', '사진', '출사지', '이벤트', '리뷰',
     '캐논', '소니', '니콘', '후지필름', '라이카', '핫셀블라드', '파나소닉', '올림푸스', '기타', '필름',
@@ -181,6 +169,15 @@ function safeCount(value: unknown) {
     return Number.isFinite(numberValue) ? numberValue : 0;
 }
 
+function formatCommentDate(iso?: string) {
+    if (!iso) return '방금';
+
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return '';
+
+    return date.toLocaleDateString('ko-KR');
+}
+
 export default function Gallery() {
     const navigate = useNavigate();
     const { id: paramId } = useParams<{ id: string }>();
@@ -201,6 +198,9 @@ export default function Gallery() {
     const [replyText, setReplyText] = useState('');
     const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
     const [editCommentText, setEditCommentText] = useState('');
+    const [isEditingPost, setIsEditingPost] = useState(false);
+    const [editTitle, setEditTitle] = useState('');
+    const [editDescription, setEditDescription] = useState('');
 
     const [searchText, setSearchText] = useState('');
     const [tagOptions, setTagOptions] = useState<string[]>(['전체']);
@@ -236,6 +236,10 @@ export default function Gallery() {
         return '';
     });
     const [profileImageUrl, setProfileImageUrl] = useState<string>('');
+    const isSelectedPostAuthor =
+        !!selectedPost &&
+        !!userName &&
+        selectedPost.author.trim().toLowerCase() === userName.trim().toLowerCase();
 
     useEffect(() => {
         const fetchMyInfo = async () => {
@@ -260,6 +264,7 @@ export default function Gallery() {
         if (!paramId) {
             setSelectedPost(null);
             setCommentInput('');
+            setIsEditingPost(false);
         }
     }, [paramId]);
 
@@ -346,12 +351,10 @@ export default function Gallery() {
                 const pageSize = hasSearchOrTag ? 200 : 20;
 
                 const [result, tags] = await Promise.all([
-                    // @ts-ignore
                     getGalleryList(currentPage, pageSize, {
                         search: searchText,
                         tag: selectedTag,
                     }),
-                    // @ts-ignore
                     getGalleryTagNames().catch((tagError) => {
                         console.warn('태그 목록 조회 실패:', tagError);
                         return [];
@@ -415,12 +418,12 @@ export default function Gallery() {
         const openInitialPost = async () => {
             try {
                 setIsDetailLoading(true);
-                // @ts-ignore
                 const detail = await getGalleryDetail(Number(initialPostId));
                 const mergedDetail = mergeLikeOverrides(detail);
 
                 setSelectedPost(mergedDetail);
                 setCommentInput('');
+                setIsEditingPost(false);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } catch (error) {
                 console.error('갤러리 상세 이동 실패:', error);
@@ -446,12 +449,12 @@ export default function Gallery() {
         navigate(`/gallery/${item.id}`);
         try {
             setIsDetailLoading(true);
-            // @ts-ignore
             const detail = await getGalleryDetail(Number(item.id));
             const mergedDetail = mergeLikeOverrides(detail);
 
             setSelectedPost(mergedDetail);
             setCommentInput('');
+            setIsEditingPost(false);
             window.scrollTo({ top: 0, behavior: 'smooth' });
         } catch (error) {
             console.error('상세 조회 실패:', error);
@@ -463,7 +466,59 @@ export default function Gallery() {
     const closeDetail = () => {
         setSelectedPost(null);
         setCommentInput('');
+        setIsEditingPost(false);
         navigate('/gallery', { replace: true });
+    };
+
+    const handleStartEditPost = () => {
+        if (!selectedPost) return;
+
+        setEditTitle(selectedPost.title);
+        setEditDescription(selectedPost.description ?? '');
+        setIsEditingPost(true);
+    };
+
+    const handleCancelEditPost = () => {
+        setIsEditingPost(false);
+        setEditTitle('');
+        setEditDescription('');
+    };
+
+    const handleSaveEditPost = async () => {
+        if (!selectedPost) return;
+        if (!editTitle.trim()) return alert('제목을 입력해주세요.');
+        if (!editDescription.trim()) return alert('내용을 입력해주세요.');
+
+        try {
+            // Post images and tags stay fixed here; only title/content are editable.
+            await updateGalleryPost(selectedPost.id, {
+                title: editTitle.trim(),
+                content: editDescription.trim(),
+            });
+            const refreshed = await getGalleryDetail(selectedPost.id);
+            const mergedDetail = mergeLikeOverrides(refreshed);
+
+            setSelectedPost(mergedDetail);
+            syncListItemFromDetail(mergedDetail);
+            handleCancelEditPost();
+        } catch (error) {
+            console.error('게시글 수정 실패:', error);
+            alert('게시글 수정 중 오류가 발생했습니다.');
+        }
+    };
+
+    const handleDeletePost = async () => {
+        if (!selectedPost) return;
+        if (!window.confirm('정말 이 게시글을 삭제하시겠습니까?')) return;
+
+        try {
+            await deleteGalleryPost(selectedPost.id);
+            setGalleryItems((prev) => prev.filter((item) => item.id !== selectedPost.id));
+            closeDetail();
+        } catch (error) {
+            console.error('게시글 삭제 실패:', error);
+            alert('게시글 삭제 중 오류가 발생했습니다.');
+        }
     };
 
     const handleCreateComment = async () => {
@@ -472,13 +527,11 @@ export default function Gallery() {
 
         try {
             setIsSubmittingComment(true);
-            // @ts-ignore
             await createComment(
                 Number(selectedPost.id),
                 commentInput.trim(),
                 selectedPost.title
             );
-            // @ts-ignore
             const refreshedDetail = await getGalleryDetail(Number(selectedPost.id));
             const mergedDetail = mergeLikeOverrides(refreshedDetail);
 
@@ -535,7 +588,6 @@ export default function Gallery() {
         }));
 
         try {
-            // @ts-ignore
             await toggleGalleryLike(Number(selectedPost.id), currentLiked);
         } catch (error) {
             console.error('게시글 좋아요 실패:', error);
@@ -559,9 +611,7 @@ export default function Gallery() {
 
         try {
             setIsSubmittingComment(true);
-            // @ts-ignore
             await createComment(Number(selectedPost.id), replyText.trim(), selectedPost.title, parentId);
-            // @ts-ignore
             const refreshedDetail = await getGalleryDetail(Number(selectedPost.id));
             const mergedDetail = mergeLikeOverrides(refreshedDetail);
             setSelectedPost(mergedDetail);
@@ -579,9 +629,7 @@ export default function Gallery() {
         if (!editCommentText.trim()) return alert('내용을 입력해주세요.');
         if (!selectedPost) return;
         try {
-            // @ts-ignore
             await updateComment(Number(selectedPost.id), commentId, editCommentText.trim());
-            // @ts-ignore
             const refreshedDetail = await getGalleryDetail(Number(selectedPost.id));
             const mergedDetail = mergeLikeOverrides(refreshedDetail);
             setSelectedPost(mergedDetail);
@@ -597,9 +645,7 @@ export default function Gallery() {
         if (!selectedPost) return;
         if (!window.confirm('정말 이 댓글을 삭제하시겠습니까?')) return;
         try {
-            // @ts-ignore
             await deleteComment(Number(selectedPost.id), commentId);
-            // @ts-ignore
             const refreshedDetail = await getGalleryDetail(Number(selectedPost.id));
             const mergedDetail = mergeLikeOverrides(refreshedDetail);
             setSelectedPost(mergedDetail);
@@ -653,7 +699,6 @@ export default function Gallery() {
         }));
 
         try {
-            // @ts-ignore
             await toggleCommentLike(Number(selectedPost.id), commentId, currentLiked);
         } catch (error) {
             console.error('댓글 좋아요 실패:', error);
@@ -717,7 +762,7 @@ export default function Gallery() {
                     transition: 'all 0.3s ease',
                 }}
             >
-                <div className="gallery-sub-header" style={{ marginBottom: isTagsVisible ? '10px' : '0' }}>
+                <div className="gallery-sub-header" style={{ marginBottom: '10px' }}>
                     <div className="search-bar-wrapper">
                         <span className="gallery-search-icon">
                             <SearchIcon />
@@ -776,17 +821,19 @@ export default function Gallery() {
                     <div className={`gallery-tag-area ${isTagsVisible ? 'open' : 'closed'}`} style={{ margin: 0 }}>
                         <button
                             type="button"
-                            className="gallery-tag-collapse-btn"
-                            onClick={() => setIsTagsVisible((prev) => !prev)}
-                            aria-label={isTagsVisible ? '태그 숨기기' : '태그 펼치기'}
-                            style={{ zIndex: 101 }}
+                            className={`gallery-tag-toggle-all ${isTagsVisible ? 'active' : ''}`}
+                            onClick={() => {
+                                // This chip doubles as the all-filter and the tag tray toggle.
+                                setIsTagsVisible((prev) => !prev);
+                                setSelectedTag(tagOptions[0]);
+                            }}
                         >
-                            <TagArrowIcon open={isTagsVisible} />
+                            {tagOptions[0]}
                         </button>
 
-                        {isTagsVisible && (
+                        <div className={`gallery-tag-bar-collapse ${isTagsVisible ? 'open' : 'closed'}`}>
                             <div className="gallery-tag-bar gallery-tag-bordered" style={{ paddingBottom: '5px' }}>
-                                {tagOptions.map((tag) => (
+                                {tagOptions.slice(1).map((tag) => (
                                     <button
                                         key={tag}
                                         type="button"
@@ -799,7 +846,7 @@ export default function Gallery() {
                                     </button>
                                 ))}
                             </div>
-                        )}
+                        </div>
                     </div>
                 )}
             </div>
@@ -895,16 +942,6 @@ export default function Gallery() {
                             </div>
                         ) : (
                             <div className="gallery-detail-card">
-                                <div className="gallery-detail-save-wrap">
-                                    <button
-                                        className="gallery-save-chip"
-                                        type="button"
-                                        onClick={handleToggleGalleryLike}
-                                    >
-                                        {selectedPost.isLiked ? '저장됨' : '저장'}
-                                    </button>
-                                </div>
-
                                 <div className="gallery-detail-image-wrap">
                                     <img
                                         src={selectedPost.src}
@@ -914,13 +951,29 @@ export default function Gallery() {
                                 </div>
 
                                 <div className="gallery-detail-content">
-                                    <h2 className="gallery-detail-title">
-                                        {selectedPost.title || '제목 없음'}
-                                    </h2>
+                                    {isEditingPost ? (
+                                        <input
+                                            className="gallery-post-edit-title-input"
+                                            value={editTitle}
+                                            onChange={(e) => setEditTitle(e.target.value)}
+                                            placeholder="제목"
+                                        />
+                                    ) : (
+                                        <h2 className="gallery-detail-title">
+                                            {selectedPost.title || '제목 없음'}
+                                        </h2>
+                                    )}
 
                                     <div className="gallery-detail-tag-list">
                                         {selectedPost.tags.map((tag) => (
-                                            <span key={tag} className="gallery-detail-tag">
+                                            <span
+                                                key={tag}
+                                                className="gallery-detail-tag"
+                                                onClick={() => {
+                                                    setSelectedTag(tag);
+                                                    closeDetail();
+                                                }}
+                                            >
                                                 #{tag}
                                             </span>
                                         ))}
@@ -943,11 +996,36 @@ export default function Gallery() {
                                                     : ''}
                                             </div>
                                         </div>
+
+                                        {isSelectedPostAuthor && (
+                                            <div className="gallery-post-owner-actions">
+                                                {isEditingPost ? (
+                                                    <>
+                                                        <button type="button" onClick={handleSaveEditPost}>저장</button>
+                                                        <button type="button" onClick={handleCancelEditPost}>취소</button>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <button type="button" onClick={handleStartEditPost}>수정</button>
+                                                        <button type="button" className="delete" onClick={handleDeletePost}>삭제</button>
+                                                    </>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
 
-                                    <p className="gallery-detail-description">
-                                        {selectedPost.description || '설명이 없습니다.'}
-                                    </p>
+                                    {isEditingPost ? (
+                                        <textarea
+                                            className="gallery-post-edit-description-input"
+                                            value={editDescription}
+                                            onChange={(e) => setEditDescription(e.target.value)}
+                                            placeholder="내용"
+                                        />
+                                    ) : (
+                                        <p className="gallery-detail-description">
+                                            {selectedPost.description || '설명이 없습니다.'}
+                                        </p>
+                                    )}
 
                                     <div className="gallery-detail-divider" />
 
@@ -978,7 +1056,7 @@ export default function Gallery() {
                                                                 <div className="gallery-detail-comment-main">
                                                                     <div className="gallery-detail-comment-author-line">
                                                                         <span className="gallery-detail-comment-author">{comment.author}</span>
-                                                                        <span className="gallery-detail-comment-time">{comment.createdAt || '방금'}{comment.isEdited && <span style={{ marginLeft: '4px', fontSize: '11px', color: '#999' }}>(수정됨)</span>}</span>
+                                                                        <span className="gallery-detail-comment-time">{formatCommentDate(comment.createdAt)}{comment.isEdited && <span style={{ marginLeft: '4px', fontSize: '11px', color: '#999' }}>(수정됨)</span>}</span>
                                                                     </div>
                                                                     {editingCommentId === comment.id ? (
                                                                         <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
@@ -1038,7 +1116,7 @@ export default function Gallery() {
                                                                             <div className="gallery-detail-comment-main">
                                                                                 <div className="gallery-detail-comment-author-line">
                                                                                     <span className="gallery-detail-comment-author">{reply.author}</span>
-                                                                                    <span className="gallery-detail-comment-time">{reply.createdAt || '방금'}{reply.isEdited && <span style={{ marginLeft: '4px', fontSize: '11px', color: '#999' }}>(수정됨)</span>}</span>
+                                                                                    <span className="gallery-detail-comment-time">{formatCommentDate(reply.createdAt)}{reply.isEdited && <span style={{ marginLeft: '4px', fontSize: '11px', color: '#999' }}>(수정됨)</span>}</span>
                                                                                 </div>
                                                                                 {editingCommentId === reply.id ? (
                                                                                     <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>

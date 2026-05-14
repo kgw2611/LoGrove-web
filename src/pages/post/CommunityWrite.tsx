@@ -1,8 +1,9 @@
-import { useState, useRef, type ChangeEvent } from 'react';
+import { useState, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import '../home/Home.css';
 import './CommunityWrite.css';
+import RichPostEditor from '../../widgets/editor/RichPostEditor';
 
 const communityTagIdMap: Record<string, number> = {
     '일상': 1,
@@ -18,88 +19,49 @@ const communityTagIdMap: Record<string, number> = {
 export default function CommunityWrite() {
     const navigate = useNavigate();
 
-    // 입력 상태 관리
-    const [board, setBoard] = useState<string>(''); // 카테고리 (일상, 자유 등)
-    const [title, setTitle] = useState<string>('');
-    const [content, setContent] = useState<string>('');
+    const [board, setBoard] = useState('');
+    const [title, setTitle] = useState('');
+    const [content, setContent] = useState('');
 
-    // 사진 파일 관리를 위한 상태 추가
-    const [imageFile, setImageFile] = useState<File | null>(null);
-    const [previewImage, setPreviewImage] = useState<string | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-
-    // 사진 첨부 기능
-    const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            setImageFile(file); // 진짜 파일 장전
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setPreviewImage(reader.result as string); // 미리보기 화면 장전
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    // 사진 취소 기능
-    const handleRemoveImage = () => {
-        setImageFile(null);
-        setPreviewImage(null);
-        if (fileInputRef.current) fileInputRef.current.value = '';
-    };
-
-    // "등록" 버튼: 백엔드 서버로 전송
     const handleSubmit = async () => {
         if (!board) return alert('게시판 카테고리를 선택해주세요.');
         if (!title.trim()) return alert('제목을 입력해주세요.');
-        if (!content.trim()) return alert('내용을 입력해주세요.');
+        if (!content.replace(/<[^>]*>/g, '').trim() && !/<img\s/i.test(content)) {
+            return alert('내용을 입력해주세요.');
+        }
 
-        // 파일과 글자를 같이 보내는 FormData 상자 생성
-        const formData = new FormData();
-
-        formData.append('boardType', 'COMMUNITY');
-        formData.append('title', title);
-        formData.append('content', content);
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+            alert('로그인이 필요한 서비스입니다.');
+            navigate('/login');
+            return;
+        }
 
         const tagId = communityTagIdMap[board];
-        if (tagId) {
-            formData.append('tagIds', String(tagId));
-        }
-
-        if (imageFile) {
-            formData.append('images', imageFile);
-        }
 
         try {
-            // 내 신분증(토큰) 꺼내기
-            const token = localStorage.getItem('access_token');
-            if (!token) {
-                alert('로그인이 필요한 서비스입니다.');
-                navigate('/login');
-                return;
-            }
-
-            // POST /api/posts 로 전송!
-            const response = await axios.post('/api/posts', formData, {
+            await axios.post('/api/posts', {
+                boardType: 'COMMUNITY',
+                title: title.trim(),
+                content,
+                tagIds: tagId ? [tagId] : [],
+            }, {
                 headers: {
-                    'Content-Type': 'multipart/form-data',
-                    'Authorization': `Bearer ${token}`
-                }
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
             });
 
-            if (response.status === 200 || response.status === 201) {
-                alert('게시글이 성공적으로 등록되었습니다!');
-                navigate('/community');
-            }
+            alert('게시글이 성공적으로 등록되었습니다.');
+            navigate('/community');
         } catch (error) {
             console.error('게시글 등록 실패:', error);
-            alert('글 작성에 실패했습니다. 서버 상태나 로그인을 확인해주세요.');
+            alert('글 작성에 실패했습니다. 서버 상태와 로그인을 확인해주세요.');
         }
     };
 
     return (
         <div className="write-container">
-            {/* 글쓰기 헤더 */}
             <div className="write-header-bar">
                 <div className="write-header-left">
                     <button className="back-btn" onClick={() => navigate(-1)}>←</button>
@@ -111,13 +73,15 @@ export default function CommunityWrite() {
                 </div>
             </div>
 
-            {/* 글쓰기 메인 영역 */}
-            {/* 사이드바가 사라졌으므로 메인 영역이 100% 너비를 차지하도록 조정 */}
             <div className="write-content" style={{ display: 'block' }}>
                 <main className="write-main" style={{ width: '100%', maxWidth: '1000px', margin: '0 auto' }}>
                     <div className="editor-top">
-                        <select className="board-select" value={board} onChange={(e: ChangeEvent<HTMLSelectElement>) => setBoard(e.target.value)}>
-                            <option value="">게시판을 선택해 주세요</option>
+                        <select
+                            className="board-select"
+                            value={board}
+                            onChange={(e: ChangeEvent<HTMLSelectElement>) => setBoard(e.target.value)}
+                        >
+                            <option value="">게시판을 선택해주세요</option>
                             <option value="일상">일상</option>
                             <option value="거래">거래</option>
                             <option value="정보">정보</option>
@@ -127,76 +91,19 @@ export default function CommunityWrite() {
                             <option value="이벤트">이벤트</option>
                             <option value="리뷰">리뷰</option>
                         </select>
-                        <input type="text" className="title-input" placeholder="제목을 입력해 주세요" value={title} onChange={(e: ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)} />
+                        <input
+                            type="text"
+                            className="title-input"
+                            placeholder="제목을 입력해 주세요"
+                            value={title}
+                            onChange={(e: ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
+                        />
                     </div>
 
-                    {/* 에디터 툴바 */}
-                    <div className="editor-toolbar">
-                        <div className="toolbar-icons">
-                            <input type="file" accept="image/*" ref={fileInputRef} style={{ display: 'none' }} onChange={handleImageUpload} />
-                            <button onClick={() => fileInputRef.current?.click()}>🖼️ 사진</button>
-
-                            <button>🎥 동영상</button>
-                            <button>🙂 이모티콘</button>
-                            <button>🗺️ 장소</button>
-                            <button>🔗 링크</button>
-                            <button>📊 투표</button>
-                        </div>
-                        <div className="toolbar-text-options">
-                            <select><option>본문</option></select>
-                            <select><option>기본서체</option></select>
-                            <select><option>15</option></select>
-                            <div className="divider-vertical"></div>
-                            <button><b>B</b></button>
-                            <button><i>I</i></button>
-                            <button><u>U</u></button>
-                            <button><del>T</del></button>
-                        </div>
-                    </div>
-
-                    {/* 🔥 텍스트 영역 글박스 스타일링 */}
-                    <div className="textarea-container" style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        flex: 1,
-                        padding: '20px',
-                        border: '1px solid #EAEAEA', /* 윤곽선 추가 */
-                        borderRadius: '0 0 12px 12px', /* 하단 모서리 둥글게 */
-                        backgroundColor: '#FCFCFC', /* 살짝 배경색을 줘서 박스 느낌 강조 */
-                        minHeight: '500px', /* 충분한 높이 확보 */
-                        boxShadow: 'inset 0px 2px 4px rgba(0,0,0,0.02)' /* 살짝 파인듯한 느낌 */
-                    }}>
-                        <textarea
-                            className="content-textarea"
-                            placeholder="내용을 입력하세요"
-                            value={content}
-                            onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setContent(e.target.value)}
-                            style={{
-                                flex: 1,
-                                border: 'none',
-                                resize: 'none',
-                                outline: 'none',
-                                background: 'transparent',
-                                fontSize: '15px',
-                                lineHeight: '1.6'
-                            }}
-                        ></textarea>
-
-                        {/* 첨부된 사진 미리보기 창 */}
-                        {previewImage && (
-                            <div className="image-preview" style={{ position: 'relative', display: 'inline-block', marginTop: '20px', maxWidth: '300px' }}>
-                                <img src={previewImage} alt="미리보기" style={{ width: '100%', borderRadius: '8px', border: '1px solid #eee' }} />
-                                <button
-                                    onClick={handleRemoveImage}
-                                    style={{
-                                        position: 'absolute', top: '10px', right: '10px', background: 'rgba(0,0,0,0.6)',
-                                        color: 'white', border: 'none', borderRadius: '50%', width: '24px', height: '24px',
-                                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                    }}
-                                >✕</button>
-                            </div>
-                        )}
-                    </div>
+                    <RichPostEditor
+                        onChange={setContent}
+                        placeholder="텍스트를 입력하고 사진을 원하는 위치에 넣어보세요."
+                    />
                 </main>
             </div>
         </div>

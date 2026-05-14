@@ -1,0 +1,42 @@
+.post-content-rendered {
+    color: #333;
+    font-size: 16px;
+    line-height: 1.75;
+    word-break: break-word;
+}
+
+.post-content-rendered p {
+    margin: 0 0 14px;
+}
+
+.post-content-rendered h2,
+.post-content-rendered h3 {
+    margin: 22px 0 12px;
+    color: #1f1f1f;
+}
+
+.post-content-rendered img {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    margin: 16px 0;
+    border-radius: 10px;
+}
+
+.post-content-rendered blockquote {
+    margin: 18px 0;
+    padding-left: 14px;
+    border-left: 3px solid #b8d9c7;
+    color: #5b655f;
+}
+
+.post-content-rendered ul,
+.post-content-rendered ol {
+    padding-left: 24px;
+}
+
+.post-content-rendered a {
+    color: #2f7a57;
+    text-decoration: underline;
+}
