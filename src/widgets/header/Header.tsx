@@ -66,8 +66,8 @@ export default function Header() {
 
                 <nav className="nav-links">
                     <Link to="/">Home</Link>
-                    <Link to="/community">community ⌄</Link>
-                    <Link to="/gallery">gallery ⌄</Link>
+                    <Link to="/community">community</Link>
+                    <Link to="/gallery">gallery</Link>
                     <Link to="/forum">forum</Link>
                 </nav>
 

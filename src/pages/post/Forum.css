@@ -35,8 +35,9 @@
 /* --- 포럼 게시판 테이블 헤더 --- */
 .forum-table-header {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 18px;
     border-bottom: 2px solid #333; /* 굵은 검은색 밑줄 */
     padding-bottom: 12px;
 }

@@ -35,6 +35,24 @@
   flex-shrink: 0;
 }
 
+.gallery-search-submit {
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.48);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.18s ease;
+}
+
+.gallery-search-submit:hover {
+  background: #ffffff;
+}
+
 .gallery-search-input {
   border: none;
   background: transparent;
@@ -204,10 +222,27 @@
 }
 
 .gallery-detail-card {
+  position: relative;
   background: #ffffff;
   border: 1px solid #dfdfdf;
   border-radius: 18px;
   padding: 14px 14px 0;
+}
+
+.gallery-detail-view-info {
+  position: absolute;
+  top: 18px;
+  right: 22px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 999px;
+  color: #6f6f6f;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 2;
 }
 
 .gallery-detail-image-wrap {

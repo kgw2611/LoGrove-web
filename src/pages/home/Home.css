@@ -94,12 +94,34 @@
     font-weight: bold;
     line-height: 1.4;
     margin-bottom: 20px;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: heroFadeIn 1.2s ease-out 0.2s forwards;
 }
 
 .hero-subtitle {
     font-size: 18px;
     color: #b0b0b0;
     margin-bottom: 60px;
+    opacity: 0;
+    transform: translateY(14px);
+    animation: heroFadeIn 1s ease-out 0.8s forwards;
+}
+
+@keyframes heroFadeIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hero-title,
+    .hero-subtitle {
+        animation: none;
+        opacity: 1;
+        transform: none;
+    }
 }
 
 .cta-box {

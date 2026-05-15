@@ -60,6 +60,8 @@ export default function StairDetail() {
     const [quizResult, setQuizResult] = useState<QuizResult | null>(null)
     const [submitting, setSubmitting] = useState(false)
     const [wasAlreadyCompleted, setWasAlreadyCompleted] = useState(false)
+    const nextMissionId = missionId + 1
+    const hasNextMission = !CATEGORY_LAST.has(missionId) && nextMissionId <= 36
 
     useEffect(() => {
         const fetchDetail = async () => {
@@ -239,6 +241,14 @@ export default function StairDetail() {
                                         onClick={handleRetryQuiz}
                                     >
                                         다시 풀기
+                                    </button>
+                                )}
+                                {quizResult?.isCorrect && hasNextMission && (
+                                    <button
+                                        className="btn-submit"
+                                        onClick={() => navigate(`/study/step/${nextMissionId}`)}
+                                    >
+                                        다음 문제
                                     </button>
                                 )}
                                 {quizResult && (

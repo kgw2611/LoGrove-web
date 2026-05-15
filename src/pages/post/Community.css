@@ -81,6 +81,62 @@
     width: 150px;
 }
 
+.comm-search-bar {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    margin: 18px 0 22px;
+    padding: 0;
+    border-bottom: none;
+}
+
+.comm-search-select {
+    height: 52px;
+    min-width: 110px;
+    padding: 0 16px;
+    border: 1px solid #d8ddd9;
+    border-radius: 14px;
+    font-size: 15px;
+    background: #ffffff;
+    color: #555;
+    cursor: pointer;
+}
+
+.comm-search-input {
+    flex: 1;
+    min-width: 0;
+    height: 52px;
+    padding: 0 18px;
+    border: 1px solid #d8ddd9;
+    border-radius: 14px;
+    font-size: 16px;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.comm-search-input:focus {
+    border-color: #7bc9a5;
+    box-shadow: 0 0 0 3px rgba(123, 201, 165, 0.15);
+}
+
+.comm-search-btn {
+    height: 52px;
+    min-width: 88px;
+    padding: 0 22px;
+    border: none;
+    border-radius: 14px;
+    background: #7bc9a5;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.18s ease;
+}
+
+.comm-search-btn:hover {
+    background: #6abf99;
+}
+
 /* --- 게시판 테이블 --- */
 .comm-table {
     width: 100%;
