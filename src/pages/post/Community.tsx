@@ -56,6 +56,7 @@ export default function Community() {
     const [popularSidebar, setPopularSidebar] = useState<Board[]>([])
     const [myProfileUrl, setMyProfileUrl] = useState<string | null>(null)
 
+    const [inputTerm, setInputTerm] = useState<string>('')
     const [searchTerm, setSearchTerm] = useState<string>('')
 
     useEffect(() => {
@@ -105,18 +106,27 @@ export default function Community() {
             }
         };
         fetchPopularSidebar();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
         const fetchPosts = async () => {
             try {
                 const tagId = categoryToTagId[activeTag];
-                const url = tagId
-                    ? `/api/posts?board=COMMUNITY&tagIds=${tagId}&page=${currentPage}&size=15`
-                    : `/api/posts?board=COMMUNITY&page=${currentPage}&size=15`;
+                const params = new URLSearchParams({
+                    board: 'COMMUNITY',
+                    page: String(currentPage),
+                    size: '15',
+                });
 
-                const response = await axios.get(url);
+                if (tagId) {
+                    params.set('tagIds', String(tagId));
+                }
+
+                if (searchTerm.trim()) {
+                    params.set('title', searchTerm.trim());
+                }
+
+                const response = await axios.get(`/api/posts?${params.toString()}`);
                 const pageData = response.data.data;
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const postsData: Board[] = (pageData?.content || []).map((post: any) => formatPost(post));
@@ -132,25 +142,23 @@ export default function Community() {
         };
 
         fetchPosts();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentPage, activeTag])
+    }, [currentPage, activeTag, searchTerm])
 
     const handleTagChange = (tag: string) => {
         setActiveTag(tag)
         setCurrentPage(0)
+        setInputTerm('')
         setSearchTerm('')
     }
 
+    const applySearch = () => {
+        setSearchTerm(inputTerm.trim())
+        setCurrentPage(0)
+    }
+
     const filteredList = useMemo(() => {
-        let baseList = boardList.slice().sort((a, b) => b.id - a.id);
-
-        if (searchTerm.trim()) {
-            const lowerKeyword = searchTerm.toLowerCase();
-            baseList = baseList.filter(post => post.title.toLowerCase().includes(lowerKeyword));
-        }
-
-        return baseList;
-    }, [boardList, activeTag, searchTerm]);
+        return boardList.slice().sort((a, b) => b.id - a.id);
+    }, [boardList]);
 
     const categoryList = ['전체 글', '일상', '거래', '정보', '질문', '사진', '출사지', '이벤트', '리뷰']
 
@@ -182,17 +190,33 @@ export default function Community() {
                         ))}
                     </div>
 
-                    <div className="comm-sub-filter">
-                        <select className="filter-select">
-                            <option>제목</option>
+                    <div className="comm-search-bar">
+                        <select
+                            className="comm-search-select"
+                            defaultValue="title"
+                        >
+                            <option value="title">제목</option>
                         </select>
                         <input
                             type="text"
-                            className="filter-input"
+                            className="comm-search-input"
                             placeholder="검색어를 입력해주세요"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            value={inputTerm}
+                            onChange={(e) => setInputTerm(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault()
+                                    applySearch()
+                                }
+                            }}
                         />
+                        <button
+                            type="button"
+                            className="comm-search-btn"
+                            onClick={applySearch}
+                        >
+                            검색
+                        </button>
                     </div>
 
                     <table className="comm-table">

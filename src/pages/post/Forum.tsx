@@ -31,6 +31,20 @@ const tagNameToBrand: Record<string, string> = {
     '필름': 'Film',
 };
 
+const brandTagIdMap: Record<string, number> = {
+    Canon: 9,
+    Sony: 10,
+    Nikon: 11,
+    Fujifilm: 12,
+    Leica: 13,
+    Hasselblad: 14,
+    Panasonic: 15,
+    Olympus: 16,
+    '기타(etc)': 17,
+    '湲고?(etc)': 17,
+    Film: 76,
+};
+
 export default function Forum() {
     const navigate = useNavigate();
 
@@ -44,6 +58,7 @@ export default function Forum() {
     const [popularSidebar, setPopularSidebar] = useState<ForumPostType[]>([]);
     const [myProfileUrl, setMyProfileUrl] = useState<string | null>(null);
 
+    const [inputTerm, setInputTerm] = useState<string>('');
     const [searchTerm, setSearchTerm] = useState<string>('');
 
     useEffect(() => {
@@ -126,7 +141,22 @@ export default function Forum() {
     useEffect(() => {
         const fetchForumPosts = async () => {
             try {
-                const response = await axios.get(`/api/posts?board=FORUM&page=${currentPage}&size=15`);
+                const params = new URLSearchParams({
+                    board: 'FORUM',
+                    page: String(currentPage),
+                    size: '15',
+                });
+                const brandTagId = brandTagIdMap[activeBrand];
+
+                if (brandTagId) {
+                    params.set('tagIds', String(brandTagId));
+                }
+
+                if (searchTerm.trim()) {
+                    params.set('title', searchTerm.trim());
+                }
+
+                const response = await axios.get(`/api/posts?${params.toString()}`);
 
                 const pageData = response.data.data;
                 const postsData = pageData?.content || response.data.content || response.data.data || [];
@@ -143,12 +173,18 @@ export default function Forum() {
         };
 
         fetchForumPosts();
-    }, [currentPage]);
+    }, [currentPage, activeBrand, searchTerm]);
 
     const handleBrandChange = (brand: string) => {
         setActiveBrand(brand);
         setCurrentPage(0);
+        setInputTerm('');
         setSearchTerm('');
+    };
+
+    const applySearch = () => {
+        setSearchTerm(inputTerm.trim());
+        setCurrentPage(0);
     };
 
     const brands: string[] = [
@@ -157,18 +193,8 @@ export default function Forum() {
     ];
 
     const filteredList = useMemo(() => {
-        let baseList = boardList
-            .filter((board) => board.brand === activeBrand)
-            .slice()
-            .sort((a, b) => Number(b.id) - Number(a.id));
-
-        if (searchTerm.trim()) {
-            const lowerKeyword = searchTerm.toLowerCase();
-            baseList = baseList.filter(post => post.title.toLowerCase().includes(lowerKeyword));
-        }
-
-        return baseList;
-    }, [boardList, activeBrand, searchTerm]);
+        return boardList.slice().sort((a, b) => Number(b.id) - Number(a.id));
+    }, [boardList]);
 
     return (
         <div className="community-container">
@@ -188,22 +214,34 @@ export default function Forum() {
                         </div>
                     </div>
 
+                    <div className="comm-search-bar">
+                        <select className="comm-search-select" defaultValue="title">
+                            <option value="title">제목</option>
+                        </select>
+                        <input
+                            type="text"
+                            className="comm-search-input"
+                            placeholder="검색어를 입력해주세요"
+                            value={inputTerm}
+                            onChange={(e) => setInputTerm(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    applySearch();
+                                }
+                            }}
+                        />
+                        <button
+                            type="button"
+                            className="comm-search-btn"
+                            onClick={applySearch}
+                        >
+                            검색
+                        </button>
+                    </div>
                     <div className="forum-table-header">
                         <div className="current-brand-title">
                             📷 {activeBrand}
-                        </div>
-
-                        <div className="comm-sub-filter" style={{ borderBottom: 'none', paddingBottom: 0, marginBottom: 0 }}>
-                            <select className="filter-select">
-                                <option>제목</option>
-                            </select>
-                            <input
-                                type="text"
-                                className="filter-input"
-                                placeholder="검색어를 입력해주세요"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
                         </div>
                     </div>
 

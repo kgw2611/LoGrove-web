@@ -44,6 +44,7 @@ export interface GalleryListItem {
     authorProfileUrl?: string;
     tags: string[];
     likeCount: number;
+    view: number;
     isLiked: boolean;
     createdAt?: string;
 }
@@ -148,6 +149,7 @@ type RawPost = {
     tagNames?: string[];
     likeCount?: number | string;
     likes?: number | string;
+    view?: number | string;
     isLiked?: boolean;
     liked?: boolean;
     createdAt?: string;
@@ -256,6 +258,7 @@ function normalizeGalleryItem(raw: RawPost): GalleryListItem {
             ? raw.tagNames.filter((tag) => !isExcludedGalleryTag(tag))
             : extractTagNames(raw.tags),
         likeCount: safeNumber(raw.likeCount ?? raw.likes),
+        view: safeNumber(raw.view ?? 0),
         isLiked: Boolean(raw.isLiked ?? raw.liked ?? false),
         createdAt: raw.createdAt ?? raw.createdDate ?? '',
     };
@@ -358,8 +361,7 @@ export async function getGalleryList(
     };
 
     if (options?.search?.trim()) {
-        params.keyword = options.search.trim();
-        params.search = options.search.trim();
+        params.title = options.search.trim();
     }
 
     if (options?.tag && options.tag !== '전체') {
@@ -379,21 +381,10 @@ export async function getGalleryList(
         items = (raw?.content ?? []).map(normalizeGalleryItem);
         totalPages = raw?.totalPages ?? 1;
     }
-
-    const keyword = options?.search?.trim().toLowerCase() ?? '';
     const selectedTag = options?.tag ?? '전체';
 
     const filteredItems = items.filter((item) => {
-        const tagMatched =
-            selectedTag === '전체' || item.tags.some((tag) => tag === selectedTag);
-
-        const searchMatched =
-            !keyword ||
-            item.title.toLowerCase().includes(keyword) ||
-            (item.description ?? '').toLowerCase().includes(keyword) ||
-            item.tags.some((tag) => tag.toLowerCase().includes(keyword));
-
-        return tagMatched && searchMatched;
+        return selectedTag === '전체' || item.tags.some((tag) => tag === selectedTag);
     });
 
     return {
@@ -613,6 +604,7 @@ export async function createGalleryPost(
         author: getCurrentUserName(),
         tags: [],
         likeCount: 0,
+        view: 0,
         isLiked: false,
         createdAt: new Date().toISOString(),
     });

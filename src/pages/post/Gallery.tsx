@@ -107,6 +107,19 @@ function CommentIcon() {
     );
 }
 
+function EyeIcon() {
+    return (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+                d="M2 12C4 7 7.5 4.5 12 4.5C16.5 4.5 20 7 22 12C20 17 16.5 19.5 12 19.5C7.5 19.5 4 17 2 12Z"
+                stroke="#6F6F6F"
+                strokeWidth="1.8"
+            />
+            <circle cx="12" cy="12" r="3" stroke="#6F6F6F" strokeWidth="1.8" />
+        </svg>
+    );
+}
+
 function ShareIcon() {
     return (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -202,6 +215,7 @@ export default function Gallery() {
     const [editTitle, setEditTitle] = useState('');
     const [editDescription, setEditDescription] = useState('');
 
+    const [searchInput, setSearchInput] = useState('');
     const [searchText, setSearchText] = useState('');
     const [tagOptions, setTagOptions] = useState<string[]>(['전체']);
     const [selectedTag, setSelectedTag] = useState('전체');
@@ -332,6 +346,7 @@ export default function Gallery() {
                         author: detail.author,
                         tags: detail.tags,
                         likeCount: safeCount(detail.likeCount),
+                        view: safeCount(detail.view),
                         isLiked: detail.isLiked,
                     }
                     : item
@@ -771,9 +786,23 @@ export default function Gallery() {
                             type="text"
                             placeholder="Search for..."
                             className="gallery-search-input"
-                            value={searchText}
-                            onChange={(e) => setSearchText(e.target.value)}
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    setSearchText(searchInput.trim());
+                                }
+                            }}
                         />
+                        <button
+                            type="button"
+                            className="gallery-search-submit"
+                            onClick={() => setSearchText(searchInput.trim())}
+                            aria-label="검색"
+                        >
+                            <SearchIcon />
+                        </button>
                     </div>
 
                     <div className="gallery-actions">
@@ -826,6 +855,8 @@ export default function Gallery() {
                                 // This chip doubles as the all-filter and the tag tray toggle.
                                 setIsTagsVisible((prev) => !prev);
                                 setSelectedTag(tagOptions[0]);
+                                setSearchInput('');
+                                setSearchText('');
                             }}
                         >
                             {tagOptions[0]}
@@ -840,7 +871,11 @@ export default function Gallery() {
                                         className={`gallery-tag-chip gallery-tag-border-chip ${
                                             selectedTag === tag ? 'active' : ''
                                         }`}
-                                        onClick={() => setSelectedTag(tag)}
+                                        onClick={() => {
+                                            setSelectedTag(tag);
+                                            setSearchInput('');
+                                            setSearchText('');
+                                        }}
                                     >
                                         {tag}
                                     </button>
@@ -942,6 +977,11 @@ export default function Gallery() {
                             </div>
                         ) : (
                             <div className="gallery-detail-card">
+                                <div className="gallery-detail-view-info">
+                                    <EyeIcon />
+                                    <span>{safeCount(selectedPost.view)}</span>
+                                </div>
+
                                 <div className="gallery-detail-image-wrap">
                                     <img
                                         src={selectedPost.src}
@@ -971,6 +1011,8 @@ export default function Gallery() {
                                                 className="gallery-detail-tag"
                                                 onClick={() => {
                                                     setSelectedTag(tag);
+                                                    setSearchInput('');
+                                                    setSearchText('');
                                                     closeDetail();
                                                 }}
                                             >
