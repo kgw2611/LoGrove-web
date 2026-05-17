@@ -38,9 +38,12 @@ export const EXCLUDED_GALLERY_TAG_NAMES = [
 export interface GalleryListItem {
     id: number;
     src: string;
+    width: number;
+    height: number;
     title: string;
     description?: string;
     author: string;
+    authorLevel?: number;
     authorProfileUrl?: string;
     tags: string[];
     likeCount: number;
@@ -60,6 +63,7 @@ export interface CommentItem {
     likeCount: number;
     isLiked: boolean;
     profileUrl?: string;
+    authorLevel?: number;
     replies: CommentItem[];
 }
 
@@ -84,6 +88,11 @@ export interface TagItem {
 export interface GalleryListResult {
     items: GalleryListItem[];
     totalPages: number;
+}
+
+export interface NeighborPostsResult {
+    newer: GalleryListItem[];
+    older: GalleryListItem[];
 }
 
 export interface GalleryListOptions {
@@ -120,6 +129,7 @@ type RawComment = {
     title?: string;
     author?: string;
     nickname?: string;
+    authorLevel?: number | string;
     content?: string;
     text?: string;
     createdAt?: string;
@@ -141,9 +151,11 @@ type RawPost = {
     description?: string;
     author?: string;
     nickname?: string;
+    authorLevel?: number | string;
     profileUrl?: string;
     imageUrl?: string;
     imageUrls?: string[];
+    images?: RawImageMeta[];
     thumbnailUrl?: string;
     tags?: string[] | RawTag[];
     tagNames?: string[];
@@ -155,6 +167,12 @@ type RawPost = {
     createdAt?: string;
     createdDate?: string;
     comments?: RawComment[];
+};
+
+type RawImageMeta = {
+    url?: string;
+    width?: number | string | null;
+    height?: number | string | null;
 };
 
 type RawPostListResponse =
@@ -240,19 +258,24 @@ function normalizeComment(raw: RawComment, fallbackPostId?: number): CommentItem
         likeCount: safeNumber(raw.likeCount ?? raw.likes),
         isLiked: Boolean(raw.isLiked ?? raw.liked ?? false),
         profileUrl: raw.profileUrl ?? undefined,
+        authorLevel: safeNumber(raw.authorLevel, 1),
         replies: (raw.replies ?? []).map((r) => normalizeComment(r, fallbackPostId)),
     };
 }
 
 function normalizeGalleryItem(raw: RawPost): GalleryListItem {
     const id = safeNumber(raw.id ?? raw.postId);
+    const firstImage = raw.images?.[0];
 
     return {
         id,
-        src: normalizeImageUrl(raw.thumbnailUrl || raw.imageUrl || raw.imageUrls?.[0]),
+        src: normalizeImageUrl(firstImage?.url ?? raw.thumbnailUrl ?? raw.imageUrl ?? raw.imageUrls?.[0]),
+        width: safeNumber(firstImage?.width, 4) || 4,
+        height: safeNumber(firstImage?.height, 5) || 5,
         title: raw.title ?? '',
         description: raw.content ?? raw.description ?? '',
         author: raw.nickname ?? raw.author ?? '익명',
+        authorLevel: safeNumber(raw.authorLevel, 1),
         authorProfileUrl: raw.profileUrl ?? undefined,
         tags: raw.tagNames
             ? raw.tagNames.filter((tag) => !isExcludedGalleryTag(tag))
@@ -346,7 +369,12 @@ export function getMyGalleryCommentsLocal(): MyGalleryCommentItem[] {
 }
 
 export function getMyGalleryPostsLocal(): GalleryListItem[] {
-    return readLocalArray<GalleryListItem>(MY_GALLERY_POSTS_KEY);
+    return readLocalArray<GalleryListItem>(MY_GALLERY_POSTS_KEY).map((post) => ({
+        ...post,
+        width: safeNumber(post.width, 4) || 4,
+        height: safeNumber(post.height, 5) || 5,
+        view: safeNumber(post.view, 0),
+    }));
 }
 
 export async function getGalleryList(
@@ -415,6 +443,21 @@ export async function getGalleryDetail(postId: number): Promise<GalleryDetailIte
     return normalizeGalleryDetail(raw, comments);
 }
 
+export async function getGalleryNeighbors(
+    postId: number,
+    count = 2
+): Promise<NeighborPostsResult> {
+    const res = await apiClient.get(`/posts/${postId}/neighbors`, {
+        params: { board: 'GALLERY', count },
+    });
+    const raw = unwrapData<{ newer?: RawPost[]; older?: RawPost[] }>(res.data);
+
+    return {
+        newer: (raw?.newer ?? []).map(normalizeGalleryItem),
+        older: (raw?.older ?? []).map(normalizeGalleryItem),
+    };
+}
+
 export async function updateGalleryPost(
     postId: number,
     payload: { title: string; content: string }
@@ -452,6 +495,7 @@ export async function createComment(
             isEdited: false,
             likeCount: 0,
             isLiked: false,
+            authorLevel: 1,
             replies: [],
         };
     }
@@ -599,9 +643,12 @@ export async function createGalleryPost(
         src: payload.imageFiles?.[0]
             ? URL.createObjectURL(payload.imageFiles[0])
             : 'https://via.placeholder.com/400x500?text=No+Image',
+        width: 4,
+        height: 5,
         title: payload.title,
         description: payload.description,
         author: getCurrentUserName(),
+        authorLevel: 1,
         tags: [],
         likeCount: 0,
         view: 0,

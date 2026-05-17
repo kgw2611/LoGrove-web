@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, type ChangeEvent, type MouseEvent } from '
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import './MyPage.css';
+import { getLevelColor } from '../../shared/utils/levelColor';
 
 const LEVEL_THRESHOLDS = [0, 500, 1500, 3000, 5500, 9000, 13300];
 
@@ -599,7 +600,10 @@ export default function MyPage() {
     return (
         <div className="mypage-container">
             <div className="profile-section">
-                <div className="profile-image-wrapper">
+                <div
+                    className="profile-image-wrapper"
+                    style={{ borderColor: getLevelColor(userData.level) }}
+                >
                     <img
                         src={profileImageUrl || 'https://images.unsplash.com/photo-1518098268026-4e89f1a2cd8e?q=80&w=400&auto=format&fit=crop'}
                         alt="프로필"
@@ -616,7 +620,12 @@ export default function MyPage() {
 
                 <div className="profile-info">
                     <div className="profile-nickname-row">
-                        <span className="profile-level-badge">Lv.{userData.level ?? 1}</span>
+                        <span
+                            className="profile-level-badge"
+                            style={{ backgroundColor: getLevelColor(userData.level) }}
+                        >
+                            Lv.{userData.level ?? 1}
+                        </span>
                         <h1 className="profile-nickname">{userName}</h1>
                     </div>
 

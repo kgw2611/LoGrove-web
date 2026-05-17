@@ -6,6 +6,7 @@ import './Community.css';
 import './ForumDetail.css';
 import RichPostEditor from '../../widgets/editor/RichPostEditor';
 import PostContentRenderer from '../../widgets/editor/PostContentRenderer';
+import { getLevelColor } from '../../shared/utils/levelColor';
 
 // 🔥 이미지 경로에 새로운 백엔드 주소(3.38.12.226)를 붙여주도록 수정!
 const getImageUrl = (path?: string) => {
@@ -39,6 +40,7 @@ interface CommentType {
     likes: number;
     isLiked: boolean;
     profileUrl?: string;
+    authorLevel?: number;
     replies: CommentType[];
 }
 
@@ -54,6 +56,7 @@ interface ForumPostType {
     views: number;
     images?: string[];
     profileUrl?: string;
+    authorLevel?: number;
 }
 
 // 🔥 인기 게시글 사이드바용 타입 추가
@@ -112,6 +115,7 @@ export default function ForumDetail() {
                     likes: c.likeCount || c.likes || 0,
                     isLiked: c.isLiked || false,
                     profileUrl: c.profileUrl || undefined,
+                    authorLevel: typeof c.authorLevel === 'number' ? c.authorLevel : 1,
                     replies: (c.replies || []).map(mapComment),
                 };
             };
@@ -141,8 +145,11 @@ export default function ForumDetail() {
                     date: data.createdAt ? new Date(data.createdAt).toLocaleDateString() : '방금 전',
                     isEdited: !!postEdited,
                     views: data.view ?? data.viewCount ?? data.views ?? 0,
-                    images: data.images || data.imageUrls || data.postImages || [],
+                    images: Array.isArray(data.images)
+                        ? data.images.map((image: string | { url?: string }) => typeof image === 'string' ? image : image.url).filter((url: string | undefined): url is string => Boolean(url))
+                        : data.imageUrls || data.postImages || [],
                     profileUrl: data.profileUrl || undefined,
+                    authorLevel: typeof data.authorLevel === 'number' ? data.authorLevel : 1,
                 };
 
                 setPost(formattedPost);
@@ -418,7 +425,7 @@ export default function ForumDetail() {
                                 </h1>
 
                                 <div className="post-author-info">
-                                    <div className="author-avatar" style={{ overflow: 'hidden' }}>
+                                    <div className="author-avatar" style={{ overflow: 'hidden', borderColor: getLevelColor(post.authorLevel) }}>
                                         {post.profileUrl
                                             ? <img src={getImageUrl(post.profileUrl)} alt="프로필" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                             : <span style={{ fontSize: '28px', lineHeight: 1 }}>👤</span>}
@@ -426,6 +433,12 @@ export default function ForumDetail() {
                                     <div className="author-details">
                                         <div className="author-name-row">
                                             <span className="author-name">{post.author}</span>
+                                            <span
+                                                className="level-badge-chip"
+                                                style={{ backgroundColor: getLevelColor(post.authorLevel) }}
+                                            >
+                                                Lv.{post.authorLevel ?? 1}
+                                            </span>
                                         </div>
                                         <div className="author-meta">
                                             <span>{post.date}{post.isEdited && <span style={{ marginLeft: '6px', fontSize: '12px', color: '#999' }}>(수정됨)</span>}</span>
@@ -468,13 +481,21 @@ export default function ForumDetail() {
                         <div className="comments-section">
                             {comments.map(comment => (
                                 <div key={comment.id} className="comment-item" style={{ marginBottom: '15px' }}>
-                                    <div className="comment-avatar" style={{ overflow: 'hidden' }}>
+                                    <div className="comment-avatar" style={{ overflow: 'hidden', borderColor: getLevelColor(comment.authorLevel) }}>
                                         {comment.profileUrl
                                             ? <img src={getImageUrl(comment.profileUrl)} alt="프로필" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                             : <span style={{ fontSize: '24px', lineHeight: 1 }}>👤</span>}
                                     </div>
                                     <div className="comment-content">
-                                        <div className="comment-author">{comment.author}</div>
+                                        <div className="comment-author">
+                                            {comment.author}
+                                            <span
+                                                className="level-badge-chip"
+                                                style={{ backgroundColor: getLevelColor(comment.authorLevel) }}
+                                            >
+                                                Lv.{comment.authorLevel ?? 1}
+                                            </span>
+                                        </div>
 
                                         {editingCommentId === comment.id ? (
                                             <div className="edit-input-box">
@@ -511,13 +532,21 @@ export default function ForumDetail() {
                                             <div style={{ marginTop: '10px', paddingLeft: '20px', borderLeft: '2px solid #eee' }}>
                                                 {comment.replies.map(reply => (
                                                     <div key={reply.id} className="comment-item" style={{ marginBottom: '10px' }}>
-                                                        <div className="comment-avatar" style={{ overflow: 'hidden', width: '30px', height: '30px' }}>
+                                                        <div className="comment-avatar" style={{ overflow: 'hidden', width: '30px', height: '30px', borderColor: getLevelColor(reply.authorLevel) }}>
                                                             {reply.profileUrl
                                                                 ? <img src={getImageUrl(reply.profileUrl)} alt="프로필" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                                                 : <span style={{ fontSize: '24px', lineHeight: 1 }}>👤</span>}
                                                         </div>
                                                         <div className="comment-content">
-                                                            <div className="comment-author">{reply.author}</div>
+                                                            <div className="comment-author">
+                                                                {reply.author}
+                                                                <span
+                                                                    className="level-badge-chip"
+                                                                    style={{ backgroundColor: getLevelColor(reply.authorLevel) }}
+                                                                >
+                                                                    Lv.{reply.authorLevel ?? 1}
+                                                                </span>
+                                                            </div>
                                                             <div className="comment-text">{reply.text}</div>
                                                             <div className="comment-date">{reply.date}{reply.isEdited && <span style={{ marginLeft: '6px', fontSize: '12px', color: '#999' }}>(수정됨)</span>}</div>
                                                             <div className="comment-actions">

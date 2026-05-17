@@ -5,8 +5,11 @@ import {
     useRef,
     useState,
     type KeyboardEvent,
+    type MouseEventHandler,
 } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { ColumnsPhotoAlbum, type Photo } from 'react-photo-album';
+import 'react-photo-album/columns.css';
 import '../home/Home.css';
 import './Gallery.css';
 import {
@@ -15,6 +18,7 @@ import {
     deleteComment,
     getGalleryDetail,
     getGalleryList,
+    getGalleryNeighbors,
     getGalleryTagNames,
     toggleCommentLike,
     toggleGalleryLike,
@@ -23,7 +27,10 @@ import {
     type CommentItem,
     type GalleryDetailItem,
     type GalleryListItem,
+    type NeighborPostsResult,
 } from '../../shared/api/gallery';
+import { getLevelColor } from '../../shared/utils/levelColor';
+import GalleryFilmstrip from './GalleryFilmstrip';
 import axios from "axios";
 
 function SearchIcon() {
@@ -182,6 +189,71 @@ function safeCount(value: unknown) {
     return Number.isFinite(numberValue) ? numberValue : 0;
 }
 
+const GALLERY_PLACEHOLDER_IMAGE = 'https://via.placeholder.com/400x500?text=No+Image';
+
+type GalleryPhoto = Photo & {
+    item: GalleryListItem;
+};
+
+const getGalleryColumns = (containerWidth: number | undefined) => {
+    if (!containerWidth || containerWidth < 600) return 1;
+    if (containerWidth < 900) return 2;
+    if (containerWidth < 1200) return 3;
+    return 4;
+};
+
+const getGallerySpacing = (containerWidth: number | undefined) => {
+    return containerWidth && containerWidth < 600 ? 8 : 18;
+};
+
+function GalleryPhotoCard({
+    photo,
+    width,
+    height,
+    onClick,
+}: {
+    photo: GalleryPhoto;
+    width: number;
+    height: number;
+    onClick?: MouseEventHandler;
+}) {
+    const item = photo.item;
+
+    return (
+        <div className="gallery-photo-card" style={{ width, height }} onClick={onClick}>
+            <img
+                src={photo.src}
+                alt={photo.alt ?? item.title ?? 'gallery photo'}
+                width={photo.width}
+                height={photo.height}
+                loading="lazy"
+                onError={(e) => {
+                    if (e.currentTarget.src !== GALLERY_PLACEHOLDER_IMAGE) {
+                        e.currentTarget.src = GALLERY_PLACEHOLDER_IMAGE;
+                    }
+                }}
+            />
+            <div className="gallery-photo-overlay">
+                <span className="gallery-photo-title">{item.title || '제목 없음'}</span>
+                <span className="gallery-photo-meta">
+                    <span
+                        className="gallery-photo-level"
+                        style={{ backgroundColor: getLevelColor(item.authorLevel) }}
+                    >
+                        Lv.{item.authorLevel ?? 1}
+                    </span>
+                    <span>♡ {safeCount(item.likeCount)}</span>
+                    <span>👁 {safeCount(item.view)}</span>
+                </span>
+            </div>
+        </div>
+    );
+}
+
+function GalleryPhotoSkeleton({ height }: { height: number }) {
+    return <div className="gallery-photo-skeleton" style={{ height }} />;
+}
+
 function formatCommentDate(iso?: string) {
     if (!iso) return '방금';
 
@@ -220,6 +292,7 @@ export default function Gallery() {
     const [tagOptions, setTagOptions] = useState<string[]>(['전체']);
     const [selectedTag, setSelectedTag] = useState('전체');
     const [isTagsVisible, setIsTagsVisible] = useState(true);
+    const [scrollY, setScrollY] = useState(0);
 
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(1);
@@ -254,6 +327,29 @@ export default function Gallery() {
         !!selectedPost &&
         !!userName &&
         selectedPost.author.trim().toLowerCase() === userName.trim().toLowerCase();
+
+    const photos = useMemo<GalleryPhoto[]>(
+        () =>
+            galleryItems.map((item) => ({
+                src: item.src,
+                width: item.width || 4,
+                height: item.height || 5,
+                alt: item.title || item.description || 'gallery photo',
+                item,
+            })),
+        [galleryItems]
+    );
+
+    const skeletonPhotos = useMemo<Photo[]>(
+        () =>
+            Array.from({ length: 12 }).map((_, index) => ({
+                src: GALLERY_PLACEHOLDER_IMAGE,
+                width: 4,
+                height: [4, 5, 6, 5, 4][index % 5],
+                alt: '',
+            })),
+        []
+    );
 
     useEffect(() => {
         const fetchMyInfo = async () => {
@@ -302,6 +398,26 @@ export default function Gallery() {
         setTotalPages(1);
     }, [searchText, selectedTag]);
 
+    useEffect(() => {
+        const handleScroll = () => setScrollY(window.scrollY);
+        handleScroll();
+        window.addEventListener('scroll', handleScroll, { passive: true });
+
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    useEffect(() => {
+        if (selectedPost) return;
+
+        const saved = sessionStorage.getItem('gallery_scroll');
+        if (!saved) return;
+
+        requestAnimationFrame(() => {
+            window.scrollTo(0, Number(saved));
+            sessionStorage.removeItem('gallery_scroll');
+        });
+    }, [selectedPost]);
+
     const requireLogin = (message: string) => {
         if (isLoggedIn) return true;
 
@@ -343,6 +459,8 @@ export default function Gallery() {
                         title: detail.title,
                         description: detail.description,
                         src: detail.src,
+                        width: detail.width,
+                        height: detail.height,
                         author: detail.author,
                         tags: detail.tags,
                         likeCount: safeCount(detail.likeCount),
@@ -450,17 +568,25 @@ export default function Gallery() {
         void openInitialPost();
     }, [initialPostId, selectedPost?.id, mergeLikeOverrides]);
 
-    const relatedItems = useMemo(() => {
-        if (!selectedPost) return [];
+    const [neighbors, setNeighbors] = useState<NeighborPostsResult | null>(null);
 
-        return galleryItems
-            .filter((item) => item.id !== selectedPost.id)
-            .slice()
-            .sort((a, b) => Number(b.id) - Number(a.id))
-            .slice(0, 4);
-    }, [galleryItems, selectedPost]);
+    useEffect(() => {
+        if (!selectedPost) {
+            setNeighbors(null);
+            return;
+        }
+
+        setNeighbors(null);
+        getGalleryNeighbors(selectedPost.id, 2)
+            .then(setNeighbors)
+            .catch((error) => {
+                console.error('Failed to load gallery neighbors:', error);
+                setNeighbors({ newer: [], older: [] });
+            });
+    }, [selectedPost?.id]);
 
     const openDetail = async (item: GalleryListItem) => {
+        sessionStorage.setItem('gallery_scroll', String(window.scrollY));
         navigate(`/gallery/${item.id}`);
         try {
             setIsDetailLoading(true);
@@ -887,41 +1013,52 @@ export default function Gallery() {
             </div>
 
             {isLoading ? (
-                <div className="gallery-loading-state">
-                    <div className="gallery-loading-icon">⏳</div>
-                    <p>갤러리 목록을 불러오는 중입니다.</p>
-                </div>
+                <ColumnsPhotoAlbum
+                    photos={skeletonPhotos}
+                    columns={getGalleryColumns}
+                    spacing={getGallerySpacing}
+                    render={{
+                        photo: (_props, { height }) => (
+                            <GalleryPhotoSkeleton height={height} />
+                        ),
+                    }}
+                />
             ) : !selectedPost ? (
                 galleryItems.length === 0 ? (
                     <div className="gallery-empty-state">
-                        <div style={{ fontSize: '50px', marginBottom: '15px' }}>📷</div>
+                        <div className="gallery-empty-illustration">◎</div>
                         <h3>검색 결과가 없습니다.</h3>
                         <p>다른 태그나 검색어로 다시 시도해 보세요.</p>
+                        <button
+                            type="button"
+                            className="gallery-empty-reset-btn"
+                            onClick={() => {
+                                setSelectedTag(tagOptions[0]);
+                                setSearchInput('');
+                                setSearchText('');
+                            }}
+                        >
+                            전체 보기
+                        </button>
                     </div>
                 ) : (
                     <>
-                        <main className="masonry-grid">
-                            {galleryItems.map((item) => (
-                                <article
-                                    className="masonry-item"
-                                    key={item.id}
-                                    onClick={() => openDetail(item)}
-                                >
-                                    <img
-                                        src={item.src}
-                                        alt={item.title || item.description || 'gallery image'}
-                                        className="masonry-img"
+                        <ColumnsPhotoAlbum
+                            photos={photos}
+                            columns={getGalleryColumns}
+                            spacing={getGallerySpacing}
+                            onClick={({ photo }) => openDetail(photo.item)}
+                            render={{
+                                photo: ({ onClick }, { photo, width, height }) => (
+                                    <GalleryPhotoCard
+                                        photo={photo}
+                                        width={width}
+                                        height={height}
+                                        onClick={onClick}
                                     />
-                                    <div className="masonry-info">
-                                        <span className="masonry-title">
-                                            {item.title || ''}
-                                        </span>
-                                        <span className="masonry-more">…</span>
-                                    </div>
-                                </article>
-                            ))}
-                        </main>
-
+                                ),
+                            }}
+                        />
                         <div ref={loadMoreRef} className="gallery-load-more-trigger" />
 
                         {isLoadingMore && (
@@ -1022,7 +1159,7 @@ export default function Gallery() {
                                     </div>
 
                                     <div className="gallery-detail-author-row">
-                                        <div className="gallery-detail-author-avatar" style={{ overflow: 'hidden', padding: 0 }}>
+                                        <div className="gallery-detail-author-avatar" style={{ overflow: 'hidden', padding: 0, borderColor: getLevelColor(selectedPost.authorLevel) }}>
                                             {selectedPost.authorProfileUrl
                                                 ? <img src={selectedPost.authorProfileUrl} alt="프로필" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
                                                 : getAvatarText(selectedPost.author)}
@@ -1031,6 +1168,12 @@ export default function Gallery() {
                                         <div className="gallery-detail-author-texts">
                                             <div className="gallery-detail-author-name">
                                                 {selectedPost.author}
+                                                <span
+                                                    className="level-badge-chip"
+                                                    style={{ backgroundColor: getLevelColor(selectedPost.authorLevel) }}
+                                                >
+                                                    Lv.{selectedPost.authorLevel ?? 1}
+                                                </span>
                                             </div>
                                             <div className="gallery-detail-author-time">
                                                 {selectedPost.createdAt
@@ -1088,7 +1231,7 @@ export default function Gallery() {
                                                 selectedPost.comments.map((comment: CommentItem) => (
                                                     <div key={comment.id}>
                                                         <div className="gallery-detail-comment-item">
-                                                            <div className="gallery-detail-comment-avatar" style={{ overflow: 'hidden', padding: 0 }}>
+                                                            <div className="gallery-detail-comment-avatar" style={{ overflow: 'hidden', padding: 0, borderColor: getLevelColor(comment.authorLevel) }}>
                                                                 {comment.profileUrl
                                                                     ? <img src={comment.profileUrl} alt="프로필" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
                                                                     : getAvatarText(comment.author)}
@@ -1098,6 +1241,12 @@ export default function Gallery() {
                                                                 <div className="gallery-detail-comment-main">
                                                                     <div className="gallery-detail-comment-author-line">
                                                                         <span className="gallery-detail-comment-author">{comment.author}</span>
+                                                                        <span
+                                                                            className="level-badge-chip"
+                                                                            style={{ backgroundColor: getLevelColor(comment.authorLevel) }}
+                                                                        >
+                                                                            Lv.{comment.authorLevel ?? 1}
+                                                                        </span>
                                                                         <span className="gallery-detail-comment-time">{formatCommentDate(comment.createdAt)}{comment.isEdited && <span style={{ marginLeft: '4px', fontSize: '11px', color: '#999' }}>(수정됨)</span>}</span>
                                                                     </div>
                                                                     {editingCommentId === comment.id ? (
@@ -1149,7 +1298,7 @@ export default function Gallery() {
                                                             <div style={{ paddingLeft: '44px', marginTop: '4px' }}>
                                                                 {comment.replies.map((reply) => (
                                                                     <div key={reply.id} className="gallery-detail-comment-item" style={{ marginBottom: '8px' }}>
-                                                                        <div className="gallery-detail-comment-avatar" style={{ overflow: 'hidden', padding: 0 }}>
+                                                                        <div className="gallery-detail-comment-avatar" style={{ overflow: 'hidden', padding: 0, borderColor: getLevelColor(reply.authorLevel) }}>
                                                                             {reply.profileUrl
                                                                                 ? <img src={reply.profileUrl} alt="프로필" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
                                                                                 : getAvatarText(reply.author)}
@@ -1158,6 +1307,12 @@ export default function Gallery() {
                                                                             <div className="gallery-detail-comment-main">
                                                                                 <div className="gallery-detail-comment-author-line">
                                                                                     <span className="gallery-detail-comment-author">{reply.author}</span>
+                                                                                    <span
+                                                                                        className="level-badge-chip"
+                                                                                        style={{ backgroundColor: getLevelColor(reply.authorLevel) }}
+                                                                                    >
+                                                                                        Lv.{reply.authorLevel ?? 1}
+                                                                                    </span>
                                                                                     <span className="gallery-detail-comment-time">{formatCommentDate(reply.createdAt)}{reply.isEdited && <span style={{ marginLeft: '4px', fontSize: '11px', color: '#999' }}>(수정됨)</span>}</span>
                                                                                 </div>
                                                                                 {editingCommentId === reply.id ? (
@@ -1285,29 +1440,24 @@ export default function Gallery() {
                     </section>
 
                     <aside className="gallery-detail-side">
-                        <div className="gallery-related-grid">
-                            {relatedItems.map((item) => (
-                                <article
-                                    key={item.id}
-                                    className="gallery-related-item"
-                                    onClick={() => openDetail(item)}
-                                >
-                                    <img
-                                        src={item.src}
-                                        alt={item.title || item.description || 'related image'}
-                                        className="gallery-related-image"
-                                    />
-                                    <div className="gallery-related-footer">
-                                        <span className="gallery-related-title">
-                                            {item.title || ''}
-                                        </span>
-                                        <span className="gallery-related-more">…</span>
-                                    </div>
-                                </article>
-                            ))}
-                        </div>
+                        <GalleryFilmstrip
+                            currentPost={selectedPost}
+                            neighbors={neighbors}
+                            onSelect={openDetail}
+                        />
                     </aside>
                 </div>
+            )}
+
+            {scrollY > 800 && (
+                <button
+                    type="button"
+                    className="gallery-scroll-top-btn"
+                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                    aria-label="맨 위로 이동"
+                >
+                    ↑
+                </button>
             )}
         </div>
     );
