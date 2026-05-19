@@ -612,8 +612,8 @@
 .filmstrip-card.is-current {
   cursor: default;
   box-shadow:
-    0 0 0 4px rgba(123, 201, 165, 0.45),
-    0 8px 24px rgba(123, 201, 165, 0.3);
+          0 0 0 4px rgba(123, 201, 165, 0.45),
+          0 8px 24px rgba(123, 201, 165, 0.3);
   z-index: 2;
 }
 
@@ -1461,6 +1461,7 @@
   align-items: center;
 }
 
+/* 기존 스타일 아래에 추가하거나 수정해 */
 .gallery-tag-border-chip {
   min-width: 88px;
   height: 44px;
@@ -1472,13 +1473,25 @@
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+  margin-top: 5px;
+
+  /* 👇 추가된 부분: 쫀득한 애니메이션 효과 */
+  transition: all 0.2s ease-in-out;
 }
 
+/* 👇 마우스 올렸을 때 커지는 효과 (Hover) */
+.gallery-tag-border-chip:hover {
+  background-color: #e0e0e0;
+  transform: scale(1.05) translateY(-2px); /* 살짝 커지면서 위로 톡 올라옴 */
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);    /* 살짝 떠 보이는 그림자 */
+}
+
+/* 활성화된 상태는 커진 채로 유지 */
 .gallery-tag-border-chip.active {
   background: #87d8a4;
   border-color: #87d8a4;
   color: #ffffff;
+  transform: scale(1.05); /* 활성화된 태그도 커짐 */
 }
 
 .gallery-load-more-trigger {
@@ -1570,37 +1583,61 @@
   color: #7bc9a5;
 }
 
-/* Final gallery overrides keep the tag toggle and post edit controls above older duplicate rules. */
+/* ====================================================================
+   🔥 V버튼 상단 배치 및 하단 흰색 공백 완벽 제거
+==================================================================== */
+
+/* 🔥 태그 영역의 쓸데없는 공간 완전 삭제 */
 .gallery-tag-area {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
   width: 100%;
-  min-height: 44px;
-  margin: 18px 0 34px;
-  padding-right: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box;
 }
 
-.gallery-tag-toggle-all {
-  flex: 0 0 auto;
-  min-width: 88px;
-  height: 44px;
-  padding: 0 22px;
-  border: 1px solid #dddddd;
-  border-radius: 12px;
-  background: #eeeeee;
-  color: #6f6f6f;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1;
+.gallery-tag-bar-collapse {
+  width: 100%;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-in-out, opacity 0.25s ease-in-out, margin 0.3s ease-in-out;
+  margin-top: 0; /* 닫혀있을 땐 마진 0 (공백 없음) */
+}
+
+
+.gallery-tag-bar-collapse.open {
+  max-height: 200px;
+  opacity: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin-top: 10px; /* 열렸을 때만 상단 검색창과 간격 생성 */
+  padding-bottom: 5px;
+}
+
+/* 🔥 상단 검색창 옆으로 이사 온 동그란 V자(Chevron) 버튼 */
+.gallery-tag-area-toggle-btn {
+  flex-shrink: 0;
+  width: 46px; /* 프로필 버튼(46px)과 동일한 크기로 맞춤 */
+  height: 46px;
+  border-radius: 50%;
+  border: 1px solid #e0e0e0;
+  background-color: #ffffff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+  padding: 0;
+  box-sizing: border-box;
+
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
 }
 
-.gallery-tag-toggle-all.active {
-  background: #87d8a4;
-  border-color: #87d8a4;
-  color: #ffffff;
+.gallery-tag-area-toggle-btn:hover {
+  background-color: #f5f5f5;
+  border-color: #d0d0d0;
 }
 
 .gallery-tag-bar-collapse {
@@ -1613,10 +1650,11 @@
 }
 
 .gallery-tag-bar-collapse.open {
-  max-height: 160px;
+  max-height: 200px;
   opacity: 1;
   overflow-y: auto;
   overflow-x: hidden;
+  padding-bottom: 10px;
 }
 
 .gallery-detail-tag-list {

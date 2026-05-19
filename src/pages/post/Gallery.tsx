@@ -162,6 +162,31 @@ function SendIcon({ active = false }: { active?: boolean }) {
     );
 }
 
+// 🔥 우측 V자 토글 버튼용 아이콘
+function ChevronIcon({ open = false }: { open?: boolean }) {
+    return (
+        <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+            style={{
+                transition: 'transform 0.3s ease',
+                transform: open ? 'rotate(180deg)' : 'rotate(0deg)'
+            }}
+        >
+            <path
+                d="M19 9L12 16L5 9"
+                stroke="#6F6F6F"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+        </svg>
+    );
+}
+
 const EXCLUDED_TAGS = [
     '일상', '거래', '정보', '질문', '사진', '출사지', '이벤트', '리뷰',
     '캐논', '소니', '니콘', '후지필름', '라이카', '핫셀블라드', '파나소닉', '올림푸스', '기타', '필름',
@@ -207,11 +232,11 @@ const getGallerySpacing = (containerWidth: number | undefined) => {
 };
 
 function GalleryPhotoCard({
-    photo,
-    width,
-    height,
-    onClick,
-}: {
+                              photo,
+                              width,
+                              height,
+                              onClick,
+                          }: {
     photo: GalleryPhoto;
     width: number;
     height: number;
@@ -289,9 +314,16 @@ export default function Gallery() {
 
     const [searchInput, setSearchInput] = useState('');
     const [searchText, setSearchText] = useState('');
-    const [tagOptions, setTagOptions] = useState<string[]>(['전체']);
-    const [selectedTag, setSelectedTag] = useState('전체');
+
+    // 태그 배열 상태
+    const [tagOptions, setTagOptions] = useState<string[]>([]);
+
+    // 다중 선택 상태
+    const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+    // 🔥 태그 펼치기/접기 상태 (기본값 열려있음)
     const [isTagsVisible, setIsTagsVisible] = useState(true);
+
     const [scrollY, setScrollY] = useState(0);
 
     const [currentPage, setCurrentPage] = useState(0);
@@ -312,7 +344,9 @@ export default function Gallery() {
 
     const isLoggedIn = !!localStorage.getItem('access_token');
     const isCommentTyping = commentInput.trim().length > 0;
-    const hasSearchOrTag = searchText.trim().length > 0 || selectedTag !== '전체';
+
+    // 검색어나 선택된 태그가 하나라도 있는지 확인
+    const hasSearchOrTag = searchText.trim().length > 0 || selectedTags.length > 0;
 
     const [userName, setUserName] = useState<string>(() => {
         const savedUserString = localStorage.getItem('user_db');
@@ -392,11 +426,12 @@ export default function Gallery() {
         );
     }, [commentLikeOverrides]);
 
+    // 검색어 혹은 태그 변경 시 페이지 초기화
     useEffect(() => {
         setCurrentPage(0);
         setGalleryItems([]);
         setTotalPages(1);
-    }, [searchText, selectedTag]);
+    }, [searchText, selectedTags]);
 
     useEffect(() => {
         const handleScroll = () => setScrollY(window.scrollY);
@@ -483,10 +518,13 @@ export default function Gallery() {
 
                 const pageSize = hasSearchOrTag ? 200 : 20;
 
+                // 🔥 텅 비어있을 때는 API에 '전체'라고 보내줘야 전체 사진이 나옵니다!
+                const tagQueryParam = selectedTags.length > 0 ? selectedTags.join(',') : '전체';
+
                 const [result, tags] = await Promise.all([
                     getGalleryList(currentPage, pageSize, {
                         search: searchText,
-                        tag: selectedTag,
+                        tag: tagQueryParam,
                     }),
                     getGalleryTagNames().catch((tagError) => {
                         console.warn('태그 목록 조회 실패:', tagError);
@@ -495,7 +533,7 @@ export default function Gallery() {
                 ]);
 
                 const filteredTags = tags.filter((tag: string) => !EXCLUDED_TAGS.includes(tag) && tag !== '전체');
-                setTagOptions(['전체', ...filteredTags]);
+                setTagOptions(filteredTags);
 
                 setGalleryItems((prev) => {
                     if (currentPage === 0) return result.items;
@@ -521,7 +559,7 @@ export default function Gallery() {
         };
 
         void fetchGallery();
-    }, [currentPage, searchText, selectedTag, hasSearchOrTag]);
+    }, [currentPage, searchText, selectedTags, hasSearchOrTag]);
 
     useEffect(() => {
         if (selectedPost) return;
@@ -631,7 +669,6 @@ export default function Gallery() {
         if (!editDescription.trim()) return alert('내용을 입력해주세요.');
 
         try {
-            // Post images and tags stay fixed here; only title/content are editable.
             await updateGalleryPost(selectedPost.id, {
                 title: editTitle.trim(),
                 content: editDescription.trim(),
@@ -875,35 +912,44 @@ export default function Gallery() {
         return name.trim().charAt(0).toUpperCase();
     };
 
+    const handleTagToggle = (tag: string) => {
+        setSelectedTags((prev) => {
+            if (prev.includes(tag)) {
+                return prev.filter((t) => t !== tag);
+            } else {
+                return [...prev, tag];
+            }
+        });
+        setSearchInput('');
+        setSearchText('');
+    };
+
     return (
         <div className="gallery-container">
 
-            {/* 🔥 검색창 영역: 위쪽 회색 여백을 제거하고 헤더에 바짝 붙이는 마법의 코드! */}
+            {/* 🔥 상단 검색창 영역: V버튼을 포함하여 모든 동작을 위로 올림 */}
             <div
                 style={{
                     position: 'sticky',
-                    top: '64px', /* 글로벌 헤더 높이에 맞게 조절 (기존 46px -> 70px) */
+                    top: '64px',
                     zIndex: 100,
                     backgroundColor: '#ffffff',
                     borderBottom: '1px solid #eaeaea',
-
-                    /* 🔥 핵심: 부모 요소(gallery-container)의 패딩으로 인해 생기는 위쪽 회색 공백을 강제로 무시하고 위로 끌어올림! */
                     marginTop: '-40px',
-
-                    /* 양옆 회색 공간 없이 화면 끝까지 배경 채우는 마법의 코드 */
                     marginLeft: 'calc(-50vw + 50%)',
                     marginRight: 'calc(-50vw + 50%)',
                     paddingLeft: 'calc(50vw - 50%)',
                     paddingRight: 'calc(50vw - 50%)',
                     boxSizing: 'border-box',
+                    paddingTop: '15px',
 
-                    paddingTop: '25px', /* 끌어올린 대신 안쪽 여백을 조금 줘서 글씨가 덜 답답하게 함 */
-                    paddingBottom: '10px',
-                    marginBottom: '15px',
+                    /* 🔥 아랫부분과 완전히 붙이도록 패딩과 마진을 확 줄임 */
+                    paddingBottom: '13px',
+                    marginBottom: '13px',
                     transition: 'all 0.3s ease',
                 }}
             >
-                <div className="gallery-sub-header" style={{ marginBottom: '10px' }}>
+                <div className="gallery-sub-header" style={{ marginBottom: '0' }}>
                     <div className="search-bar-wrapper">
                         <span className="gallery-search-icon">
                             <SearchIcon />
@@ -942,6 +988,19 @@ export default function Gallery() {
                             </button>
                         </Link>
 
+                        {/* 🔥 천재적인 발상! V자 토글 버튼을 검색창 윗줄로 이사옴 (프로필 자리) */}
+                        {!selectedPost && (
+                            <button
+                                type="button"
+                                className="gallery-tag-area-toggle-btn"
+                                onClick={() => setIsTagsVisible(prev => !prev)}
+                                aria-label={isTagsVisible ? '태그 영역 닫기' : '태그 영역 열기'}
+                            >
+                                <ChevronIcon open={isTagsVisible} />
+                            </button>
+                        )}
+
+                        {/* 🔥 프로필은 V버튼 오른쪽 끝으로 밀려남 */}
                         <button
                             className="gallery-profile-btn"
                             type="button"
@@ -967,41 +1026,22 @@ export default function Gallery() {
                                 <UserIcon />
                             )}
                         </button>
-
-
                     </div>
                 </div>
 
                 {!selectedPost && (
-                    <div className={`gallery-tag-area ${isTagsVisible ? 'open' : 'closed'}`} style={{ margin: 0 }}>
-                        <button
-                            type="button"
-                            className={`gallery-tag-toggle-all ${isTagsVisible ? 'active' : ''}`}
-                            onClick={() => {
-                                // This chip doubles as the all-filter and the tag tray toggle.
-                                setIsTagsVisible((prev) => !prev);
-                                setSelectedTag(tagOptions[0]);
-                                setSearchInput('');
-                                setSearchText('');
-                            }}
-                        >
-                            {tagOptions[0]}
-                        </button>
-
+                    /* 🔥 태그 영역: V버튼이 윗줄로 갔으므로, 태그를 닫으면 높이가 0px로 완벽히 사라짐! */
+                    <div className="gallery-tag-area">
                         <div className={`gallery-tag-bar-collapse ${isTagsVisible ? 'open' : 'closed'}`}>
-                            <div className="gallery-tag-bar gallery-tag-bordered" style={{ paddingBottom: '5px' }}>
-                                {tagOptions.slice(1).map((tag) => (
+                            <div className="gallery-tag-bar gallery-tag-bordered">
+                                {tagOptions.map((tag) => (
                                     <button
                                         key={tag}
                                         type="button"
                                         className={`gallery-tag-chip gallery-tag-border-chip ${
-                                            selectedTag === tag ? 'active' : ''
+                                            selectedTags.includes(tag) ? 'active' : ''
                                         }`}
-                                        onClick={() => {
-                                            setSelectedTag(tag);
-                                            setSearchInput('');
-                                            setSearchText('');
-                                        }}
+                                        onClick={() => handleTagToggle(tag)}
                                     >
                                         {tag}
                                     </button>
@@ -1033,7 +1073,7 @@ export default function Gallery() {
                             type="button"
                             className="gallery-empty-reset-btn"
                             onClick={() => {
-                                setSelectedTag(tagOptions[0]);
+                                setSelectedTags([]);
                                 setSearchInput('');
                                 setSearchText('');
                             }}
@@ -1147,7 +1187,7 @@ export default function Gallery() {
                                                 key={tag}
                                                 className="gallery-detail-tag"
                                                 onClick={() => {
-                                                    setSelectedTag(tag);
+                                                    setSelectedTags([tag]);
                                                     setSearchInput('');
                                                     setSearchText('');
                                                     closeDetail();
