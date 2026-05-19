@@ -36,28 +36,39 @@
     cursor: pointer;
 }
 
-/* 카테고리 버튼들 */
+/* 👇 수정된 부분: 카테고리 버튼들 그룹 👇 */
 .comm-categories {
     display: flex;
+    flex-wrap: wrap; /* 태그가 많아지면 다음 줄로 넘어가도록 처리 */
     gap: 12px;
     margin-bottom: 40px;
 }
 
+/* 👇 수정된 부분: 개별 카테고리 버튼 (알약 모양 & 애니메이션) 👇 */
 .cat-btn {
     padding: 10px 24px;
     border: none;
-    border-radius: 8px;
-    background-color: #f0f0f0;
+    border-radius: 30px; /* 둥근 알약 모양 */
+    background-color: #f4f6f8; /* 부드러운 밝은 회색 */
     color: #555;
     font-weight: 600;
     font-size: 14px;
     cursor: pointer;
+    transition: all 0.2s ease-in-out; /* 부드러운 애니메이션 */
 }
 
+/* 마우스 커서를 올렸을 때 효과 */
+.cat-btn:hover {
+    background-color: #e9ecef; /* 살짝 진해지게 */
+    transform: scale(1.05) translateY(-2px); /* 살짝 커지면서 위로 떠오르는 효과 */
+}
+
+/* 선택된(활성화된) 버튼 */
 .cat-btn.active {
-    background-color: #87d8a3; /* 활성화된 초록색 */
+    background-color: #87d8a3; /* 초록색 유지 */
     color: white;
     box-shadow: 0 4px 10px rgba(135, 216, 163, 0.3);
+    transform: scale(1.05); /* 활성화된 상태도 약간 커 보이게 유지 */
 }
 
 /* 미니 검색/필터 영역 */
@@ -166,13 +177,19 @@
     text-decoration: underline;
 }
 
-/* 테이블 안의 뱃지 태그들 */
+/* 👇 수정된 부분: 테이블 안의 뱃지 태그들 (애니메이션 포함) 👇 */
 .table-tag {
     display: inline-block;
     padding: 4px 16px;
     border-radius: 4px;
     font-size: 13px;
     background-color: transparent;
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out;
+}
+
+.table-tag:hover {
+    transform: scale(1.1);
 }
 
 .tag-green { border: 1px solid #87d8a3; color: #87d8a3; }
@@ -189,9 +206,9 @@
     flex-direction: column;
     gap: 20px;
 
-    /* 👇 스크롤 따라오게 만드는 마법의 3줄 👇 */
+    /* 스크롤 따라오게 만드는 마법의 3줄 */
     position: sticky;
-    top: 90px; /* 글로벌 헤더 높이에 맞게 조절 (원하시면 70px 등으로 변경 가능) */
+    top: 90px; /* 글로벌 헤더 높이에 맞게 조절 */
     align-self: flex-start; /* 부모 높이만큼 늘어나는 것을 방지 */
 }
 

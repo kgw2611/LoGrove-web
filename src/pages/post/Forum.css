@@ -14,22 +14,31 @@
     max-width: 600px; /* 너무 넓어지지 않게 고정 */
 }
 
+/* 👇 수정된 부분: 개별 브랜드 버튼 (알약 모양 & 애니메이션) 👇 */
 .brand-btn {
-    background-color: #eaeaea; /* 피그마의 연한 회색 */
-    color: #777;
+    background-color: #f4f6f8; /* 부드러운 밝은 회색 */
+    color: #555;
     border: none;
-    border-radius: 6px;
+    border-radius: 30px; /* 👈 6px에서 30px로 변경하여 둥근 알약 모양 완성 */
     padding: 10px 0;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s ease-in-out; /* 👈 부드러운 애니메이션 적용 */
 }
 
+/* 👇 마우스 커서를 올렸을 때 효과 👇 */
+.brand-btn:hover {
+    background-color: #e9ecef; /* 살짝 진해지게 */
+    transform: scale(1.05) translateY(-2px); /* 살짝 커지면서 위로 떠오르는 효과 */
+}
+
+/* 선택된(활성화된) 버튼 */
 .brand-btn.active {
     background-color: #87d8a3; /* 활성화 시 초록색 */
     color: white;
     box-shadow: 0 4px 10px rgba(135, 216, 163, 0.3);
+    transform: scale(1.05); /* 활성화된 상태도 약간 커 보이게 유지 */
 }
 
 /* --- 포럼 게시판 테이블 헤더 --- */
@@ -67,4 +76,3 @@
     top: 90px;
     align-self: flex-start;
 }
-
