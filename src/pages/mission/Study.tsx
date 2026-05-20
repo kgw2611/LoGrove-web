@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import axios from 'axios'
+import { Link, useNavigate } from 'react-router-dom'
+import { apiClient } from '../../shared/api/client'
+import { getValidToken } from '../../shared/utils/auth'
 import '../home/Home.css'
 import './Study.css'
 
@@ -13,13 +14,17 @@ type UserGameInfo = {
 }
 
 export default function Study() {
+    const navigate = useNavigate()
     const [gameInfo, setGameInfo] = useState<UserGameInfo | null>(null)
 
     useEffect(() => {
-        const token = localStorage.getItem('access_token')
-        if (!token) return
+        const token = getValidToken()
+        if (!token) {
+            navigate('/login')
+            return
+        }
 
-        axios.get('/api/users/me', {
+        apiClient.get('/users/me', {
             headers: { Authorization: `Bearer ${token}` },
         })
             .then(res => {
@@ -31,7 +36,7 @@ export default function Study() {
                 })
             })
             .catch(() => {})
-    }, [])
+    }, [navigate])
 
     const renderXpBar = () => {
         if (!gameInfo) return null

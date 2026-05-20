@@ -1,14 +1,17 @@
 import axios, { type InternalAxiosRequestConfig } from 'axios';
+import { clearAuthStorage, getValidToken } from '../utils/auth';
 
 export const apiClient = axios.create({
     baseURL: 'http://3.38.12.226:8080/api',
 });
 
+const protectedPaths = ['/mypage', '/study', '/community/write', '/forum/write', '/gallery/write'];
+
 apiClient.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
-        const token = localStorage.getItem('access_token');
+        const token = getValidToken();
 
-        if (token && config.headers) {
+        if (token && config.headers && !config.headers.Authorization) {
             config.headers.Authorization = `Bearer ${token}`;
         }
 
@@ -22,12 +25,19 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('userId');
-            localStorage.removeItem('nickname');
-            window.location.href = '/login';
+        const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+
+        if (status === 401 || status === 403) {
+            clearAuthStorage();
+
+            const currentPath = window.location.pathname;
+            const isProtectedPath = protectedPaths.some((path) => currentPath.startsWith(path));
+
+            if (isProtectedPath && !currentPath.startsWith('/login')) {
+                window.location.href = '/login';
+            }
         }
+
         return Promise.reject(error);
     }
 );

@@ -1,9 +1,10 @@
 import { useState, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import '../home/Home.css';
 import './CommunityWrite.css';
 import RichPostEditor from '../../widgets/editor/RichPostEditor';
+import { apiClient } from '../../shared/api/client';
+import { getValidToken } from '../../shared/utils/auth';
 
 const brandTagIdMap: Record<string, number> = {
     Canon: 9,
@@ -32,7 +33,7 @@ export default function ForumWrite() {
             return alert('내용을 입력해주세요.');
         }
 
-        const token = localStorage.getItem('access_token');
+        const token = getValidToken();
         if (!token) {
             alert('로그인이 필요한 서비스입니다.');
             navigate('/login');
@@ -42,7 +43,7 @@ export default function ForumWrite() {
         const tagId = brandTagIdMap[camera];
 
         try {
-            await axios.post('/api/posts', {
+            await apiClient.post('/posts', {
                 boardType: 'FORUM',
                 title: title.trim(),
                 content,

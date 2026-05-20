@@ -30,6 +30,7 @@ import {
     type NeighborPostsResult,
 } from '../../shared/api/gallery';
 import { getLevelColor } from '../../shared/utils/levelColor';
+import { getValidToken } from '../../shared/utils/auth';
 import GalleryFilmstrip from './GalleryFilmstrip';
 import axios from "axios";
 
@@ -342,7 +343,7 @@ export default function Gallery() {
     const commentInputRef = useRef<HTMLInputElement | null>(null);
     const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
-    const isLoggedIn = !!localStorage.getItem('access_token');
+    const isLoggedIn = !!getValidToken();
     const isCommentTyping = commentInput.trim().length > 0;
 
     // 검색어나 선택된 태그가 하나라도 있는지 확인
@@ -387,7 +388,7 @@ export default function Gallery() {
 
     useEffect(() => {
         const fetchMyInfo = async () => {
-            const token = localStorage.getItem('access_token');
+            const token = getValidToken();
             if (token) {
                 try {
                     const response = await axios.get('/api/users/me', {

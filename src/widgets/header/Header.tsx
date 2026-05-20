@@ -2,31 +2,42 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Header.css';
-
-function clearAuthStorage() {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('userId');
-    localStorage.removeItem('nickname');
-}
+import { clearAuthStorage, getValidToken, isTokenExpired } from '../../shared/utils/auth';
 
 export default function Header() {
     const navigate = useNavigate();
 
-    const [isLoggedIn, setIsLoggedIn] = useState<boolean>(!!localStorage.getItem('access_token'));
+    const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
+        const token = localStorage.getItem('access_token');
+
+        if (!token || isTokenExpired(token)) {
+            if (token) clearAuthStorage();
+            return false;
+        }
+
+        return true;
+    });
 
     useEffect(() => {
-        const token = localStorage.getItem('access_token');
-        if (!token) return;
+        if (!isLoggedIn) return;
+
+        const token = getValidToken();
+        if (!token) {
+            setIsLoggedIn(false);
+            return;
+        }
 
         axios.get('/api/users/me', {
             headers: { Authorization: `Bearer ${token}` },
         }).catch((err) => {
-            if (axios.isAxiosError(err) && err.response?.status === 401) {
+            const status = axios.isAxiosError(err) ? err.response?.status : undefined;
+
+            if (status === 401 || status === 403) {
                 clearAuthStorage();
                 setIsLoggedIn(false);
             }
         });
-    }, []);
+    }, [isLoggedIn]);
 
     // "Get started" 버튼 클릭 시 작동하는 함수
     const handleStartClick = () => {

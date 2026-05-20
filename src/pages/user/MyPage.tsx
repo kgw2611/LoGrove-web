@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import './MyPage.css';
 import { getLevelColor } from '../../shared/utils/levelColor';
+import { clearAuthStorage, getValidToken } from '../../shared/utils/auth';
 
 const LEVEL_THRESHOLDS = [0, 500, 1500, 3000, 5500, 9000, 13300];
 
@@ -153,8 +154,11 @@ export default function MyPage() {
     // 1. 백엔드에서 내 정보 가져오기
     useEffect(() => {
         const fetchMyInfo = async () => {
-            const token = localStorage.getItem('access_token');
-            if (!token) return;
+            const token = getValidToken();
+            if (!token) {
+                navigate('/login');
+                return;
+            }
 
             try {
                 const response = await axios.get('/api/users/me', {
@@ -182,25 +186,28 @@ export default function MyPage() {
                 setProfileImageUrl(fetchedUser.profileUrl || '');
             } catch (error: unknown) {
                 console.error('내 정보 불러오기 실패:', error);
-                if (axios.isAxiosError(error) && error.response?.status === 401) {
-                    localStorage.removeItem('access_token');
-                    localStorage.removeItem('userId');
-                    localStorage.removeItem('nickname');
+                const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+
+                if (status === 401 || status === 403) {
+                    clearAuthStorage();
                     navigate('/login');
                 }
             }
         };
 
         void fetchMyInfo();
-    }, []);
+    }, [navigate]);
 
     // 2. 백엔드에서 '내가 쓴 글' & '내가 쓴 댓글' 가져오기 (갤러리 포함)
     useEffect(() => {
         if (!userName) return;
 
         const fetchMyActivities = async () => {
-            const token = localStorage.getItem('access_token');
-            if (!token) return;
+            const token = getValidToken();
+            if (!token) {
+                navigate('/login');
+                return;
+            }
 
             // --- 내가 쓴 글 가져오기 ---
             try {
@@ -294,7 +301,7 @@ export default function MyPage() {
         };
 
         void fetchMyActivities();
-    }, [userName]);
+    }, [navigate, userName]);
 
     // 3. 프로필 이미지 변경 (성민님이 성공하신 부분! 그대로 살렸습니다)
     const handleProfileImageChange = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -305,7 +312,12 @@ export default function MyPage() {
         formData.append('image', file);
 
         try {
-            const token = localStorage.getItem('access_token');
+            const token = getValidToken();
+            if (!token) {
+                navigate('/login');
+                return;
+            }
+
             const response = await axios.put('/api/users/me/profile-image', formData, {
                 headers: { Authorization: `Bearer ${token}` },
             });
@@ -320,7 +332,11 @@ export default function MyPage() {
     // 4. 한줄소개 저장
     const handleSaveBio = async () => {
         try {
-            const token = localStorage.getItem('access_token');
+            const token = getValidToken();
+            if (!token) {
+                navigate('/login');
+                return;
+            }
 
             await axios.put(
                 '/api/users/me',
@@ -362,7 +378,11 @@ export default function MyPage() {
         }
 
         try {
-            const token = localStorage.getItem('access_token');
+            const token = getValidToken();
+            if (!token) {
+                navigate('/login');
+                return;
+            }
 
             await axios.put(
                 '/api/users/me',

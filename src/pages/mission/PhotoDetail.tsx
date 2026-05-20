@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import axios from 'axios'
 import { apiClient } from '../../shared/api/client'
+import { getValidToken } from '../../shared/utils/auth'
 import './StudyMission.css'
 
 const PHOTO_LEVEL_POINT: Record<number, number> = { 0: 200, 1: 300, 2: 500 }
@@ -47,6 +48,11 @@ export default function PhotoDetail() {
 
     useEffect(() => {
         const fetchDetail = async () => {
+            if (!getValidToken()) {
+                navigate('/login')
+                return
+            }
+
             if (!Number.isFinite(missionId)) {
                 navigate('/study/mission', { replace: true })
                 return
@@ -108,7 +114,7 @@ export default function PhotoDetail() {
             return
         }
 
-        const token = localStorage.getItem('access_token')
+        const token = getValidToken()
         if (!token) {
             alert('로그인이 필요한 서비스입니다.')
             navigate('/login')
