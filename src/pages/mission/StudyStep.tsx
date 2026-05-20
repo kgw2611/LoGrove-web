@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { apiClient } from '../../shared/api/client'
+import { getValidToken } from '../../shared/utils/auth'
 import './StudyStep.css'
 
 type StairItem = {
@@ -32,11 +33,16 @@ export default function StudyStep() {
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
+        if (!getValidToken()) {
+            navigate('/login')
+            return
+        }
+
         apiClient.get('/learning/stair')
             .then(res => setMissions(res.data.data || res.data || []))
             .catch(e => console.error('단계별 미션 목록 불러오기 실패:', e))
             .finally(() => setLoading(false))
-    }, [])
+    }, [navigate])
 
     const grouped: Record<string, StairItem[]> = {}
     CATEGORIES.forEach(c => { grouped[c] = [] })

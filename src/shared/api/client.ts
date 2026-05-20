@@ -5,7 +5,7 @@ export const apiClient = axios.create({
     baseURL: 'http://3.38.12.226:8080/api',
 });
 
-const protectedPaths = ['/mypage', '/community/write', '/forum/write', '/gallery/write'];
+const protectedPaths = ['/mypage', '/study', '/community/write', '/forum/write', '/gallery/write'];
 
 apiClient.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {

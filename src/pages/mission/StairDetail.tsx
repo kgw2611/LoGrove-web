@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { apiClient } from '../../shared/api/client'
+import { getValidToken } from '../../shared/utils/auth'
 import './StudyStep.css'
 
 type StairItem = {
@@ -65,6 +66,11 @@ export default function StairDetail() {
 
     useEffect(() => {
         const fetchDetail = async () => {
+            if (!getValidToken()) {
+                navigate('/login')
+                return
+            }
+
             if (!Number.isFinite(missionId)) {
                 navigate('/study/step', { replace: true })
                 return

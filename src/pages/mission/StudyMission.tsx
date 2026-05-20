@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { apiClient } from '../../shared/api/client'
+import { getValidToken } from '../../shared/utils/auth'
 import './StudyMission.css'
 
 // 백엔드 MissionResponse.level: 0=Level1(200p), 1=Level2(300p), 2=Level3(500p)
@@ -22,6 +23,11 @@ export default function StudyMission() {
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
+        if (!getValidToken()) {
+            navigate('/login')
+            return
+        }
+
         apiClient.get('/learning/photo')
             .then(res => {
                 const list = res.data.data || res.data || []
@@ -37,7 +43,7 @@ export default function StudyMission() {
             })
             .catch(e => console.error('사진 미션 목록 불러오기 실패:', e))
             .finally(() => setLoading(false))
-    }, [])
+    }, [navigate])
 
     return (
         <div className="mission-container">
