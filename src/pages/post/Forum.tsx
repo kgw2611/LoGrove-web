@@ -5,6 +5,7 @@ import '../home/Home.css';
 import './Community.css';
 import './Forum.css';
 import Pagination from '../../shared/ui/Pagination';
+import { getValidToken } from '../../shared/utils/auth';
 
 interface ForumPostType {
     id: number | string;
@@ -49,7 +50,7 @@ export default function Forum() {
     const navigate = useNavigate();
 
     const [activeBrand, setActiveBrand] = useState<string>('Canon');
-    const [isLoggedIn] = useState<boolean>(() => !!localStorage.getItem('access_token'));
+    const [isLoggedIn] = useState<boolean>(() => !!getValidToken());
     const [userName, setUserName] = useState<string>('');
 
     const [boardList, setBoardList] = useState<ForumPostType[]>([]);
@@ -63,7 +64,7 @@ export default function Forum() {
 
     useEffect(() => {
         const fetchMyInfo = async () => {
-            const token = localStorage.getItem('access_token');
+            const token = getValidToken();
             if (token) {
                 try {
                     const response = await axios.get('/api/users/me', {

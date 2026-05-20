@@ -1,8 +1,10 @@
+import { clearAuthStorage, getValidToken } from '../utils/auth'
+
 export const isLoggedIn = (): boolean =>
-    !!localStorage.getItem('access_token')
+    !!getValidToken()
 
 export const getAccessToken = (): string | null =>
-    localStorage.getItem('access_token')
+    getValidToken()
 
 export const saveTokens = (token: string, userId: number, nickname: string): void => {
     localStorage.setItem('access_token', token)
@@ -11,7 +13,5 @@ export const saveTokens = (token: string, userId: number, nickname: string): voi
 }
 
 export const clearTokens = (): void => {
-    localStorage.removeItem('access_token')
-    localStorage.removeItem('userId')
-    localStorage.removeItem('nickname')
+    clearAuthStorage()
 }

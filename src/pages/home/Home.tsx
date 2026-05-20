@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import './Home.css'
+import { getValidToken } from '../../shared/utils/auth'
 
 export default function Home() {
     const navigate = useNavigate()
 
     // 🔥 핵심: 무조건 false가 아니라, 로컬 스토리지에 'access_token' 도장이 있는지 확인합니다!
     const [isLoggedIn] = useState<boolean>(
-        !!localStorage.getItem('access_token')
+        !!getValidToken()
     )
 
     // "시작하기" 및 "사진 학습" 버튼 클릭 시 작동하는 공통 함수

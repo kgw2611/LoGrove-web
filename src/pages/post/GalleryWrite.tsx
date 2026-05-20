@@ -8,6 +8,7 @@ import {
     recommendTagsByImage,
     type TagItem,
 } from '../../shared/api/gallery';
+import { getValidToken } from '../../shared/utils/auth';
 
 // 🔥 태그 검색에서 쓰이므로 남겨둡니다.
 function SearchIcon() {
@@ -73,7 +74,7 @@ export default function GalleryWrite() {
     const [isReady, setIsReady] = useState(false);
 
     useEffect(() => {
-        const isLoggedIn = !!localStorage.getItem('access_token');
+        const isLoggedIn = !!getValidToken();
 
         if (!isLoggedIn) {
             alert('갤러리 글쓰기는 로그인한 회원만 이용할 수 있습니다.');
