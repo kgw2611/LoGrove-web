@@ -1,0 +1,38 @@
+.casual-photo-fab {
+    position: fixed;
+    right: 28px;
+    bottom: 28px;
+    z-index: 800;
+    height: 56px;
+    padding: 0 20px;
+    border: none;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #21a179, #176b87);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 10px 24px rgba(23, 107, 135, 0.28), 0 3px 8px rgba(0, 0, 0, 0.14);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.casual-photo-fab:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 30px rgba(23, 107, 135, 0.34), 0 5px 10px rgba(0, 0, 0, 0.16);
+}
+
+.casual-photo-fab:active {
+    transform: translateY(0);
+}
+
+@media (max-width: 600px) {
+    .casual-photo-fab {
+        right: 16px;
+        bottom: 80px;
+        height: 52px;
+        padding: 0 16px;
+    }
+}
