@@ -43,7 +43,7 @@ interface MyCommentType {
 interface GalleryImageType {
     id: number;
     imageUrl: string;
-    source: 'gallery' | 'mission';
+    source: 'gallery' | 'mission' | 'casual';
     title: string;
     createdAt: string;
     referenceId: number;
