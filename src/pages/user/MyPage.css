@@ -391,3 +391,324 @@
         grid-template-columns: repeat(2, 1fr);
     }
 }
+
+/* ============================= */
+/* MyPage 반응형 CSS */
+/* ============================= */
+
+/* 태블릿 이하 */
+@media (max-width: 1024px) {
+    .mypage-container {
+        max-width: 100%;
+        padding: 64px 28px;
+    }
+
+    .profile-section {
+        gap: 32px;
+    }
+
+    .profile-image-wrapper {
+        width: 140px;
+        height: 140px;
+    }
+
+    .profile-nickname {
+        font-size: 32px;
+    }
+
+    .info-container {
+        gap: 30px;
+    }
+
+    .my-gallery-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* 모바일 */
+@media (max-width: 768px) {
+    .mypage-container {
+        padding: 40px 18px;
+    }
+
+    .profile-section {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 22px;
+        margin-bottom: 36px;
+    }
+
+    .profile-image-wrapper {
+        width: 120px;
+        height: 120px;
+        border-width: 3px;
+    }
+
+    .profile-info {
+        align-items: center;
+        width: 100%;
+    }
+
+    .profile-nickname-row {
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .profile-nickname {
+        font-size: 28px;
+    }
+
+    .profile-level-badge {
+        font-size: 12px;
+        padding: 3px 9px;
+    }
+
+    .profile-xp-bar-wrapper {
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .profile-xp-bar-track {
+        width: min(260px, 100%);
+    }
+
+    .profile-status {
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    .mypage-divider {
+        margin-bottom: 22px;
+    }
+
+    .mypage-tabs {
+        gap: 20px;
+        overflow-x: auto;
+        padding-bottom: 6px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .mypage-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .tab-btn {
+        flex-shrink: 0;
+        font-size: 15px;
+    }
+
+    .info-container {
+        flex-direction: column;
+        gap: 24px;
+        margin-top: 18px;
+    }
+
+    .info-sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #eee;
+        padding-right: 0;
+        padding-bottom: 14px;
+    }
+
+    .info-sidebar h3 {
+        font-size: 17px;
+        margin-bottom: 12px;
+    }
+
+    .info-sidebar ul {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        padding-bottom: 4px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .info-sidebar ul::-webkit-scrollbar {
+        display: none;
+    }
+
+    .info-sidebar li {
+        flex-shrink: 0;
+        padding: 10px 12px;
+        font-size: 14px;
+        margin-bottom: 0;
+        white-space: nowrap;
+    }
+
+    .info-content {
+        max-width: none;
+        width: 100%;
+    }
+
+    .info-content h2 {
+        font-size: 19px;
+    }
+
+    .info-desc {
+        margin-bottom: 24px;
+    }
+
+    .info-input-group input {
+        font-size: 16px;
+        box-sizing: border-box;
+    }
+
+    .social-connect-item {
+        gap: 12px;
+    }
+
+    .pw-change-box {
+        padding: 14px 16px;
+        font-size: 14px;
+    }
+
+    .modal-overlay {
+        padding: 20px 14px;
+    }
+
+    .modal-content {
+        width: 100%;
+        max-width: 400px;
+        padding: 24px 18px;
+    }
+
+    .my-gallery-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+    }
+}
+
+/* 작은 모바일 */
+@media (max-width: 480px) {
+    .mypage-container {
+        padding: 32px 14px;
+    }
+
+    .profile-section {
+        gap: 18px;
+        margin-bottom: 30px;
+    }
+
+    .profile-image-wrapper {
+        width: 104px;
+        height: 104px;
+    }
+
+    .profile-nickname {
+        font-size: 24px;
+    }
+
+    .profile-xp-bar-track {
+        width: 220px;
+    }
+
+    .profile-xp-text {
+        font-size: 11px;
+    }
+
+    .profile-status {
+        font-size: 13px;
+    }
+
+    .mypage-tabs {
+        gap: 16px;
+    }
+
+    .tab-btn {
+        font-size: 14px;
+    }
+
+    .info-sidebar h3 {
+        font-size: 16px;
+    }
+
+    .info-sidebar li {
+        font-size: 13px;
+        padding: 9px 10px;
+    }
+
+    .info-content h2 {
+        font-size: 18px;
+    }
+
+    .info-desc {
+        font-size: 12px;
+    }
+
+    .social-connect-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .social-info {
+        font-size: 13px;
+    }
+
+    .connect-btn {
+        width: 100%;
+        padding: 9px 12px;
+    }
+
+    .pw-change-box {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .delete-account-btn {
+        width: 100%;
+        padding: 11px 15px;
+    }
+
+    .modal-content {
+        padding: 22px 16px;
+        border-radius: 10px;
+    }
+
+    .modal-content h3 {
+        font-size: 17px;
+    }
+
+    .my-gallery-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .my-gallery-image-box {
+        border-width: 4px;
+    }
+
+    .my-gallery-title {
+        font-size: 11px;
+    }
+}
+
+/* 아주 좁은 화면 */
+@media (max-width: 360px) {
+    .mypage-container {
+        padding: 28px 12px;
+    }
+
+    .profile-image-wrapper {
+        width: 92px;
+        height: 92px;
+    }
+
+    .profile-nickname {
+        font-size: 22px;
+    }
+
+    .profile-xp-bar-track {
+        width: 190px;
+    }
+
+    .my-gallery-grid {
+        grid-template-columns: 1fr;
+    }
+}

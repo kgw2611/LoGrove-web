@@ -1744,3 +1744,671 @@
   cursor: pointer;
   box-shadow: 0 10px 24px rgba(47, 107, 74, 0.22);
 }
+
+/* ============================= */
+/* Gallery 전체 반응형 보강 CSS */
+/* ============================= */
+
+/* 태블릿 이하 */
+@media (max-width: 1024px) {
+  .gallery-container {
+    padding: 22px 28px 34px;
+  }
+
+  .gallery-sub-header {
+    gap: 12px;
+  }
+
+  .gallery-tag-border-chip {
+    min-width: 76px;
+    height: 40px;
+    padding: 0 18px;
+    font-size: 14px;
+  }
+
+  .gallery-detail-card {
+    padding: 12px 12px 0;
+  }
+
+  .gallery-detail-image {
+    max-width: 100%;
+    max-height: 64vh;
+  }
+
+  .gallery-detail-description {
+    font-size: 15px;
+  }
+
+  .gallery-edit-panel {
+    width: min(680px, 92vw);
+  }
+}
+
+/* 모바일 */
+@media (max-width: 768px) {
+  .gallery-container {
+    padding: 18px 16px 30px;
+  }
+
+  .gallery-sub-header {
+    flex-direction: column;
+    align-items: stretch;
+    margin-bottom: 18px;
+  }
+
+  .search-bar-wrapper {
+    width: 100%;
+    height: 44px;
+    border-radius: 14px;
+  }
+
+  .gallery-search-input {
+    font-size: 16px;
+  }
+
+  .gallery-actions {
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .gallery-write-link {
+    flex: 1;
+  }
+
+  .gallery-write-btn {
+    width: 100%;
+    min-width: 0;
+    height: 44px;
+    font-size: 14px;
+    border-radius: 14px;
+  }
+
+  .gallery-profile-btn,
+  .gallery-tag-area-toggle-btn {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+  }
+
+  .gallery-dropdown-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .gallery-tag-area {
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .gallery-tag-bar-collapse.open {
+    max-height: 160px;
+    margin-top: 6px;
+  }
+
+  .gallery-tag-bordered {
+    gap: 8px;
+  }
+
+  .gallery-tag-border-chip {
+    min-width: auto;
+    height: 36px;
+    padding: 0 14px;
+    font-size: 13px;
+    border-radius: 999px;
+    margin-top: 0;
+  }
+
+  .gallery-tag-border-chip:hover,
+  .gallery-tag-border-chip.active {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .masonry-grid {
+    column-count: 2;
+    column-gap: 12px;
+  }
+
+  .masonry-item {
+    margin-bottom: 12px;
+  }
+
+  .masonry-img,
+  .gallery-photo-card,
+  .gallery-photo-card img,
+  .gallery-photo-skeleton {
+    border-radius: 16px;
+  }
+
+  .gallery-photo-overlay {
+    padding: 22px 10px 10px;
+    opacity: 1;
+  }
+
+  .gallery-photo-title {
+    font-size: 12px;
+  }
+
+  .gallery-photo-meta,
+  .gallery-photo-likes {
+    font-size: 12px;
+  }
+
+  .gallery-detail-layout {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .gallery-detail-top-icons {
+    padding-left: 0;
+    gap: 14px;
+    margin-bottom: 12px;
+  }
+
+  .gallery-detail-card {
+    border-radius: 14px;
+    padding: 10px 10px 0;
+  }
+
+  .gallery-detail-view-info {
+    top: 14px;
+    right: 14px;
+    font-size: 12px;
+    padding: 5px 9px;
+  }
+
+  .gallery-detail-image-wrap {
+    padding: 2px 0 10px;
+  }
+
+  .gallery-detail-image {
+    max-height: 58vh;
+    border-radius: 14px;
+  }
+
+  .gallery-detail-content {
+    padding: 0 8px;
+  }
+
+  .gallery-detail-title {
+    font-size: 17px;
+    line-height: 1.4;
+  }
+
+  .gallery-post-owner-actions {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .gallery-post-owner-actions button {
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+
+  .gallery-detail-author-row {
+    align-items: flex-start;
+  }
+
+  .gallery-detail-author-name {
+    font-size: 14px;
+  }
+
+  .gallery-detail-author-time {
+    font-size: 12px;
+  }
+
+  .gallery-detail-description {
+    font-size: 14px;
+    line-height: 1.65;
+    margin-bottom: 20px;
+  }
+
+  .gallery-detail-comment-count {
+    font-size: 15px;
+  }
+
+  .gallery-detail-comment-item {
+    gap: 8px;
+  }
+
+  .gallery-detail-comment-avatar {
+    width: 34px;
+    height: 34px;
+    font-size: 13px;
+  }
+
+  .gallery-detail-comment-body {
+    min-width: 0;
+  }
+
+  .gallery-detail-comment-author-line {
+    flex-wrap: wrap;
+    gap: 4px 8px;
+  }
+
+  .gallery-detail-comment-author {
+    font-size: 14px;
+  }
+
+  .gallery-detail-comment-time {
+    font-size: 12px;
+  }
+
+  .gallery-detail-comment-text {
+    font-size: 14px;
+    word-break: break-word;
+  }
+
+  .gallery-detail-comment-meta {
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 13px;
+  }
+
+  .comment-like-btn,
+  .gallery-comment-reply-btn {
+    font-size: 14px;
+  }
+
+  .gallery-comment-input-image-style,
+  .gallery-detail-comment-input-wrap {
+    min-height: 52px;
+    padding: 0 10px 0 16px;
+    border-radius: 18px;
+  }
+
+  .gallery-detail-comment-input {
+    height: 50px;
+    font-size: 16px;
+  }
+
+  .gallery-detail-comment-tools {
+    gap: 6px;
+  }
+
+  .detail-tool-btn {
+    width: 30px;
+    height: 30px;
+  }
+
+  .detail-send-btn,
+  .gallery-comment-send-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    margin-left: 6px;
+  }
+
+  .gallery-reply-indicator {
+    font-size: 13px;
+    padding: 9px 12px;
+  }
+
+  .filmstrip-track {
+    gap: 10px;
+    padding: 6px 2px 10px;
+  }
+
+  .filmstrip-card,
+  .filmstrip-card-skeleton {
+    flex: 0 0 96px;
+    max-width: 96px;
+    border-radius: 12px;
+  }
+
+  .gallery-comment-menu,
+  .gallery-post-menu {
+    width: 120px;
+    border-radius: 14px;
+    padding: 8px;
+  }
+
+  .gallery-comment-menu-item,
+  .gallery-post-menu-item {
+    font-size: 14px;
+    padding: 10px 12px;
+    border-radius: 10px;
+  }
+
+  .gallery-comment-edit-actions {
+    gap: 8px;
+  }
+
+  .gallery-comment-edit-cancel,
+  .gallery-comment-edit-save {
+    min-width: 80px;
+    height: 46px;
+    font-size: 15px;
+    border-radius: 14px;
+  }
+
+  .gallery-detail-comment-edit-input-wrap {
+    min-height: 52px;
+    padding: 0 14px;
+  }
+
+  .gallery-detail-comment-edit-input {
+    font-size: 16px;
+  }
+
+  .gallery-edit-panel-overlay {
+    justify-content: center;
+  }
+
+  .gallery-edit-panel {
+    width: 100vw;
+    height: 100vh;
+  }
+
+  .gallery-edit-panel-header {
+    height: 72px;
+    padding: 0 18px;
+  }
+
+  .gallery-edit-panel-header h2 {
+    font-size: 22px;
+  }
+
+  .gallery-edit-panel-body {
+    padding: 22px 18px;
+  }
+
+  .gallery-edit-label {
+    font-size: 14px;
+  }
+
+  .gallery-edit-input,
+  .gallery-edit-textarea {
+    border-radius: 18px;
+    padding: 15px 16px;
+    font-size: 16px;
+  }
+
+  .gallery-edit-textarea {
+    min-height: 120px;
+  }
+
+  .gallery-edit-tag-panel {
+    padding: 16px;
+  }
+
+  .gallery-edit-tag-chip {
+    padding: 8px 13px;
+    font-size: 13px;
+  }
+
+  .gallery-edit-panel-footer {
+    padding: 14px 18px 20px;
+  }
+
+  .gallery-edit-delete-btn,
+  .gallery-edit-save-btn {
+    min-width: 86px;
+    height: 50px;
+    font-size: 16px;
+    border-radius: 14px;
+  }
+
+  .gallery-scroll-top-btn {
+    right: 18px;
+    bottom: 18px;
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
+  }
+}
+
+/* 작은 모바일 */
+@media (max-width: 480px) {
+  .gallery-container {
+    padding: 14px 12px 24px;
+  }
+
+  .gallery-sub-header {
+    gap: 10px;
+  }
+
+  .search-bar-wrapper {
+    height: 42px;
+    padding: 0 12px;
+  }
+
+  .gallery-search-submit {
+    width: 32px;
+    height: 32px;
+  }
+
+  .gallery-actions {
+    gap: 6px;
+  }
+
+  .gallery-write-btn {
+    height: 42px;
+    font-size: 13px;
+    padding: 0 12px;
+  }
+
+  .gallery-profile-btn,
+  .gallery-tag-area-toggle-btn {
+    width: 42px;
+    height: 42px;
+  }
+
+  .gallery-tag-bar-collapse.open {
+    max-height: 140px;
+  }
+
+  .gallery-tag-border-chip {
+    height: 34px;
+    padding: 0 12px;
+    font-size: 12px;
+  }
+
+  .masonry-grid {
+    column-count: 1;
+  }
+
+  .masonry-title {
+    font-size: 12px;
+  }
+
+  .gallery-detail-card {
+    padding: 8px 8px 0;
+  }
+
+  .gallery-detail-image {
+    max-height: 52vh;
+  }
+
+  .gallery-detail-view-info {
+    position: static;
+    width: fit-content;
+    margin: 0 0 8px auto;
+  }
+
+  .gallery-detail-title {
+    font-size: 16px;
+  }
+
+  .gallery-detail-author-avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 13px;
+  }
+
+  .gallery-detail-description {
+    font-size: 13px;
+  }
+
+  .gallery-detail-tag-list {
+    gap: 5px;
+  }
+
+  .gallery-detail-tag {
+    font-size: 12px;
+    padding: 4px 10px;
+  }
+
+  .gallery-detail-comment-avatar {
+    width: 30px;
+    height: 30px;
+  }
+
+  .gallery-detail-comment-author {
+    font-size: 13px;
+  }
+
+  .gallery-detail-comment-text {
+    font-size: 13px;
+  }
+
+  .gallery-detail-comment-body {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .detail-comment-more-btn {
+    align-self: flex-end;
+  }
+
+  .gallery-comment-input-image-style,
+  .gallery-detail-comment-input-wrap {
+    min-height: 48px;
+    padding: 0 8px 0 14px;
+    gap: 6px;
+  }
+
+  .gallery-detail-comment-input {
+    height: 46px;
+    font-size: 16px;
+  }
+
+  .gallery-detail-comment-tools {
+    display: none;
+  }
+
+  .gallery-comment-send-btn,
+  .detail-send-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+  }
+
+  .filmstrip-card,
+  .filmstrip-card-skeleton {
+    flex: 0 0 82px;
+    max-width: 82px;
+  }
+
+  .filmstrip-current-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+  }
+
+  .gallery-comment-edit-actions {
+    flex-direction: column;
+  }
+
+  .gallery-comment-edit-cancel,
+  .gallery-comment-edit-save {
+    width: 100%;
+  }
+
+  .gallery-edit-panel-header {
+    height: 64px;
+    padding: 0 14px;
+  }
+
+  .gallery-edit-panel-header h2 {
+    font-size: 20px;
+  }
+
+  .gallery-edit-panel-body {
+    padding: 18px 14px;
+  }
+
+  .gallery-edit-inline-group {
+    margin-bottom: 22px;
+  }
+
+  .gallery-edit-tag-panel {
+    padding: 14px;
+  }
+
+  .gallery-edit-tag-panel-title,
+  .gallery-edit-tag-panel-subtitle {
+    font-size: 14px;
+  }
+
+  .gallery-edit-switch-row {
+    font-size: 14px;
+  }
+
+  .gallery-edit-panel-footer {
+    flex-direction: column;
+    padding: 12px 14px 18px;
+  }
+
+  .gallery-edit-delete-btn,
+  .gallery-edit-save-btn {
+    width: 100%;
+  }
+
+  .gallery-scroll-top-btn {
+    right: 14px;
+    bottom: 14px;
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* 아주 좁은 화면 */
+@media (max-width: 360px) {
+  .gallery-container {
+    padding: 12px 10px 22px;
+  }
+
+  .gallery-write-btn {
+    font-size: 12px;
+    padding: 0 8px;
+  }
+
+  .gallery-tag-border-chip {
+    font-size: 11px;
+    padding: 0 10px;
+  }
+
+  .gallery-detail-content {
+    padding: 0 4px;
+  }
+
+  .gallery-detail-image {
+    max-height: 48vh;
+  }
+
+  .gallery-comment-input-image-style,
+  .gallery-detail-comment-input-wrap {
+    padding-left: 12px;
+  }
+
+  .gallery-detail-comment-input {
+    font-size: 15px;
+  }
+
+  .gallery-comment-send-btn,
+  .detail-send-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .filmstrip-card,
+  .filmstrip-card-skeleton {
+    flex: 0 0 74px;
+    max-width: 74px;
+  }
+}

@@ -134,3 +134,151 @@
     width: auto;
     margin-bottom: 25px; /* 캐릭터 다리가 바닥에 자연스럽게 닿도록 아래 여백 주기 */
 }
+
+/* ============================= */
+/* Study 반응형 CSS */
+/* ============================= */
+
+/* 태블릿 이하 */
+@media (max-width: 1024px) {
+    .study-main-content {
+        padding: 24px;
+        padding-bottom: 70px;
+    }
+
+    .study-title {
+        font-size: 30px;
+        margin-bottom: 40px;
+    }
+
+    .study-cards-wrapper {
+        gap: 20px;
+    }
+
+    .study-card {
+        width: 340px;
+        height: 300px;
+    }
+
+    .character-img {
+        max-height: 180px;
+        margin-bottom: 22px;
+    }
+}
+
+/* 모바일 */
+@media (max-width: 768px) {
+    .study-main-content {
+        justify-content: flex-start;
+        padding: 32px 18px 64px;
+    }
+
+    .study-user-info {
+        margin-bottom: 26px;
+    }
+
+    .study-xp-bar-track {
+        width: min(280px, 100%);
+    }
+
+    .study-title {
+        font-size: 26px;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .study-cards-wrapper {
+        width: 100%;
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
+    }
+
+    .study-card {
+        width: 100%;
+        max-width: 396px;
+        height: 280px;
+    }
+
+    .study-card-title {
+        font-size: 17px;
+        margin-top: 30px;
+        margin-bottom: 16px;
+    }
+
+    .character-img {
+        max-height: 165px;
+        margin-bottom: 20px;
+    }
+}
+
+/* 작은 모바일 */
+@media (max-width: 480px) {
+    .study-main-content {
+        padding: 28px 14px 56px;
+    }
+
+    .study-user-row {
+        gap: 8px;
+    }
+
+    .study-level-badge {
+        font-size: 12px;
+        padding: 3px 9px;
+    }
+
+    .study-nickname {
+        font-size: 16px;
+    }
+
+    .study-xp-bar-track {
+        width: 240px;
+        max-width: 100%;
+    }
+
+    .study-xp-text {
+        font-size: 12px;
+    }
+
+    .study-title {
+        font-size: 24px;
+        margin-bottom: 24px;
+    }
+
+    .study-card {
+        height: 250px;
+        border-radius: 12px;
+    }
+
+    .study-card-title {
+        font-size: 16px;
+        margin-top: 24px;
+        margin-bottom: 12px;
+    }
+
+    .character-img {
+        max-height: 140px;
+        margin-bottom: 18px;
+    }
+}
+
+/* 아주 좁은 화면 */
+@media (max-width: 360px) {
+    .study-main-content {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .study-title {
+        font-size: 22px;
+    }
+
+    .study-card {
+        height: 230px;
+    }
+
+    .character-img {
+        max-height: 125px;
+        margin-bottom: 16px;
+    }
+}
