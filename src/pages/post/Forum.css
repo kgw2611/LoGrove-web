@@ -76,3 +76,119 @@
     top: 90px;
     align-self: flex-start;
 }
+
+/* ============================= */
+/* Forum Brand 반응형 CSS */
+/* ============================= */
+
+/* 태블릿 이하 */
+@media (max-width: 1024px) {
+    .brand-grid-wrapper {
+        margin-bottom: 42px;
+    }
+
+    .brand-grid {
+        max-width: 560px;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px 12px;
+    }
+
+    .brand-btn {
+        font-size: 13px;
+        padding: 10px 0;
+    }
+}
+
+/* 모바일 */
+@media (max-width: 768px) {
+    .brand-grid-wrapper {
+        width: 100%;
+        justify-content: flex-start;
+        margin-top: 16px;
+        margin-bottom: 32px;
+    }
+
+    .brand-grid {
+        max-width: none;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+
+    .brand-btn {
+        padding: 10px 8px;
+        font-size: 12px;
+        border-radius: 24px;
+    }
+
+    .brand-btn:hover,
+    .brand-btn.active {
+        transform: none;
+    }
+
+    .forum-table-header {
+        flex-wrap: wrap;
+        gap: 10px;
+        padding-bottom: 10px;
+    }
+
+    .current-brand-title {
+        font-size: 18px;
+    }
+
+    .sidebar-tag-search {
+        padding: 10px 4px;
+        font-size: 13px;
+    }
+
+    .comm-sidebar {
+        position: static;
+        top: auto;
+    }
+}
+
+/* 작은 모바일 */
+@media (max-width: 480px) {
+    .brand-grid-wrapper {
+        margin-top: 12px;
+        margin-bottom: 26px;
+    }
+
+    .brand-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .brand-btn {
+        padding: 9px 6px;
+        font-size: 12px;
+    }
+
+    .forum-table-header {
+        align-items: flex-start;
+    }
+
+    .current-brand-title {
+        font-size: 17px;
+        line-height: 1.4;
+    }
+
+    .sidebar-tag-search {
+        font-size: 12px;
+    }
+}
+
+/* 아주 좁은 화면 */
+@media (max-width: 360px) {
+    .brand-grid {
+        gap: 7px;
+    }
+
+    .brand-btn {
+        font-size: 11px;
+        padding: 8px 4px;
+    }
+
+    .current-brand-title {
+        font-size: 16px;
+    }
+}

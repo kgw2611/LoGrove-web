@@ -313,3 +313,278 @@
     color: #aaa;
     white-space: nowrap;
 }
+
+/* ============================= */
+/* Community / Forum 반응형 CSS */
+/* ============================= */
+
+/* 태블릿 이하 */
+@media (max-width: 1024px) {
+    .community-container {
+        padding: 18px 24px;
+    }
+
+    .comm-content {
+        max-width: 100%;
+        gap: 24px;
+    }
+
+    .comm-main {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .comm-sidebar {
+        flex: 0 0 260px;
+    }
+
+    .sidebar-box {
+        padding: 20px;
+    }
+
+    .cat-btn {
+        padding: 9px 18px;
+        font-size: 13px;
+    }
+
+    .comm-table th,
+    .comm-table td {
+        padding: 14px 6px;
+        font-size: 13px;
+    }
+
+    .table-tag {
+        padding: 4px 12px;
+        font-size: 12px;
+    }
+}
+
+/* 모바일 */
+@media (max-width: 768px) {
+    .community-container {
+        padding: 14px 16px;
+    }
+
+    .comm-content {
+        flex-direction: column;
+        gap: 24px;
+        margin-top: 20px;
+    }
+
+    .comm-main {
+        width: 100%;
+        flex: none;
+    }
+
+    .comm-sidebar {
+        width: 100%;
+        flex: none;
+        position: static;
+        top: auto;
+        gap: 16px;
+        order: -1;
+    }
+
+    .sidebar-box {
+        padding: 18px 16px;
+    }
+
+    .profile-info {
+        margin-bottom: 14px;
+    }
+
+    .write-btn {
+        padding: 12px;
+        border-radius: 14px;
+    }
+
+    .comm-top-search {
+        padding: 11px 14px;
+        font-size: 14px;
+    }
+
+    .comm-categories {
+        gap: 8px;
+        margin-bottom: 28px;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 6px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .comm-categories::-webkit-scrollbar {
+        display: none;
+    }
+
+    .cat-btn {
+        flex-shrink: 0;
+        padding: 9px 16px;
+        font-size: 13px;
+    }
+
+    .cat-btn:hover,
+    .cat-btn.active {
+        transform: none;
+    }
+
+    .comm-sub-filter {
+        justify-content: flex-start;
+        overflow-x: auto;
+        gap: 8px;
+    }
+
+    .comm-search-bar {
+        flex-direction: column;
+        gap: 8px;
+        margin: 14px 0 18px;
+    }
+
+    .comm-search-select,
+    .comm-search-input,
+    .comm-search-btn {
+        width: 100%;
+        height: 48px;
+        border-radius: 12px;
+    }
+
+    .comm-search-input {
+        font-size: 16px;
+    }
+
+    .comm-search-btn {
+        min-width: 0;
+        font-size: 15px;
+    }
+
+    .comm-table {
+        min-width: 680px;
+    }
+
+    .comm-main {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .comm-main::-webkit-scrollbar {
+        height: 6px;
+    }
+
+    .comm-table th,
+    .comm-table td {
+        padding: 13px 6px;
+        font-size: 13px;
+        white-space: nowrap;
+    }
+
+    .title-cell {
+        min-width: 220px;
+        white-space: normal;
+        line-height: 1.45;
+    }
+
+    .popular-box h4 {
+        margin-top: 0;
+    }
+}
+
+/* 작은 모바일 */
+@media (max-width: 480px) {
+    .community-container {
+        padding: 12px;
+    }
+
+    .comm-content {
+        margin-top: 16px;
+        gap: 20px;
+    }
+
+    .sidebar-box {
+        padding: 16px 14px;
+        border-radius: 10px;
+    }
+
+    .profile-avatar {
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+    }
+
+    .profile-name {
+        font-size: 14px;
+    }
+
+    .comm-top-search {
+        font-size: 13px;
+        border-radius: 10px;
+    }
+
+    .comm-categories {
+        margin-bottom: 22px;
+    }
+
+    .cat-btn {
+        padding: 8px 14px;
+        font-size: 12px;
+    }
+
+    .filter-input {
+        width: 120px;
+    }
+
+    .comm-search-select,
+    .comm-search-input,
+    .comm-search-btn {
+        height: 46px;
+        font-size: 14px;
+    }
+
+    .comm-search-input {
+        font-size: 16px;
+    }
+
+    .comm-table {
+        min-width: 620px;
+    }
+
+    .comm-table th,
+    .comm-table td {
+        padding: 12px 5px;
+        font-size: 12px;
+    }
+
+    .title-cell {
+        min-width: 190px;
+    }
+
+    .table-tag {
+        padding: 3px 10px;
+        font-size: 11px;
+    }
+
+    .popular-item {
+        font-size: 12px;
+    }
+
+    .popular-views {
+        font-size: 11px;
+    }
+}
+
+/* 아주 좁은 화면 */
+@media (max-width: 360px) {
+    .community-container {
+        padding: 10px;
+    }
+
+    .comm-table {
+        min-width: 580px;
+    }
+
+    .title-cell {
+        min-width: 170px;
+    }
+
+    .cat-btn {
+        padding: 8px 12px;
+    }
+}

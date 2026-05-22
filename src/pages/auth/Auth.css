@@ -179,3 +179,157 @@
     text-decoration: underline;
     margin-left: 5px;
 }
+
+/* ============================= */
+/* Auth 반응형 CSS */
+/* ============================= */
+
+/* 태블릿 이하 */
+@media (max-width: 768px) {
+    .auth-container {
+        padding: 16px 20px;
+    }
+
+    .auth-wrapper {
+        max-width: 100%;
+        width: 100%;
+        margin: 48px auto;
+    }
+
+    .auth-title {
+        font-size: 28px;
+    }
+
+    .auth-subtitle {
+        font-size: 14px;
+        margin-bottom: 26px;
+        text-align: center;
+    }
+
+    .social-login {
+        gap: 12px;
+        margin-bottom: 26px;
+    }
+
+    .social-btn {
+        flex: 1;
+        max-width: 72px;
+        height: 42px;
+    }
+
+    .auth-form {
+        gap: 18px;
+    }
+
+    .auth-input {
+        font-size: 16px;
+        padding: 14px 12px;
+    }
+
+    .side-btn {
+        padding: 0 12px;
+        font-size: 12px;
+    }
+
+    .submit-btn {
+        font-size: 15px;
+        padding: 15px;
+    }
+}
+
+/* 작은 모바일 */
+@media (max-width: 480px) {
+    .auth-container {
+        padding: 14px 16px;
+    }
+
+    .auth-wrapper {
+        margin: 36px auto;
+        align-items: stretch;
+    }
+
+    .auth-title {
+        font-size: 26px;
+        text-align: center;
+    }
+
+    .auth-subtitle {
+        font-size: 13px;
+    }
+
+    .social-login {
+        gap: 8px;
+    }
+
+    .social-btn {
+        width: auto;
+        height: 42px;
+        font-size: 14px;
+    }
+
+    .btn-apple {
+        font-size: 18px;
+    }
+
+    .btn-kakao {
+        font-size: 11px;
+    }
+
+    .divider {
+        margin-bottom: 24px;
+    }
+
+    .auth-form {
+        gap: 16px;
+    }
+
+    .input-with-btn {
+        gap: 6px;
+    }
+
+    .side-btn {
+        padding: 0 10px;
+        min-width: 78px;
+    }
+
+    .auth-options {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        margin-top: 0;
+    }
+
+    .submit-btn {
+        width: 100%;
+        margin-top: 8px;
+    }
+
+    .auth-footer {
+        font-size: 12px;
+        line-height: 1.5;
+    }
+}
+
+/* 아주 좁은 화면 */
+@media (max-width: 360px) {
+    .auth-container {
+        padding: 12px;
+    }
+
+    .auth-title {
+        font-size: 24px;
+    }
+
+    .input-with-btn {
+        flex-direction: column;
+    }
+
+    .side-btn {
+        width: 100%;
+        height: 42px;
+    }
+
+    .social-btn {
+        height: 40px;
+    }
+}
