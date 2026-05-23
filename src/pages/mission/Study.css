@@ -16,15 +16,39 @@
     padding-bottom: 80px;
 }
 
-.study-user-info {
+/* ===== 프로필 카드 ===== */
+.study-profile-card {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 32px;
+    gap: 12px;
+    margin-bottom: 40px;
+    padding: 32px 80px;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.07);
+    min-width: 500px;
 }
 
-.study-user-row {
+/* 프로필 이미지 원형 + 레벨 컬러 테두리 */
+.study-profile-image-wrapper {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    border: 4px solid #00bfa5; /* levelColor로 덮어씌워짐 */
+    overflow: hidden;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.study-profile-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* 레벨 뱃지 + 닉네임 한 줄 */
+.study-profile-nickname-row {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -33,21 +57,21 @@
 .study-level-badge {
     background: #00bfa5;
     color: #fff;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 700;
-    padding: 3px 10px;
+    padding: 4px 14px;
     border-radius: 20px;
 }
 
 .study-nickname {
-    font-size: 18px;
-    font-weight: 600;
+    font-size: 22px;
+    font-weight: 700;
     color: #333;
 }
 
 .study-xp-bar-track {
-    width: 280px;
-    height: 10px;
+    width: 320px;
+    height: 12px;
     background: #e0e0e0;
     border-radius: 999px;
     overflow: hidden;
@@ -61,8 +85,9 @@
 }
 
 .study-xp-text {
-    font-size: 13px;
+    font-size: 14px;
     color: #888;
+    font-weight: 500;
 }
 
 .study-title {
@@ -146,6 +171,11 @@
         padding-bottom: 70px;
     }
 
+    .study-profile-card {
+        padding: 28px 60px;
+        min-width: 420px;
+    }
+
     .study-title {
         font-size: 30px;
         margin-bottom: 40px;
@@ -173,12 +203,25 @@
         padding: 32px 18px 64px;
     }
 
-    .study-user-info {
-        margin-bottom: 26px;
+    .study-profile-card {
+        padding: 24px 28px;
+        min-width: unset;
+        width: 100%;
+        max-width: 360px;
+    }
+
+    .study-profile-image-wrapper {
+        width: 90px;
+        height: 90px;
+    }
+
+    .study-nickname {
+        font-size: 18px;
     }
 
     .study-xp-bar-track {
-        width: min(280px, 100%);
+        width: 100%;
+        max-width: 280px;
     }
 
     .study-title {
@@ -218,8 +261,14 @@
         padding: 28px 14px 56px;
     }
 
-    .study-user-row {
-        gap: 8px;
+    .study-profile-card {
+        padding: 20px 24px;
+        min-width: unset;
+    }
+
+    .study-profile-image-wrapper {
+        width: 80px;
+        height: 80px;
     }
 
     .study-level-badge {
@@ -267,6 +316,26 @@
     .study-main-content {
         padding-left: 12px;
         padding-right: 12px;
+    }
+
+    .study-profile-card {
+        padding: 16px 20px;
+        min-width: unset;
+        width: 100%;
+    }
+
+    .study-profile-image-wrapper {
+        width: 70px;
+        height: 70px;
+    }
+
+    .study-nickname {
+        font-size: 15px;
+    }
+
+    .study-level-badge {
+        font-size: 11px;
+        padding: 3px 8px;
     }
 
     .study-title {
