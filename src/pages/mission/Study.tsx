@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { apiClient } from '../../shared/api/client'
 import { getValidToken } from '../../shared/utils/auth'
+import { getLevelColor } from '../../shared/utils/levelColor'
 import '../home/Home.css'
 import './Study.css'
 
@@ -11,6 +12,7 @@ type UserGameInfo = {
     nickname: string
     level: number
     progress: number
+    profileUrl?: string
 }
 
 export default function Study() {
@@ -33,28 +35,57 @@ export default function Study() {
                     nickname: data.nickname || data.name || '',
                     level: typeof data.level === 'number' ? data.level : 1,
                     progress: typeof data.progress === 'number' ? data.progress : 0,
+                    profileUrl: data.profileUrl || '',
                 })
             })
             .catch(() => {})
     }, [navigate])
 
-    const renderXpBar = () => {
+    const renderProfileCard = () => {
         if (!gameInfo) return null
+
         const lv = gameInfo.level
         const prog = gameInfo.progress
         const maxProg = lv < LEVEL_THRESHOLDS.length
             ? LEVEL_THRESHOLDS[lv] - LEVEL_THRESHOLDS[lv - 1]
             : LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length - 1] - LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length - 2]
         const pct = Math.min(100, Math.round((prog / maxProg) * 100))
+        const levelColor = getLevelColor(lv)
 
         return (
-            <div className="study-user-info">
-                <div className="study-user-row">
-                    <span className="study-level-badge">Lv.{lv}</span>
+            <div className="study-profile-card">
+                {/* 프로필 이미지 */}
+                <div
+                    className="study-profile-image-wrapper"
+                    style={{ borderColor: levelColor }}
+                >
+                    <img
+                        src={
+                            gameInfo.profileUrl ||
+                            'https://images.unsplash.com/photo-1518098268026-4e89f1a2cd8e?q=80&w=400&auto=format&fit=crop'
+                        }
+                        alt="프로필"
+                        className="study-profile-image"
+                    />
+                </div>
+
+                {/* 레벨 + 닉네임 */}
+                <div className="study-profile-nickname-row">
+                    <span
+                        className="study-level-badge"
+                        style={{ backgroundColor: levelColor }}
+                    >
+                        Lv.{lv}
+                    </span>
                     <span className="study-nickname">{gameInfo.nickname}</span>
                 </div>
+
+                {/* XP 바 */}
                 <div className="study-xp-bar-track">
-                    <div className="study-xp-bar-fill" style={{ width: `${pct}%` }} />
+                    <div
+                        className="study-xp-bar-fill"
+                        style={{ width: `${pct}%`, backgroundColor: levelColor }}
+                    />
                 </div>
                 <span className="study-xp-text">{prog} / {maxProg} XP</span>
             </div>
@@ -64,7 +95,7 @@ export default function Study() {
     return (
         <div className="study-container">
             <main className="study-main-content">
-                {renderXpBar()}
+                {renderProfileCard()}
 
                 <h1 className="study-title">
                     LoGrove, 어떤 방식으로 시작해볼까요?

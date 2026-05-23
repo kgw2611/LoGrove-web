@@ -135,6 +135,83 @@
     margin-bottom: 25px; /* 캐릭터 다리가 바닥에 자연스럽게 닿도록 아래 여백 주기 */
 }
 
+/* ===== 프로필 카드 ===== */
+.study-profile-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 40px;
+    padding: 32px 40px;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.07);
+    min-width: 300px;
+}
+
+/* 프로필 이미지 원형 + 레벨 컬러 테두리 */
+.study-profile-image-wrapper {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    border: 4px solid #00bfa5; /* levelColor로 덮어씌워짐 */
+    overflow: hidden;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.study-profile-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* 레벨 뱃지 + 닉네임 한 줄 */
+.study-profile-nickname-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* 레벨 뱃지 (기존보다 크게) */
+.study-level-badge {
+    background: #00bfa5;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 4px 14px;
+    border-radius: 20px;
+}
+
+/* 닉네임 (기존보다 크게) */
+.study-nickname {
+    font-size: 22px;
+    font-weight: 700;
+    color: #333;
+}
+
+/* XP 바 (기존보다 넓게) */
+.study-xp-bar-track {
+    width: 320px;
+    height: 12px;
+    background: #e0e0e0;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.study-xp-bar-fill {
+    height: 100%;
+    background: #00bfa5;
+    border-radius: 999px;
+    transition: width 0.4s ease;
+}
+
+.study-xp-text {
+    font-size: 14px;
+    color: #888;
+    font-weight: 500;
+}
+
 /* ============================= */
 /* Study 반응형 CSS */
 /* ============================= */
@@ -210,6 +287,27 @@
         max-height: 165px;
         margin-bottom: 20px;
     }
+
+    .study-profile-card {
+        padding: 24px 28px;
+        min-width: unset;
+        width: 100%;
+        max-width: 360px;
+    }
+
+    .study-profile-image-wrapper {
+        width: 90px;
+        height: 90px;
+    }
+
+    .study-nickname {
+        font-size: 18px;
+    }
+
+    .study-xp-bar-track {
+        width: 100%;
+        max-width: 280px;
+    }
 }
 
 /* 작은 모바일 */
@@ -259,6 +357,24 @@
     .character-img {
         max-height: 140px;
         margin-bottom: 18px;
+    }
+
+    .study-profile-image-wrapper {
+        width: 80px;
+        height: 80px;
+    }
+
+    .study-nickname {
+        font-size: 16px;
+    }
+
+    .study-level-badge {
+        font-size: 12px;
+        padding: 3px 10px;
+    }
+
+    .study-xp-text {
+        font-size: 12px;
     }
 }
 
