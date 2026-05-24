@@ -290,6 +290,48 @@ export default function GalleryWrite() {
                                 )}
                             </div>
 
+                            /* 🎨 필터 UI 추가 */
+                            {previewUrl && (
+                                <div className={`gallery-filter-section ${!isTagRecommended ? 'disabled' : ''}`}>
+                                    <p className="gallery-filter-title">
+                                        //필터
+                                        {!isTagRecommended && (
+                                            <span className="gallery-filter-notice"> · 태그 추천 후 사용 가능합니다</span>
+                                        )}
+                                    </p>
+                                    <div className="gallery-filter-list">
+                                        {[
+                                            { key: 'normal',                                            label: 'Normal' },
+                                            { key: 'grayscale(100%)',                                   label: 'Grayscale' },
+                                            { key: 'sepia(100%)',                                       label: 'Sepia' },
+                                            { key: 'brightness(1.3)',                                   label: 'Bright' },
+                                            { key: 'contrast(1.4)',                                     label: 'Contrast' },
+                                            { key: 'sepia(50%) contrast(1.2) brightness(0.9)',          label: 'Vintage' },
+                                            { key: 'hue-rotate(180deg) saturate(1.2)',                  label: 'Cool' },
+                                            { key: 'sepia(30%) saturate(1.4) brightness(1.1)',          label: 'Warm' },
+                                        ].map(({ key, label }) => (
+                                            <button
+                                                key={key}
+                                                type="button"
+                                                className={`gallery-filter-item ${selectedFilter === key ? 'active' : ''}`}
+                                                onClick={() => isTagRecommended && setSelectedFilter(key)}
+                                                disabled={!isTagRecommended}
+                                            >
+                                                <div className="gallery-filter-thumb-wrapper">
+                                                    <img
+                                                        src={previewUrl}
+                                                        alt={label}
+                                                        className="gallery-filter-thumb"
+                                                        style={{ filter: key === 'normal' ? 'none' : key }}
+                                                    />
+                                                </div>
+                                                <span className="gallery-filter-label">{label}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="gallery-left-divider" />
                         </section>
 
