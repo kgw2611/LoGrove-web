@@ -51,6 +51,54 @@ function UploadIcon() {
     );
 }
 
+const applyFilterToFile = (file: File, filter: string): Promise<File> => {
+    return new Promise((resolve) => {
+        // normal이면 원본 그대로 반환
+        if (filter === 'normal') {
+            resolve(file);
+            return;
+        }
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+
+        img.onload = () => {
+            if (!ctx) {
+                resolve(file);
+                return;
+            }
+
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+
+            // Canvas에 CSS filter 적용
+            ctx.filter = filter;
+            ctx.drawImage(img, 0, 0);
+
+            canvas.toBlob(
+                (blob) => {
+                    if (!blob) {
+                        resolve(file);
+                        return;
+                    }
+                    const filteredFile = new File(
+                        [blob],
+                        file.name,
+                        { type: file.type, lastModified: Date.now() }
+                    );
+                    resolve(filteredFile);
+                },
+                file.type,
+                0.95 // 품질 95%
+            );
+        };
+
+        img.onerror = () => resolve(file); // 에러 시 원본 반환
+        img.src = URL.createObjectURL(file);
+    });
+};
+
 export default function GalleryWrite() {
     const navigate = useNavigate();
     const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -72,6 +120,10 @@ export default function GalleryWrite() {
     const [isRecommending, setIsRecommending] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isReady, setIsReady] = useState(false);
+
+    //이미지 필터 기능 관련
+    const [selectedFilter, setSelectedFilter] = useState<string>('normal');
+    const [isTagRecommended, setIsTagRecommended] = useState<boolean>(false);
 
     useEffect(() => {
         const isLoggedIn = !!getValidToken();
@@ -196,6 +248,8 @@ export default function GalleryWrite() {
             alert('태그 추천 중 오류가 발생했습니다.');
         } finally {
             setIsRecommending(false);
+            //이미지 필터 관련
+            setIsTagRecommended(true);
         }
     };
 
@@ -218,10 +272,14 @@ export default function GalleryWrite() {
         try {
             setIsSubmitting(true);
 
+            // 필터가 normal이면 원본 파일 그대로 사용
+            // 필터가 있으면 Canvas API로 필터 적용된 이미지 파일 생성
+            const fileToSubmit = await applyFilterToFile(selectedFile, selectedFilter);
+
             await createGalleryPost({
                 title: title.trim(),
                 description: description.trim(),
-                imageFiles: [selectedFile],
+                imageFiles: [fileToSubmit],
                 tagIds: selectedTags.map((tag) => tag.id),
                 commentEnabled: allowComments,
                 shareEnabled: allowShare,
@@ -285,6 +343,49 @@ export default function GalleryWrite() {
                             </div>
 
                             <div className="gallery-left-divider" />
+
+                            {/* 🎨 필터 UI 추가 */}
+                            {previewUrl && (
+                                <div className={`gallery-filter-section ${!isTagRecommended ? 'disabled' : ''}`}>
+                                    <p className="gallery-filter-title">
+                                        🎨 필터
+                                        {!isTagRecommended && (
+                                            <span className="gallery-filter-notice"> · 태그 추천 후 사용 가능합니다</span>
+                                        )}
+                                    </p>
+                                    <div className="gallery-filter-list">
+                                        {[
+                                            { key: 'normal',                                            label: 'Normal' },
+                                            { key: 'grayscale(100%)',                                   label: 'Grayscale' },
+                                            { key: 'sepia(100%)',                                       label: 'Sepia' },
+                                            { key: 'brightness(1.3)',                                   label: 'Bright' },
+                                            { key: 'contrast(1.4)',                                     label: 'Contrast' },
+                                            { key: 'sepia(50%) contrast(1.2) brightness(0.9)',          label: 'Vintage' },
+                                            { key: 'hue-rotate(180deg) saturate(1.2)',                  label: 'Cool' },
+                                            { key: 'sepia(30%) saturate(1.4) brightness(1.1)',          label: 'Warm' },
+                                        ].map(({ key, label }) => (
+                                            <button
+                                                key={key}
+                                                type="button"
+                                                className={`gallery-filter-item ${selectedFilter === key ? 'active' : ''}`}
+                                                onClick={() => isTagRecommended && setSelectedFilter(key)}
+                                                disabled={!isTagRecommended}
+                                            >
+                                                <div className="gallery-filter-thumb-wrapper">
+                                                    <img
+                                                        src={previewUrl}
+                                                        alt={label}
+                                                        className="gallery-filter-thumb"
+                                                        style={{ filter: key === 'normal' ? 'none' : key }}
+                                                    />
+                                                </div>
+                                                <span className="gallery-filter-label">{label}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                         </section>
 
                         <aside className="gallery-write-right">
