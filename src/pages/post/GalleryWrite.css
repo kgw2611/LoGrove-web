@@ -454,8 +454,8 @@
 }
 
 .gallery-filter-thumb-wrapper {
-    width: 64px;
-    height: 64px;
+    width: 250px;
+    height: 250px;
     border-radius: 8px;
     overflow: hidden;
     background: #ddd;

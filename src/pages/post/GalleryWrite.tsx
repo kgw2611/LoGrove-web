@@ -51,6 +51,54 @@ function UploadIcon() {
     );
 }
 
+const applyFilterToFile = (file: File, filter: string): Promise<File> => {
+    return new Promise((resolve) => {
+        // normal이면 원본 그대로 반환
+        if (filter === 'normal') {
+            resolve(file);
+            return;
+        }
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+
+        img.onload = () => {
+            if (!ctx) {
+                resolve(file);
+                return;
+            }
+
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+
+            // Canvas에 CSS filter 적용
+            ctx.filter = filter;
+            ctx.drawImage(img, 0, 0);
+
+            canvas.toBlob(
+                (blob) => {
+                    if (!blob) {
+                        resolve(file);
+                        return;
+                    }
+                    const filteredFile = new File(
+                        [blob],
+                        file.name,
+                        { type: file.type, lastModified: Date.now() }
+                    );
+                    resolve(filteredFile);
+                },
+                file.type,
+                0.95 // 품질 95%
+            );
+        };
+
+        img.onerror = () => resolve(file); // 에러 시 원본 반환
+        img.src = URL.createObjectURL(file);
+    });
+};
+
 export default function GalleryWrite() {
     const navigate = useNavigate();
     const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -224,10 +272,14 @@ export default function GalleryWrite() {
         try {
             setIsSubmitting(true);
 
+            // 필터가 normal이면 원본 파일 그대로 사용
+            // 필터가 있으면 Canvas API로 필터 적용된 이미지 파일 생성
+            const fileToSubmit = await applyFilterToFile(selectedFile, selectedFilter);
+
             await createGalleryPost({
                 title: title.trim(),
                 description: description.trim(),
-                imageFiles: [selectedFile],
+                imageFiles: [fileToSubmit],
                 tagIds: selectedTags.map((tag) => tag.id),
                 commentEnabled: allowComments,
                 shareEnabled: allowShare,
@@ -290,11 +342,13 @@ export default function GalleryWrite() {
                                 )}
                             </div>
 
-                            /* 🎨 필터 UI 추가 */
+                            <div className="gallery-left-divider" />
+
+                            {/* 🎨 필터 UI 추가 */}
                             {previewUrl && (
                                 <div className={`gallery-filter-section ${!isTagRecommended ? 'disabled' : ''}`}>
                                     <p className="gallery-filter-title">
-                                        //필터
+                                        🎨 필터
                                         {!isTagRecommended && (
                                             <span className="gallery-filter-notice"> · 태그 추천 후 사용 가능합니다</span>
                                         )}
@@ -332,7 +386,6 @@ export default function GalleryWrite() {
                                 </div>
                             )}
 
-                            <div className="gallery-left-divider" />
                         </section>
 
                         <aside className="gallery-write-right">
