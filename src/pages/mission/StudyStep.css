@@ -1,251 +1,343 @@
+/* =========================================
+   🔥 단계별 학습: 로드맵 (4:6 비율, 지그재그, 독립 스크롤, 컴팩트 가로형 카드)
+   ========================================= */
+
 .step-container {
     font-family: 'Pretendard', -apple-system, sans-serif;
-    background-color: #ffffff;
+    background-color: #f8f9fa;
     min-height: 100vh;
+    overflow-x: hidden;
+    /* 페이지 전체 위아래 스크롤을 막고, 내부 좌우 컬럼만 스크롤되도록 설정 (모바일 짤림 방지) */
+    height: 100vh;
+    overflow-y: hidden;
 }
 
-/* --- 상단 네비게이션 바 --- */
-.step-navbar {
+.roadmap-main-content {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 40px;
-    border-bottom: 1px solid #eaeaea;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 30px 20px; /* 상단 여백 살짝 축소 */
+    gap: 30px;
+    align-items: flex-start;
+    height: 100%; /* 부모 높이 상속 */
 }
 
-.step-nav-left {
+/* =========================================
+   👈 좌측 사이드바 (비율 4)
+   ========================================= */
+.roadmap-left-column {
+    flex: 4;
+    display: flex;
+    flex-direction: column;
+    /* 독립적인 스크롤 영역 */
+    height: calc(100vh - 60px);
+}
+
+.sidebar-top-actions {
+    flex-shrink: 0;
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    padding-bottom: 16px;
+    padding-left: 20px;
+}
+
+.roadmap-back-btn {
     display: flex;
     align-items: center;
-    gap: 20px;
-}
-
-.back-arrow-btn {
+    gap: 6px;
     background: none;
     border: none;
-    font-size: 24px;
-    cursor: pointer;
-    color: #333;
-}
-
-.nav-divider {
-    width: 1px;
-    height: 24px;
-    background-color: #e0e0e0;
-}
-
-.logo-text {
-    font-size: 24px;
-    font-weight: 700;
-    color: #87d8a3;
-    margin-right: 10px;
-}
-
-.step-nav-title {
+    color: #888;
     font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: color 0.2s, transform 0.2s;
+    padding: 8px 0;
+}
+
+.roadmap-back-btn:hover {
+    color: #333;
+    transform: translateX(-4px);
+}
+
+.category-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0 20px 24px 20px;
+    flex-shrink: 0;
+}
+
+.category-tab {
+    padding: 8px 16px;
+    border-radius: 20px;
+    background: #ffffff;
+    border: 1px solid #eaeaea;
+    color: #666;
+    font-size: 14px;
     font-weight: 600;
-    color: #87d8a3; /* 로고와 같은 초록색 계열 */
-}
-
-.step-nav-right {
-    display: flex;
-    gap: 12px;
-}
-
-.login-btn {
-    padding: 8px 16px;
-    border-radius: 20px;
-    border: 1px solid #ddd;
-    background: white;
     cursor: pointer;
+    transition: all 0.2s;
 }
 
-.start-btn {
-    padding: 8px 16px;
-    border-radius: 20px;
-    border: none;
-    background-color: #87d8a3;
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
+.category-tab:hover {
+    background: #f0fdf4;
+    border-color: #7BC9A5;
+    color: #7BC9A5;
 }
 
-/* --- 메인 콘텐츠 영역 --- */
-.step-main-content {
-    display: flex;
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 40px 20px;
-    gap: 40px;
+.category-tab.active {
+    background: #7BC9A5;
+    color: #fff;
+    border-color: #7BC9A5;
+    box-shadow: 0 4px 10px rgba(123, 201, 165, 0.3);
 }
 
-/* 왼쪽 사이드바 (도형 & 세로선) */
-.step-sidebar {
-    width: 150px;
-    border-right: 2px solid #87d8a3; /* 초록색 세로선! */
-    position: relative;
-}
-
-.graphics-placeholder {
-    width: 100%;
-    height: 100%;
-    /* 나중에 이미지를 넣을 곳입니다 */
-}
-
-/* 오른쪽 리스트 영역 */
-.step-list-section {
+.roadmap-sidebar {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 20px;
-}
-
-/* --- 카드 디자인 --- */
-.step-card {
-    display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 20px 24px;
-    border-radius: 10px;
-    background-color: #ffffff;
-    transition: box-shadow 0.15s;
+    overflow-y: auto; /* 좌측 자체 스크롤 */
+    overflow-x: hidden;
+    padding-right: 10px;
+    padding-top: 10px;
+    width: 100%;
+    padding-bottom: 50px; /* 스크롤 여유 공간 */
 }
 
-.step-card:hover {
-    box-shadow: 0 2px 10px rgba(0,0,0,0.07);
-}
+/* 좌측 스크롤바 디자인 */
+.roadmap-sidebar::-webkit-scrollbar { width: 6px; }
+.roadmap-sidebar::-webkit-scrollbar-thumb { background-color: #e5e8eb; border-radius: 4px; }
 
-.step-card-title {
-    font-size: 18px;
-    font-weight: 700;
-    margin: 0 0 8px 0;
-    color: #333;
-}
-
-.step-card-desc {
-    font-size: 14px;
-    color: #666;
-    margin: 0 0 12px 0;
-}
-
-.step-card-level {
-    display: flex;
-    align-items: center;
-    font-size: 12px;
-    color: #666;
-}
-
-.level-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    margin-right: 6px;
-}
-
-.step-action-btn {
-    padding: 10px 28px;
-    border-radius: 20px;
-    border: none;
-    color: white;
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-    transition: opacity 0.2s;
-}
-
-.step-action-btn:hover {
-    opacity: 0.8;
-}
-
-/* 🔥 상태별 컬러 테마 (초록색: 시작 / 보라색: 완료) */
-.card-start {
-    border: 2px solid #8fd3b2; /* 연한 초록색 테두리 */
-}
-.btn-start {
-    background-color: #8fd3b2;
-}
-.dot-start {
-    background-color: #8fd3b2;
-}
-
-.card-done {
-    border: 2px solid #b8a1f8;
-}
-.btn-done {
-    background-color: #b8a1f8;
-}
-.dot-done {
-    background-color: #b8a1f8;
-}
-
-.card-locked {
-    border: 2px solid #d0d0d0;
-    opacity: 0.55;
-}
-.btn-locked {
-    background-color: #c8c8c8;
-    cursor: not-allowed;
-    font-size: 16px;
-}
-.dot-locked {
-    background-color: #c8c8c8;
-}
-
-/* --- 카테고리 그룹 --- */
-.step-category-group {
+.timeline-container {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    margin-bottom: 44px;
+    align-items: center;
+    width: 100%;
 }
 
-.step-category-title {
-    font-size: 15px;
-    font-weight: 700;
-    color: #87d8a3;
-    margin: 0 0 4px 0;
-    padding-bottom: 10px;
-    border-bottom: 2px solid #e8f8f0;
-    letter-spacing: 0.3px;
+.timeline-node {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 35px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
 }
 
-/* --- 배지 --- */
-.step-card-meta {
+.timeline-node.locked {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.timeline-node.zigzag-left { transform: translateX(-20px); }
+.timeline-node.zigzag-right { transform: translateX(20px); }
+
+.node-hexagon {
+    width: 80px;
+    height: 92px;
+    background-color: #e5e8eb;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
     display: flex;
     align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    margin-bottom: 12px;
+}
+
+.hexagon-inner {
+    width: 72px;
+    height: 82px;
+    background-color: #ffffff;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.node-number { font-size: 26px; font-weight: 800; color: #888; }
+.timeline-node.active .node-hexagon { background-color: #7BC9A5; }
+.timeline-node.active .node-number { color: #7BC9A5; }
+.timeline-node .node-hexagon.completed { background-color: #b8a1f8; }
+/* 🔥 로드맵의 잠긴 Hexagon 색상 */
+.timeline-node .node-hexagon.locked { background-color: #dcdcdc; }
+
+.node-title.bold { font-weight: 800; color: #222; }
+.node-title { font-size: 15px; color: #666; font-weight: 500; text-align: center; }
+
+.node-line {
+    position: absolute;
+    top: 92px;
+    left: 50%;
+    width: 2px;
+    height: 35px;
+    border-left: 2px dashed #d1d5db;
+    z-index: 0;
+    transition: all 0.3s ease;
+}
+.node-line.zigzag-left { transform: translateX(calc(-50% + 20px)); }
+.node-line.zigzag-right { transform: translateX(calc(-50% - 20px)); }
+.node-line.completed { border-left: 2px solid #b8a1f8; }
+
+.active-connector {
+    position: absolute;
+    top: 46px;
+    right: 0;
+    z-index: -1;
+    border-top: 2px dashed #7BC9A5;
+    transition: all 0.3s ease;
+}
+.active-connector.zigzag-left { left: calc(50% + 20px); }
+.active-connector.zigzag-right { left: calc(50% - 20px); }
+
+/* =========================================
+   👉 우측 상세 정보 리스트 (비율 6 - Sticky & 스크롤)
+   ========================================= */
+.roadmap-detail-section {
+    flex: 6;
+    /* 🔥 우측도 고정하고 내부에 자체 스크롤바 생성! */
+    height: calc(100vh - 60px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 15px; /* 스크롤바 여백 */
+    scroll-behavior: smooth; /* 스크롤 부드럽게 */
+}
+
+/* 우측 스크롤바 디자인 */
+.roadmap-detail-section::-webkit-scrollbar { width: 6px; }
+.roadmap-detail-section::-webkit-scrollbar-thumb { background-color: #e5e8eb; border-radius: 4px; }
+
+.mission-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* 카드 간격을 살짝 더 좁혀서 더 리스트 느낌 강화 */
+    padding-bottom: 60px; /* 맨 아래 스크롤 여백 */
+}
+
+/* 🔥 슬림하고 컴팩트해진 가로형 카드 */
+.detail-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 0;
+    overflow: hidden;
+    transition: border 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* 🔥 호버 시 커지거나 그림자 바뀌는 효과 완전 제거 (모달 짤림 방지) */
+.detail-card.active-card {
+    /* transform: scale(1.02); <- 제거됨 */
+    box-shadow: 0 6px 20px rgba(0,0,0,0.06); /* 그림자 은은하게 고정 */
+    border-width: 2px;
+}
+
+.detail-card.border-green {
+    border: 1px solid #7BC9A5;
+    box-shadow: 0 4px 10px rgba(123, 201, 165, 0.08);
+}
+
+.detail-card.border-purple {
+    border: 1px solid #b8a1f8;
+    box-shadow: 0 4px 10px rgba(184, 161, 248, 0.1);
+}
+
+/* 🔥 추가된 잠긴(회색) 테마 */
+.detail-card.border-gray {
+    border: 1px solid #ddd;
+    background-color: #fafafa; /* 연한 회색 배경 */
+    box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    opacity: 0.8; /* 살짝 투명하게 처리해 잠긴 느낌 강조 */
+}
+
+/* 🔥 내부 여백 다이어트 완료: 카드가 훨씬 얇아짐 */
+.detail-body {
+    padding: 16px 20px; /* 상하 패딩 팍 줄임 */
+    text-align: left;
+}
+
+/* 제목과 뱃지 가로 정렬 */
+.lesson-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 16px;
+    margin-bottom: 20px; /* 버튼과의 여백 살짝 축소 */
+    flex-wrap: wrap;
+}
+
+.lesson-title {
+    font-size: 20px; /* 폰트 크기 다이어트 완료 */
+    font-weight: 800;
+    color: #222;
+    margin: 0; /* 기존 하단 여백 제거 */
+}
+
+.lesson-badges {
+    display: flex;
     gap: 8px;
-    margin-bottom: 6px;
+    align-items: center;
 }
 
-.level-badge {
-    display: inline-block;
-    padding: 2px 10px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 600;
-    color: white;
-}
-.level-easy  { background-color: #8fd3b2; }
-.level-normal { background-color: #f0c070; }
-.level-hard  { background-color: #f08070; }
-
-.quiz-type-badge {
-    display: inline-block;
-    padding: 2px 10px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 500;
+/* 🔥 자물쇠 아이콘 뱃지 스타일 */
+.lesson-locked-badge {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
     background-color: #f0f0f0;
-    color: #666;
+    color: #777;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-/* --- 로딩 --- */
-.step-loading {
-    text-align: center;
-    padding: 40px;
-    color: #999;
+.lesson-type-badge, .lesson-xp-badge {
+    padding: 5px 12px; /* 뱃지도 살짝 슬림하게 */
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 800;
 }
 
-/* --- 퀴즈 모달 --- */
+.lesson-type-badge { background-color: #f4f5f7; color: #666; }
+.lesson-xp-badge.green { background: #eefaf2; color: #7BC9A5; }
+.lesson-xp-badge.purple { background: #f4f0ff; color: #9275f0; }
+/* 🔥 잠긴 미션 XP 뱃지 회색 처리 */
+.lesson-xp-badge.gray { background-color: #f0f0f0; color: #777; }
+
+.lesson-start-btn {
+    width: 100%;
+    padding: 14px; /* 버튼도 슬림하게 */
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 800;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+}
+/* 🔥 active(클릭) 애니메이션은 유지하되 호버는 없음 */
+.lesson-start-btn:active { transform: scale(0.98); }
+
+/* 🔥 잠긴 미션 버튼 스타일 (회색, 클릭 불가) */
+.lesson-start-btn.btn-gray {
+    background-color: #dcdcdc;
+    color: #777;
+    cursor: not-allowed;
+    transform: none;
+    font-size: 18px; /* 자물쇠 아이콘 잘 보이게 살짝 크게 */
+}
+
+.lesson-start-btn.btn-green { background-color: #7BC9A5; }
+.lesson-start-btn.btn-green:hover:not(.btn-gray) { background-color: #61b18d; }
+.lesson-start-btn.btn-purple { background-color: #b8a1f8; }
+.lesson-start-btn.btn-purple:hover:not(.btn-gray) { background-color: #a48df0; }
+
+
+/* =========================================
+   🔥 모달 (팝업) 기존 디자인 원상복구! 절대 건들지 않음!
+   ========================================= */
 .modal-overlay {
     position: fixed;
     top: 0; left: 0;
@@ -470,436 +562,75 @@
     opacity: 0.55;
 }
 
-/* --- 전용 상세 페이지 --- */
-.mission-detail-page {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 40px 20px 72px;
-}
-
-.mission-page-panel {
-    margin: 0 auto;
-}
-
-.mission-back-btn {
-    margin-bottom: 18px;
-    padding: 8px 16px;
-    border: 1px solid #d9eadf;
-    border-radius: 6px;
-    background: #fff;
-    color: #4E5A53;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-}
-
-.mission-back-btn:hover {
-    background: #f6fff9;
-}
-
-.category-complete-text {
-    display: inline-flex;
-    align-items: center;
-    padding: 0 12px;
-    color: #2f9e63;
-    font-size: 14px;
-    font-weight: 800;
-}
-
-/* ============================= */
-/* Study Step / Quiz 반응형 CSS */
-/* ============================= */
-
-/* 태블릿 이하 */
-@media (max-width: 1024px) {
-    .step-navbar {
-        padding: 14px 24px;
-    }
-
-    .step-main-content {
-        max-width: 100%;
-        padding: 32px 24px;
-        gap: 28px;
-    }
-
-    .step-sidebar {
-        width: 110px;
-    }
-
-    .step-card {
-        padding: 18px 20px;
-    }
-
-    .step-card-title {
-        font-size: 17px;
-    }
-
-    .step-action-btn {
-        padding: 9px 24px;
-    }
-
-    .step-quiz-modal {
-        width: 560px;
-    }
-
-    .modal-box {
-        padding: 32px;
-    }
-}
-
-/* 모바일 */
+/* =========================================
+   📱 모바일 뷰 최적화 (스마트폰 사이즈)
+   ========================================= */
 @media (max-width: 768px) {
-    .step-navbar {
-        padding: 12px 16px;
-        flex-wrap: wrap;
-        gap: 12px;
-    }
-
-    .step-nav-left {
-        flex: 1;
-        min-width: 0;
-        gap: 12px;
-    }
-
-    .back-arrow-btn {
-        font-size: 22px;
-        flex-shrink: 0;
-    }
-
-    .nav-divider {
-        height: 22px;
-        flex-shrink: 0;
-    }
-
-    .logo-text {
-        font-size: 21px;
-        margin-right: 4px;
-        flex-shrink: 0;
-    }
-
-    .step-nav-title {
-        font-size: 14px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .step-nav-right {
-        width: 100%;
-        justify-content: flex-end;
-        gap: 8px;
-    }
-
-    .login-btn,
-    .start-btn {
-        padding: 7px 14px;
-        font-size: 13px;
-    }
-
-    .step-main-content {
+    .roadmap-main-content {
         flex-direction: column;
-        padding: 24px 16px 56px;
+        padding: 20px 16px;
         gap: 20px;
+        height: auto;
     }
 
-    .step-sidebar {
+    .roadmap-left-column {
         width: 100%;
-        height: 8px;
-        border-right: none;
-        border-bottom: 2px solid #87d8a3;
+        height: auto;
+        position: relative;
+        top: 0;
+        border-bottom: 2px solid #eaeaea;
     }
 
-    .graphics-placeholder {
-        display: none;
+    .category-selector {
+        padding: 0 10px 16px 10px;
+        justify-content: center;
     }
 
-    .step-list-section {
-        width: 100%;
-        gap: 18px;
-    }
-
-    .step-category-group {
-        gap: 10px;
-        margin-bottom: 34px;
-    }
-
-    .step-category-title {
-        font-size: 14px;
-        padding-bottom: 8px;
-    }
-
-    .step-card {
-        width: 100%;
-        padding: 18px 16px;
-        gap: 14px;
-    }
-
-    .step-card-title {
-        font-size: 17px;
-        line-height: 1.35;
-    }
-
-    .step-card-desc {
+    .category-tab {
+        padding: 6px 12px;
         font-size: 13px;
-        line-height: 1.5;
     }
 
-    .step-card-meta {
-        flex-wrap: wrap;
-    }
-
-    .step-action-btn {
-        padding: 9px 20px;
-        font-size: 13px;
-        flex-shrink: 0;
-    }
-
-    .modal-overlay {
-        align-items: flex-start;
-        padding: 24px 12px;
+    .roadmap-sidebar {
+        height: auto;
+        max-height: 250px;
         overflow-y: auto;
-    }
-
-    .modal-box {
-        width: 100%;
-        max-width: 520px;
-        padding: 26px 18px;
-    }
-
-    .step-quiz-modal {
-        width: 100%;
-        border-width: 6px;
-    }
-
-    .quiz-modal-header {
-        margin-bottom: 20px;
-        gap: 12px;
-    }
-
-    .modal-category-label {
-        font-size: 13px;
-    }
-
-    .quiz-question {
-        font-size: 16px;
-        line-height: 1.65;
-        margin-bottom: 20px;
-    }
-
-    .quiz-image {
-        max-height: 220px;
-    }
-
-    .quiz-choice-item {
-        padding: 12px 14px;
-        font-size: 14px;
-        align-items: flex-start;
-    }
-
-    .choice-num {
-        width: 23px;
-        height: 23px;
-        font-size: 12px;
-        margin-top: 1px;
-    }
-
-    .short-answer-input {
-        font-size: 16px;
-        padding: 13px 12px;
-    }
-
-    .quiz-result-title {
-        font-size: 17px;
-    }
-
-    .quiz-commentary {
-        font-size: 13px;
-    }
-
-    .modal-loading-area {
-        padding: 34px 20px;
-        font-size: 15px;
-    }
-
-    .modal-footer {
-        gap: 10px;
-        margin-top: 24px;
-    }
-
-    .btn-cancel,
-    .btn-submit {
-        flex: 1;
-        padding: 11px 16px;
-        font-size: 14px;
-    }
-
-    .mission-detail-page {
-        padding: 28px 16px 56px;
-    }
-}
-
-/* 작은 모바일 */
-@media (max-width: 480px) {
-    .step-navbar {
-        padding: 10px 12px;
-    }
-
-    .step-nav-left {
-        gap: 8px;
-    }
-
-    .logo-text {
-        font-size: 19px;
-    }
-
-    .step-nav-title {
-        font-size: 13px;
-    }
-
-    .step-nav-right {
-        justify-content: space-between;
-    }
-
-    .login-btn,
-    .start-btn {
-        flex: 1;
-        padding: 8px 12px;
-    }
-
-    .step-main-content {
-        padding: 20px 12px 48px;
-    }
-
-    .step-category-group {
-        margin-bottom: 28px;
-    }
-
-    .step-card {
-        flex-direction: column;
-        align-items: stretch;
-        padding: 16px 14px;
-        border-radius: 10px;
-    }
-
-    .step-card-title {
-        font-size: 16px;
-    }
-
-    .step-card-desc {
-        font-size: 13px;
+        padding-right: 0;
         margin-bottom: 10px;
     }
 
-    .step-card-level {
-        font-size: 12px;
-    }
+    .timeline-node.zigzag-left { transform: translateX(-10px); }
+    .timeline-node.zigzag-right { transform: translateX(10px); }
 
-    .step-action-btn {
+    .roadmap-detail-section {
         width: 100%;
-        padding: 10px 16px;
+        height: auto;
+        position: relative;
+        top: 0;
+        overflow-y: visible;
+        padding-right: 0;
     }
 
-    .category-complete-text {
-        width: 100%;
-        justify-content: center;
-        padding: 10px 0;
-        font-size: 13px;
-    }
-
-    .modal-overlay {
-        padding: 16px 10px;
-    }
-
-    .modal-box {
-        padding: 22px 14px;
-        border-radius: 10px;
-    }
-
-    .step-quiz-modal {
-        border-width: 5px;
-    }
-
-    .quiz-modal-header {
+    .lesson-header-row {
+        flex-direction: column;
         align-items: flex-start;
-        flex-direction: column;
-        gap: 8px;
-    }
-
-    .quiz-question {
-        font-size: 15px;
-        line-height: 1.6;
-    }
-
-    .quiz-image {
-        max-height: 190px;
-        margin-bottom: 16px;
-    }
-
-    .quiz-choice-item {
         gap: 10px;
-        padding: 11px 12px;
-        font-size: 13px;
     }
 
-    .short-answer-hint {
-        font-size: 13px;
+    .detail-body {
+        padding: 24px 20px;
     }
 
-    .quiz-result {
-        margin-top: 20px;
-        padding-top: 16px;
-    }
-
-    .modal-footer {
-        flex-direction: column;
-    }
-
-    .btn-cancel,
-    .btn-submit {
-        width: 100%;
-    }
-
-    .mission-detail-page {
-        padding: 24px 12px 48px;
-    }
-
-    .mission-back-btn {
-        width: 100%;
-        margin-bottom: 16px;
-    }
-}
-
-/* 아주 좁은 화면 */
-@media (max-width: 360px) {
-    .logo-text {
+    .lesson-title {
         font-size: 18px;
     }
 
-    .step-nav-title {
-        font-size: 12px;
+    .lesson-info-row {
+        gap: 8px;
     }
 
-    .step-card {
-        padding: 14px 12px;
-    }
-
-    .step-card-title {
-        font-size: 15px;
-    }
-
-    .quiz-question {
-        font-size: 14px;
-    }
-
-    .quiz-choice-item {
-        font-size: 12px;
-    }
-
-    .modal-box {
-        padding: 18px 12px;
-    }
-
-    .quiz-image {
-        max-height: 170px;
+    .lesson-level-badge, .lesson-type-badge, .lesson-xp-badge {
+        padding: 6px 12px;
+        font-size: 13px;
     }
 }
