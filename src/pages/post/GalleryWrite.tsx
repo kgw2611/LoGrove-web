@@ -73,6 +73,10 @@ export default function GalleryWrite() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isReady, setIsReady] = useState(false);
 
+    //이미지 필터 기능 관련
+    const [selectedFilter, setSelectedFilter] = useState<string>('normal');
+    const [isTagRecommended, setIsTagRecommended] = useState<boolean>(false);
+
     useEffect(() => {
         const isLoggedIn = !!getValidToken();
 
@@ -196,6 +200,8 @@ export default function GalleryWrite() {
             alert('태그 추천 중 오류가 발생했습니다.');
         } finally {
             setIsRecommending(false);
+            //이미지 필터 관련
+            setIsTagRecommended(true);
         }
     };
 
