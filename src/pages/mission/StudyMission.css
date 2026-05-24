@@ -1,132 +1,284 @@
+/* =========================================
+   🔥 스터디 미션: 최종본 (4:6 비율, 지그재그 부활, 테이블 제거, 양옆 스크롤 고정, 가로 스크롤 제거)
+   ========================================= */
+
 .mission-container {
     font-family: 'Pretendard', -apple-system, sans-serif;
-    background-color: #ffffff;
+    background-color: #f8f9fa;
     min-height: 100vh;
+    overflow-x: hidden; /* 페이지 전체 가로 스크롤 방지 */
 }
 
-/* --- 상단 네비게이션 바 & 레이아웃 --- */
-.step-navbar {
+.roadmap-main-content {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 40px;
-    border-bottom: 1px solid #eaeaea;
-}
-.step-nav-left { display: flex; align-items: center; gap: 20px; }
-.back-arrow-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #333; }
-.nav-divider { width: 1px; height: 24px; background-color: #e0e0e0; }
-.logo-text { font-size: 24px; font-weight: 700; color: #87d8a3; margin-right: 10px; }
-.step-nav-title { font-size: 16px; font-weight: 600; color: #87d8a3; }
-.step-nav-right { display: flex; gap: 12px; }
-.login-btn { padding: 8px 16px; border-radius: 20px; border: 1px solid #ddd; background: white; cursor: pointer; }
-.start-btn { padding: 8px 16px; border-radius: 20px; border: none; background-color: #87d8a3; color: white; font-weight: bold; cursor: pointer; }
-
-.step-main-content {
-    display: flex;
-    max-width: 1100px;
+    max-width: 1400px;
     margin: 0 auto;
     padding: 40px 20px;
-    gap: 40px;
+    gap: 30px;
+    align-items: flex-start;
 }
 
-.step-sidebar {
-    width: 150px;
-    border-right: 2px solid #87d8a3;
-    position: relative;
-}
-.graphics-placeholder { width: 100%; height: 100%; }
-
-/* --- 🔥 우측 미션 카드 그리드 --- */
-.mission-grid-section {
-    flex: 1;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-    align-content: start;
-}
-
-.mission-card {
+/* =========================================
+   👈 좌측 사이드바 (타임라인 로드맵 - 비율 4)
+   ========================================= */
+.roadmap-left-column {
+    flex: 4; /* 🔥 4:6 비율 중 4 */
     display: flex;
     flex-direction: column;
-    padding: 20px;
-    border-radius: 8px;
-    background-color: #ffffff;
-    overflow: hidden;
+    /* 🔥 다시 Sticky 부활! 화면 스크롤 시 위아래로 따라다님 */
+    position: sticky;
+    top: 60px;
+    height: calc(100vh - 80px);
 }
 
-.card-green { border: 2px solid #8fd3b2; }
-.card-purple { border: 2px solid #b8a1f8; }
-
-.mission-card-header {
+/* 뒤로가기 버튼 영역 (고정됨) */
+.sidebar-top-actions {
+    flex-shrink: 0;
+    width: 100%;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-bottom: 16px;
+    justify-content: flex-start;
+    padding-bottom: 20px;
+    padding-left: 20px;
 }
 
-.mission-card-title {
-    font-size: 20px;
+.roadmap-back-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 16px;
     font-weight: 700;
-    margin: 0;
+    cursor: pointer;
+    transition: color 0.2s, transform 0.2s;
+    padding: 8px 0;
+}
+
+.roadmap-back-btn:hover {
     color: #333;
+    transform: translateX(-4px);
 }
 
-.mission-card-right {
+/* 내부 타임라인 스크롤 영역 */
+.roadmap-sidebar {
+    flex: 1; /* 남은 공간 모두 차지 */
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 16px;
+    overflow-y: auto; /* 위아래 스크롤 허용 */
+    overflow-x: hidden; /* 🔥 가로 스크롤 완벽 차단! (삐져나간 요소 숨김) */
+    padding-right: 10px;
+    padding-top: 10px;
+    width: 100%;
 }
 
-.mission-card-level {
+/* 스크롤바 예쁘게 처리 */
+.roadmap-sidebar::-webkit-scrollbar { width: 6px; }
+.roadmap-sidebar::-webkit-scrollbar-thumb { background-color: #e5e8eb; border-radius: 4px; }
+
+.timeline-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.timeline-node {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 35px; /* 노드 간 간격 */
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+/* 🔥 지그재그 오프셋 적용 */
+.timeline-node.zigzag-left { transform: translateX(-20px); }
+.timeline-node.zigzag-right { transform: translateX(20px); }
+
+/* 육각형 디자인 (큼지막하게 유지) */
+.node-hexagon {
+    width: 80px;
+    height: 92px;
+    background-color: #e5e8eb;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
     display: flex;
     align-items: center;
-    font-size: 12px;
+    justify-content: center;
+    transition: all 0.2s ease;
+    margin-bottom: 12px;
+}
+
+.hexagon-inner {
+    width: 72px;
+    height: 82px;
+    background-color: #ffffff;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 노드 번호 크기 */
+.node-number {
+    font-size: 26px;
+    font-weight: 800;
+    color: #888;
+}
+
+/* 활성 상태 (클릭된 미션) */
+.timeline-node.active .node-hexagon { background-color: #7BC9A5; }
+.timeline-node.active .node-number { color: #7BC9A5; }
+.node-title.bold { font-weight: 800; color: #222; }
+
+.node-title {
+    font-size: 15px;
     color: #666;
     font-weight: 500;
 }
 
-.level-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    margin-right: 6px;
-}
-.dot-green { background-color: #8fd3b2; }
-.dot-purple { background-color: #b8a1f8; }
-
-.mission-action-btn {
-    padding: 8px 24px;
-    border-radius: 20px;
-    border: none;
-    color: white;
-    font-weight: 600;
-    font-size: 13px;
-    cursor: pointer;
-    transition: opacity 0.2s;
-}
-.mission-action-btn:hover { opacity: 0.8; }
-.btn-green { background-color: #8fd3b2; }
-.btn-purple { background-color: #b8a1f8; }
-
-/* 이미지 박스 */
-.mission-card-image-box {
-    width: 100%;
-    background: #f5f5f5;
-    border-bottom-left-radius: 6px;
-    border-bottom-right-radius: 6px;
-    overflow: hidden;
+/* 🔥 밑으로 이어지는 지그재그 점선 라인 */
+.node-line {
+    position: absolute;
+    top: 92px; /* 확대한 노드 높이에 맞춰 조정 */
+    left: 50%;
+    width: 2px;
+    height: 35px; /* 다음 노드까지의 간격 */
+    border-left: 2px dashed #d1d5db;
+    z-index: 0;
+    transition: all 0.3s ease;
 }
 
-.mission-card-image-box img {
-    width: 100%;
-    height: auto;
-    max-height: 260px;
-    display: block;
-    object-fit: contain;
+/* 노드 오프셋에 맞춰 연결선 위치 조정 */
+.node-line.zigzag-left { transform: translateX(calc(-50% + 20px)); }
+.node-line.zigzag-right { transform: translateX(calc(-50% - 20px)); }
+.node-line.completed { border-left: 2px solid #7BC9A5; }
+
+/* 🔥 활성화 시 오른쪽 카드로 이어지는 지그재그 가로 점선 꼬리표 */
+.active-connector {
+    position: absolute;
+    top: 46px; /* 확대한 육각형 중앙 높이 */
+    right: 0; /* 가로 스크롤 이슈를 막기 위해 right:0 로 우측 끝을 맞춤 */
+    z-index: -1;
+    border-top: 2px dashed #7BC9A5;
+    transition: all 0.3s ease;
+}
+
+/* 노드 오프셋에 맞춰 꼬리표 출발 위치 조정 */
+.active-connector.zigzag-left {
+    left: calc(50% + 20px);
+}
+.active-connector.zigzag-right {
+    left: calc(50% - 20px);
 }
 
 /* =========================================
-   🔥 모달 (팝업) 디자인 (여기가 통째로 빠져있었습니다!)
+   👉 우측 상세 정보 카드 (대시보드 - 비율 6 & 고정)
+   ========================================= */
+.roadmap-detail-section {
+    flex: 6; /* 🔥 4:6 비율 중 6 */
+    /* 🔥 우측 정보창도 화면에 고정(Sticky) */
+    position: sticky;
+    top: 60px;
+    z-index: 10;
+}
+
+/* 테두리 동적 변경을 위한 기본 스타일 */
+.detail-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 0;
+    overflow: hidden;
+    transition: border 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* 상태에 따른 테두리 색상 및 그림자 처리 */
+.detail-card.border-green {
+    border: 1px solid #7BC9A5;
+    box-shadow: 0 8px 30px rgba(123, 201, 165, 0.1);
+}
+
+.detail-card.border-purple {
+    border: 1px solid #b8a1f8;
+    box-shadow: 0 8px 30px rgba(184, 161, 248, 0.15);
+}
+
+/* 하단 상세 내용 */
+.detail-body { padding: 40px; }
+
+.lesson-title { font-size: 28px; font-weight: 800; color: #222; margin: 0 0 10px 0; }
+
+/* 레벨 뱃지와 XP 텍스트를 나란히 배치 */
+.lesson-info-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 30px;
+}
+
+.lesson-level-badge {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 800;
+    margin: 0; /* 기존 마진 제거 */
+}
+.lesson-level-badge.green { background: #eefaf2; color: #7BC9A5; }
+.lesson-level-badge.purple { background: #f4f0ff; color: #9275f0; }
+
+/* 🔥 XP 뱃지 스타일 */
+.lesson-xp-badge {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 800;
+    margin: 0;
+}
+
+.lesson-xp-badge.green { background: #eefaf2; color: #7BC9A5; }
+.lesson-xp-badge.purple { background: #f4f0ff; color: #9275f0; }
+
+/* 샘플 이미지 뷰어 (테이블을 없애고 큼지막하게 강조) */
+.lesson-sample-image {
+    width: 100%;
+    /* 높이를 키워 이미지가 메인이 되게 구성 */
+    height: 380px;
+    background: #f4f5f7;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 30px;
+    border: 1px solid #eaeaea;
+}
+.lesson-sample-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* 이미지가 카드 꽉 차게 변경 (비율 유지) */
+}
+
+/* 하단 시작 버튼 */
+.lesson-start-btn {
+    width: 100%;
+    padding: 18px;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: 800;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.lesson-start-btn.btn-green { background-color: #7BC9A5; }
+.lesson-start-btn.btn-green:hover { background-color: #61b18d; }
+.lesson-start-btn.btn-purple { background-color: #b8a1f8; }
+.lesson-start-btn.btn-purple:hover { background-color: #a48df0; }
+
+
+/* =========================================
+   🔥 성민님이 주셨던 모달 (팝업) 기존 디자인 원상복구! 절대 건들지 않음!
    ========================================= */
 .modal-overlay {
     position: fixed;
@@ -247,7 +399,7 @@
 }
 
 /* =========================================
-   🔥 추가된 모달 로딩 & 결과 디자인
+   🔥 추가된 모달 로딩 & 결과 디자인 (원본)
    ========================================= */
 
 /* 로딩 화면 */
@@ -266,7 +418,7 @@
     width: 50px;
     height: 50px;
     border: 5px solid #e2f4e8;
-    border-top: 5px solid #87d8a3; /* 돌아가는 초록색 부분 */
+    border-top: 5px solid #87d8a3;
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin-bottom: 20px;
@@ -336,7 +488,7 @@
     background-color: #87d8a3;
     display: flex;
     align-items: center;
-    transition: width 1s ease-in-out; /* 점수가 차오르는 애니메이션 */
+    transition: width 1s ease-in-out;
 }
 
 .score-text {
@@ -448,379 +600,4 @@
 
 .mission-back-btn:hover {
     background: #f6fff9;
-}
-
-/* ============================= */
-/* Mission / Step 반응형 CSS */
-/* ============================= */
-
-/* 태블릿 이하 */
-@media (max-width: 1024px) {
-    .step-navbar {
-        padding: 14px 24px;
-    }
-
-    .step-main-content {
-        max-width: 100%;
-        padding: 32px 24px;
-        gap: 28px;
-    }
-
-    .step-sidebar {
-        width: 110px;
-    }
-
-    .mission-grid-section {
-        gap: 16px;
-    }
-
-    .mission-card {
-        padding: 18px;
-    }
-
-    .mission-card-title {
-        font-size: 18px;
-    }
-
-    .mission-card-right {
-        gap: 10px;
-    }
-
-    .mission-action-btn {
-        padding: 8px 18px;
-    }
-
-    .modal-box {
-        width: 720px;
-        padding: 32px;
-    }
-
-    .modal-body {
-        gap: 24px;
-    }
-}
-
-/* 모바일 */
-@media (max-width: 768px) {
-    .step-navbar {
-        padding: 12px 16px;
-        flex-wrap: wrap;
-        gap: 12px;
-    }
-
-    .step-nav-left {
-        gap: 12px;
-        flex: 1;
-        min-width: 0;
-    }
-
-    .back-arrow-btn {
-        font-size: 22px;
-    }
-
-    .logo-text {
-        font-size: 21px;
-        margin-right: 4px;
-    }
-
-    .step-nav-title {
-        font-size: 14px;
-        white-space: nowrap;
-    }
-
-    .step-nav-right {
-        width: 100%;
-        justify-content: flex-end;
-        gap: 8px;
-    }
-
-    .login-btn,
-    .start-btn {
-        padding: 7px 14px;
-        font-size: 13px;
-    }
-
-    .step-main-content {
-        flex-direction: column;
-        padding: 24px 16px 56px;
-        gap: 20px;
-    }
-
-    .step-sidebar {
-        width: 100%;
-        height: 8px;
-        border-right: none;
-        border-bottom: 2px solid #87d8a3;
-    }
-
-    .graphics-placeholder {
-        display: none;
-    }
-
-    .mission-grid-section {
-        width: 100%;
-        grid-template-columns: 1fr;
-        gap: 18px;
-    }
-
-    .mission-card {
-        width: 100%;
-        padding: 18px 16px;
-    }
-
-    .mission-card-header {
-        gap: 12px;
-        align-items: flex-start;
-    }
-
-    .mission-card-title {
-        font-size: 18px;
-        line-height: 1.35;
-    }
-
-    .mission-card-right {
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 8px;
-    }
-
-    .mission-action-btn {
-        padding: 8px 16px;
-        font-size: 12px;
-    }
-
-    .mission-card-image-box img {
-        max-height: 220px;
-    }
-
-    .modal-overlay {
-        align-items: flex-start;
-        padding: 24px 12px;
-        overflow-y: auto;
-    }
-
-    .modal-box {
-        width: 100%;
-        max-width: 520px;
-        padding: 24px 18px;
-        border-width: 8px;
-    }
-
-    .modal-title {
-        font-size: 21px;
-        margin-bottom: 22px;
-    }
-
-    .modal-body {
-        flex-direction: column;
-        gap: 18px;
-        margin-bottom: 28px;
-    }
-
-    .modal-left,
-    .modal-right {
-        width: 100%;
-        flex: none;
-    }
-
-    .modal-left {
-        max-height: none;
-    }
-
-    .modal-image {
-        max-height: 240px;
-    }
-
-    .modal-upload-area {
-        min-height: 220px;
-    }
-
-    .modal-right {
-        font-size: 14px;
-        line-height: 1.6;
-    }
-
-    .modal-footer {
-        gap: 10px;
-    }
-
-    .btn-cancel,
-    .btn-submit {
-        flex: 1;
-        padding: 12px 16px;
-        font-size: 15px;
-    }
-
-    .modal-loading-area {
-        height: 220px;
-        font-size: 16px;
-    }
-
-    .result-feedback {
-        font-size: 16px;
-    }
-
-    .result-verdict {
-        font-size: 20px;
-    }
-
-    .mission-detail-page {
-        padding: 28px 16px 56px;
-    }
-}
-
-/* 작은 모바일 */
-@media (max-width: 480px) {
-    .step-navbar {
-        padding: 10px 12px;
-    }
-
-    .step-nav-left {
-        gap: 8px;
-    }
-
-    .nav-divider {
-        height: 20px;
-    }
-
-    .logo-text {
-        font-size: 19px;
-    }
-
-    .step-nav-title {
-        font-size: 13px;
-    }
-
-    .step-nav-right {
-        justify-content: space-between;
-    }
-
-    .login-btn,
-    .start-btn {
-        flex: 1;
-        padding: 8px 12px;
-    }
-
-    .step-main-content {
-        padding: 20px 12px 48px;
-    }
-
-    .mission-card {
-        padding: 16px 14px;
-        border-radius: 10px;
-    }
-
-    .mission-card-header {
-        flex-direction: column;
-        align-items: stretch;
-        padding-bottom: 14px;
-    }
-
-    .mission-card-right {
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .mission-card-title {
-        font-size: 17px;
-    }
-
-    .mission-action-btn {
-        padding: 8px 14px;
-    }
-
-    .mission-card-image-box img {
-        max-height: 200px;
-    }
-
-    .modal-overlay {
-        padding: 16px 10px;
-    }
-
-    .modal-box {
-        padding: 22px 14px;
-        border-width: 6px;
-        border-radius: 10px;
-    }
-
-    .modal-title {
-        font-size: 19px;
-        margin-bottom: 18px;
-    }
-
-    .modal-image {
-        max-height: 210px;
-    }
-
-    .modal-upload-area {
-        min-height: 200px;
-        font-size: 13px;
-    }
-
-    .photo-content-text {
-        font-size: 14px;
-    }
-
-    .photo-guide-text {
-        font-size: 12px;
-    }
-
-    .score-bar-container {
-        height: 26px;
-    }
-
-    .result-xp-gained {
-        font-size: 15px;
-    }
-
-    .modal-footer {
-        flex-direction: column;
-    }
-
-    .btn-cancel,
-    .btn-submit {
-        width: 100%;
-    }
-
-    .mission-detail-page {
-        padding: 24px 12px 48px;
-    }
-
-    .mission-back-btn {
-        width: 100%;
-        margin-bottom: 16px;
-    }
-}
-
-/* 아주 좁은 화면 */
-@media (max-width: 360px) {
-    .logo-text {
-        font-size: 18px;
-    }
-
-    .step-nav-title {
-        font-size: 12px;
-    }
-
-    .mission-card-title {
-        font-size: 16px;
-    }
-
-    .mission-card-right {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .mission-action-btn {
-        width: 100%;
-    }
-
-    .modal-box {
-        padding: 18px 12px;
-    }
-
-    .modal-image {
-        max-height: 180px;
-    }
 }
