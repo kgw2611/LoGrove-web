@@ -2,12 +2,33 @@
   box-sizing: border-box;
 }
 
+:root {
+  --header-height: 48px;
+}
+
+@media (max-width: 900px) {
+  :root {
+    --header-height: 128px;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --header-height: 120px;
+  }
+}
+
+@media (max-width: 360px) {
+  :root {
+    --header-height: 136px;
+  }
+}
+
 html,
 body,
 #root {
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
 }
 
 body {
