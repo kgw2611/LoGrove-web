@@ -106,3 +106,131 @@
     background-color: #71c98e;
     transform: scale(1.05) translateY(-2px); /* 살짝 커지면서 위로 떠오르는 효과 */
 }
+
+/* ============================= */
+/* Header 반응형 CSS */
+/* ============================= */
+
+.navbar,
+.navbar-inner,
+.logo,
+.nav-links,
+.nav-buttons {
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+@media (max-width: 900px) {
+    .navbar {
+        position: sticky;
+        top: 0;
+        overflow: hidden;
+    }
+
+    .navbar-inner {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+        padding: 8px 12px;
+    }
+
+    .logo {
+        width: 100%;
+        justify-content: center;
+        margin-left: 0;
+    }
+
+    .logo-icon-img {
+        height: 38px;
+    }
+
+    .logo-text {
+        font-size: 22px;
+    }
+
+    .nav-links {
+        order: 2;
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 8px 18px;
+    }
+
+    .nav-links a {
+        font-size: 14px;
+        white-space: nowrap;
+    }
+
+    .nav-links a:hover {
+        transform: none;
+    }
+
+    .nav-buttons {
+        order: 3;
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-right: 0;
+    }
+
+    .login-btn,
+    .start-btn {
+        padding: 8px 16px;
+        font-size: 13px;
+        white-space: nowrap;
+    }
+
+    .login-btn:hover,
+    .start-btn:hover {
+        transform: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .navbar-inner {
+        padding: 8px 10px;
+        gap: 8px;
+    }
+
+    .logo-icon-img {
+        height: 34px;
+    }
+
+    .logo-text {
+        font-size: 20px;
+    }
+
+    .nav-links {
+        gap: 8px 14px;
+    }
+
+    .nav-links a {
+        font-size: 13px;
+    }
+
+    .nav-buttons {
+        gap: 8px;
+    }
+
+    .login-btn,
+    .start-btn {
+        padding: 7px 12px;
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 360px) {
+    .nav-links {
+        gap: 6px 10px;
+    }
+
+    .nav-links a {
+        font-size: 12px;
+    }
+
+    .login-btn,
+    .start-btn {
+        padding: 7px 10px;
+    }
+}
