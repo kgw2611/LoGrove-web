@@ -18,7 +18,6 @@ import {
     deleteComment,
     getGalleryDetail,
     getGalleryList,
-    getGalleryNeighbors,
     getGalleryTagNames,
     toggleCommentLike,
     toggleGalleryLike,
@@ -27,11 +26,10 @@ import {
     type CommentItem,
     type GalleryDetailItem,
     type GalleryListItem,
-    type NeighborPostsResult,
 } from '../../shared/api/gallery';
 import { getLevelColor } from '../../shared/utils/levelColor';
 import { getValidToken } from '../../shared/utils/auth';
-import GalleryFilmstrip from './GalleryFilmstrip';
+import GallerySideGrid from './GallerySideGrid';
 import axios from "axios";
 
 function SearchIcon() {
@@ -607,23 +605,6 @@ export default function Gallery() {
         void openInitialPost();
     }, [initialPostId, selectedPost?.id, mergeLikeOverrides]);
 
-    const [neighbors, setNeighbors] = useState<NeighborPostsResult | null>(null);
-
-    useEffect(() => {
-        if (!selectedPost) {
-            setNeighbors(null);
-            return;
-        }
-
-        setNeighbors(null);
-        getGalleryNeighbors(selectedPost.id, 2)
-            .then(setNeighbors)
-            .catch((error) => {
-                console.error('Failed to load gallery neighbors:', error);
-                setNeighbors({ newer: [], older: [] });
-            });
-    }, [selectedPost?.id]);
-
     const openDetail = async (item: GalleryListItem) => {
         sessionStorage.setItem('gallery_scroll', String(window.scrollY));
         navigate(`/gallery/${item.id}`);
@@ -926,30 +907,8 @@ export default function Gallery() {
     };
 
     return (
-        <div className="gallery-container">
-
-            {/* 🔥 상단 검색창 영역: V버튼을 포함하여 모든 동작을 위로 올림 */}
-            <div
-                style={{
-                    position: 'sticky',
-                    top: '64px',
-                    zIndex: 100,
-                    backgroundColor: '#ffffff',
-                    borderBottom: '1px solid #eaeaea',
-                    marginTop: '-40px',
-                    marginLeft: 'calc(-50vw + 50%)',
-                    marginRight: 'calc(-50vw + 50%)',
-                    paddingLeft: 'calc(50vw - 50%)',
-                    paddingRight: 'calc(50vw - 50%)',
-                    boxSizing: 'border-box',
-                    paddingTop: '15px',
-
-                    /* 🔥 아랫부분과 완전히 붙이도록 패딩과 마진을 확 줄임 */
-                    paddingBottom: '13px',
-                    marginBottom: '13px',
-                    transition: 'all 0.3s ease',
-                }}
-            >
+        <>
+            <div className="gallery-sticky-search">
                 <div className="gallery-sub-header" style={{ marginBottom: '0' }}>
                     <div className="search-bar-wrapper">
                         <span className="gallery-search-icon">
@@ -1052,6 +1011,8 @@ export default function Gallery() {
                     </div>
                 )}
             </div>
+
+            <div className="gallery-container">
 
             {isLoading ? (
                 <ColumnsPhotoAlbum
@@ -1481,9 +1442,8 @@ export default function Gallery() {
                     </section>
 
                     <aside className="gallery-detail-side">
-                        <GalleryFilmstrip
-                            currentPost={selectedPost}
-                            neighbors={neighbors}
+                        <GallerySideGrid
+                            currentPostId={selectedPost.id}
                             onSelect={openDetail}
                         />
                     </aside>
@@ -1500,6 +1460,7 @@ export default function Gallery() {
                     ↑
                 </button>
             )}
-        </div>
+            </div>
+        </>
     );
 }

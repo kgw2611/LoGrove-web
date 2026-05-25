@@ -6,6 +6,17 @@
   box-sizing: border-box;
 }
 
+.gallery-sticky-search {
+  position: sticky;
+  top: var(--header-height, 48px);
+  z-index: 100;
+  background-color: #ffffff;
+  border-bottom: 1px solid #eaeaea;
+  padding: 12px 56px 13px;
+  box-sizing: border-box;
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
 /* 상단 검색 + 액션 영역 */
 .gallery-sub-header {
   display: flex;
@@ -560,6 +571,75 @@
   min-width: 0;
 }
 
+.gallery-side-grid {
+  position: sticky;
+  top: calc(var(--header-height, 48px) + 16px);
+  padding: 0 4px;
+}
+
+.gallery-side-grid-card {
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  appearance: none;
+  -webkit-appearance: none;
+  box-sizing: border-box;
+  display: block;
+  border: none;
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  background: #f0f0ec;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.gallery-side-grid-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.14);
+}
+
+.gallery-side-grid-card:focus-visible {
+  outline: 2px solid #7BC9A5;
+  outline-offset: 2px;
+}
+
+.gallery-side-grid-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.gallery-side-grid-skeleton {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 0 4px;
+}
+
+.gallery-side-grid-skel-cell {
+  aspect-ratio: 1 / 1;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #ececec 0%, #f7f7f4 50%, #ececec 100%);
+  background-size: 200% 100%;
+  animation: galleryShimmer 1.4s infinite;
+}
+
+.gallery-side-grid-empty {
+  padding: 24px 8px;
+  color: #999;
+  text-align: center;
+  font-size: 13px;
+}
+
+@media (max-width: 300px) {
+  .gallery-side-grid-skeleton {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
 .gallery-filmstrip {
   position: sticky;
   top: 90px;
@@ -756,6 +836,10 @@
   .gallery-container {
     padding: 24px 40px 36px;
   }
+  .gallery-sticky-search {
+    padding-left: 40px;
+    padding-right: 40px;
+  }
 }
 
 @media (max-width: 1200px) {
@@ -770,6 +854,10 @@
   .gallery-filmstrip {
     position: static;
     padding: 2px 0 12px;
+  }
+
+  .gallery-side-grid {
+    position: static;
   }
 
   .filmstrip-track {
@@ -791,6 +879,10 @@
   .gallery-container {
     padding: 22px 24px 32px;
   }
+  .gallery-sticky-search {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
 
   .gallery-sub-header {
     flex-direction: column;
@@ -810,6 +902,10 @@
 @media (max-width: 600px) {
   .gallery-container {
     padding: 18px 16px 28px;
+  }
+  .gallery-sticky-search {
+    padding-left: 16px;
+    padding-right: 16px;
   }
 
   .masonry-grid {

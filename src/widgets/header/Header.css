@@ -6,10 +6,10 @@
     display: flex;
     justify-content: center;
 
-    /* 🔥 스크롤 시 헤더를 천장에 고정시키는 마법의 3줄! */
     position: sticky;
     top: 0;
     z-index: 1000;
+    box-shadow: 0 2px 10px rgba(60, 60, 60, 0.18);
 }
 
 .navbar-inner {
@@ -19,7 +19,7 @@
     width: 100%;
     max-width: 1512px;
     /* 🔥 1. 헤더 두께(흰색 공간)를 확 줄였습니다! (위아래 여백 12px -> 4px로 변경) */
-    padding: 4px 0;
+    padding: 10px 0;
 }
 
 /* --- 왼쪽 로고 영역 --- */
