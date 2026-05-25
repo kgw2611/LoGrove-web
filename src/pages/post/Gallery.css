@@ -1,6 +1,6 @@
 .gallery-container {
   font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
-  padding: 0 56px 40px;
+  padding: 24px 56px 40px;
   background-color: #f8f8f6;
   min-height: 100vh;
   box-sizing: border-box;
@@ -11,7 +11,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 0;
+  margin-top: 6px;
   margin-bottom: 28px;
   gap: 16px;
 }
@@ -754,7 +754,7 @@
 
 @media (max-width: 1400px) {
   .gallery-container {
-    padding: 0 40px 36px;
+    padding: 24px 40px 36px;
   }
 }
 
@@ -1752,7 +1752,7 @@
 /* 태블릿 이하 */
 @media (max-width: 1024px) {
   .gallery-container {
-    padding: 0 28px 34px;
+    padding: 22px 28px 34px;
   }
 
   .gallery-sub-header {
@@ -1787,7 +1787,7 @@
 /* 모바일 */
 @media (max-width: 768px) {
   .gallery-container {
-    padding: 0 16px 30px;
+    padding: 18px 16px 30px;
   }
 
   .gallery-sub-header {
@@ -2166,7 +2166,7 @@
 /* 작은 모바일 */
 @media (max-width: 480px) {
   .gallery-container {
-    padding: 0 12px 24px;
+    padding: 14px 12px 24px;
   }
 
   .gallery-sub-header {
@@ -2370,7 +2370,7 @@
 /* 아주 좁은 화면 */
 @media (max-width: 360px) {
   .gallery-container {
-    padding: 0 10px 22px;
+    padding: 12px 10px 22px;
   }
 
   .gallery-write-btn {
@@ -2411,4 +2411,17 @@
     flex: 0 0 74px;
     max-width: 74px;
   }
+}
+
+/* ============================= */
+/* Gallery 검색/액션바 sticky */
+/* ============================= */
+
+.gallery-sub-header {
+  position: sticky;
+  top: 48px; /* 헤더 높이만큼 */
+  z-index: 900;
+  background-color: #f8f8f6;
+  padding: 12px 0;
+  margin-top: 0;
 }
