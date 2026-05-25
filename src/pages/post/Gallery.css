@@ -2412,16 +2412,3 @@
     max-width: 74px;
   }
 }
-
-/* ============================= */
-/* Gallery 검색/액션바 sticky */
-/* ============================= */
-
-.gallery-sub-header {
-  position: sticky;
-  top: 48px; /* 헤더 높이만큼 */
-  z-index: 900;
-  background-color: #f8f8f6;
-  padding: 12px 0;
-  margin-top: 0;
-}
