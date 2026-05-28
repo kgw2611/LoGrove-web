@@ -5,6 +5,7 @@ import '../home/Home.css'
 import './Community.css'
 import Pagination from '../../shared/ui/Pagination'
 import { getValidToken } from '../../shared/utils/auth'
+import { truncateWithPeriods } from '../../shared/utils/text'
 
 type Board = {
     id: number
@@ -341,7 +342,9 @@ export default function Community() {
                                     style={{ cursor: 'pointer' }}
                                 >
                                     <span className="popular-rank">{index + 1}</span>
-                                    <span className="popular-title">{post.title}</span>
+                                    <span className="popular-title" title={post.title}>
+                                        {truncateWithPeriods(post.title, 17)}
+                                    </span>
                                     <span className="popular-views">{post.views}</span>
                                 </div>
                             ))}

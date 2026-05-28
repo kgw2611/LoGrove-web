@@ -7,6 +7,7 @@ import './ForumDetail.css';
 import RichPostEditor from '../../widgets/editor/RichPostEditor';
 import PostContentRenderer from '../../widgets/editor/PostContentRenderer';
 import { getLevelColor } from '../../shared/utils/levelColor';
+import { truncateWithPeriods } from '../../shared/utils/text';
 
 // 🔥 이미지 경로에 새로운 백엔드 주소(3.38.12.226)를 붙여주도록 수정!
 const getImageUrl = (path?: string) => {
@@ -629,7 +630,9 @@ export default function ForumDetail() {
                                     style={{ cursor: 'pointer' }}
                                 >
                                     <span className="popular-rank">{index + 1}</span>
-                                    <span className="popular-title">{post.title}</span>
+                                    <span className="popular-title" title={post.title}>
+                                        {truncateWithPeriods(post.title, 17)}
+                                    </span>
                                     <span className="popular-views">{post.views}</span>
                                 </div>
                             ))}

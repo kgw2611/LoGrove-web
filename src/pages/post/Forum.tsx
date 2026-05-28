@@ -6,6 +6,7 @@ import './Community.css';
 import './Forum.css';
 import Pagination from '../../shared/ui/Pagination';
 import { getValidToken } from '../../shared/utils/auth';
+import { truncateWithPeriods } from '../../shared/utils/text';
 
 interface ForumPostType {
     id: number | string;
@@ -330,7 +331,9 @@ export default function Forum() {
                                     style={{ cursor: 'pointer' }}
                                 >
                                     <span className="popular-rank">{index + 1}</span>
-                                    <span className="popular-title">{post.title}</span>
+                                    <span className="popular-title" title={post.title}>
+                                        {truncateWithPeriods(post.title, 17)}
+                                    </span>
                                     <span className="popular-views">{post.views}</span>
                                 </div>
                             ))}
