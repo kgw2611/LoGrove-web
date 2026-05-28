@@ -665,92 +665,53 @@ export default function MyPage() {
                             </div>
                         );
                     })()}
-
-                    {isEditingBio ? (
-                        <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-                            <input
-                                type="text"
-                                value={bio}
-                                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                    setBio(e.target.value)
-                                }
-                                style={{
-                                    padding: '6px',
-                                    borderRadius: '4px',
-                                    border: '1px solid #ccc',
-                                    width: '200px',
-                                }}
-                                autoFocus
-                            />
-                            <button
-                                onClick={handleSaveBio}
-                                style={{
-                                    padding: '6px 12px',
-                                    background: '#00bfa5',
-                                    color: '#fff',
-                                    border: 'none',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer',
-                                }}
-                            >
-                                저장
-                            </button>
-                            <button
-                                onClick={() => setIsEditingBio(false)}
-                                style={{
-                                    padding: '6px 12px',
-                                    background: '#eee',
-                                    border: 'none',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer',
-                                }}
-                            >
-                                취소
-                            </button>
-                        </div>
-                    ) : (
-                        <div
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '10px',
-                                marginTop: '5px',
-                            }}
-                        >
-                            <p className="profile-status" style={{ margin: 0, color: '#666' }}>
-                                {bio}
-                            </p>
-                            <button
-                                onClick={() => setIsEditingBio(true)}
-                                style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    color: '#888',
-                                    cursor: 'pointer',
-                                    fontSize: '12px',
-                                    textDecoration: 'underline',
-                                }}
-                            >
-                                수정
-                            </button>
-                        </div>
-                    )}
-                    <button
-                        onClick={() => fileInputRef.current?.click()}
-                        style={{
-                            marginTop: '12px',
-                            padding: '6px 14px',
-                            background: 'none',
-                            border: '1px solid #ccc',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontSize: '13px',
-                            color: '#555',
-                        }}
-                    >
-                        프로필 이미지 수정
-                    </button>
                 </div>
+
+                <button
+                    type="button"
+                    className="profile-image-edit-btn"
+                    onClick={() => fileInputRef.current?.click()}
+                >
+                    프로필 이미지 수정
+                </button>
+
+                {isEditingBio ? (
+                    <div className="profile-bio-row">
+                        <input
+                            type="text"
+                            value={bio}
+                            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                                setBio(e.target.value)
+                            }
+                            className="profile-bio-input"
+                            autoFocus
+                        />
+                        <button
+                            onClick={handleSaveBio}
+                            className="profile-bio-save-btn"
+                        >
+                            저장
+                        </button>
+                        <button
+                            onClick={() => setIsEditingBio(false)}
+                            className="profile-bio-cancel-btn"
+                        >
+                            취소
+                        </button>
+                    </div>
+                ) : (
+                    <div className="profile-bio-row">
+                        <p className="profile-status">
+                            {bio}
+                        </p>
+                        <button
+                            onClick={() => setIsEditingBio(true)}
+                            className="profile-bio-edit-btn"
+                        >
+                            수정
+                        </button>
+                    </div>
+                )}
             </div>
 
             <div className="mypage-divider"></div>

@@ -22,6 +22,7 @@ export const EXCLUDED_GALLERY_TAG_NAMES = [
     '기타',
     '기타(etc)',
     'etc',
+    '전체',
     'film',
     '필름',
     '인기순위',
@@ -76,8 +77,6 @@ export interface CreateGalleryPostPayload {
     description: string;
     imageFiles?: File[];
     tagIds?: number[];
-    commentEnabled?: boolean;
-    shareEnabled?: boolean;
 }
 
 export interface TagItem {
@@ -616,10 +615,6 @@ export async function createGalleryPost(
     formData.append('title', payload.title);
     formData.append('content', payload.description);
     formData.append('boardType', 'GALLERY');
-    formData.append('commentEnabled', String(payload.commentEnabled ?? true));
-    formData.append('shareEnabled', String(payload.shareEnabled ?? true));
-    formData.append('commentAllowed', String(payload.commentEnabled ?? true));
-    formData.append('shareAllowed', String(payload.shareEnabled ?? true));
 
     payload.tagIds?.forEach((tagId) => {
         formData.append('tagIds', String(tagId));

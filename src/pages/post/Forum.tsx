@@ -6,6 +6,7 @@ import './Community.css';
 import './Forum.css';
 import Pagination from '../../shared/ui/Pagination';
 import { getValidToken } from '../../shared/utils/auth';
+import { truncateWithPeriods } from '../../shared/utils/text';
 
 interface ForumPostType {
     id: number | string;
@@ -19,6 +20,8 @@ interface ForumPostType {
     commentCount: number;
 }
 
+type SearchType = 'title_content' | 'author';
+
 const tagNameToBrand: Record<string, string> = {
     '캐논': 'Canon',
     '소니': 'Sony',
@@ -28,7 +31,8 @@ const tagNameToBrand: Record<string, string> = {
     '핫셀블라드': 'Hasselblad',
     '파나소닉': 'Panasonic',
     '올림푸스': 'Olympus',
-    '기타': '기타(etc)',
+    '기타': '전체',
+    '전체': '전체',
     '필름': 'Film',
 };
 
@@ -41,15 +45,13 @@ const brandTagIdMap: Record<string, number> = {
     Hasselblad: 14,
     Panasonic: 15,
     Olympus: 16,
-    '기타(etc)': 17,
-    '湲고?(etc)': 17,
     Film: 76,
 };
 
 export default function Forum() {
     const navigate = useNavigate();
 
-    const [activeBrand, setActiveBrand] = useState<string>('Canon');
+    const [activeBrand, setActiveBrand] = useState<string>('전체');
     const [isLoggedIn] = useState<boolean>(() => !!getValidToken());
     const [userName, setUserName] = useState<string>('');
 
@@ -61,6 +63,7 @@ export default function Forum() {
 
     const [inputTerm, setInputTerm] = useState<string>('');
     const [searchTerm, setSearchTerm] = useState<string>('');
+    const [searchType, setSearchType] = useState<SearchType>('title_content');
 
     useEffect(() => {
         const fetchMyInfo = async () => {
@@ -101,39 +104,14 @@ export default function Forum() {
         commentCount: post.commentCount || post.commentsCount || 0
     });
 
-    // 🔥 2. 포럼 인기글 데이터를 서버에서 가져오는 useEffect 추가!
-    useEffect(() => {
-        const fetchPopularSidebar = async () => {
-            try {
-                // 커뮤니티와 동일하게 인기글 API 호출, 단 board 파라미터를 FORUM으로!
-                const response = await axios.get('/api/posts/popular?board=FORUM');
-                const postsData: ForumPostType[] = (response.data.data || []).slice(0, 5).map(formatPost);
-                setPopularSidebar(postsData);
-            } catch (error) {
-                console.error('포럼 인기 게시글 사이드바 불러오기 실패:', error);
-            }
-        };
-        fetchPopularSidebar();
-    }, []);
-
     useEffect(() => {
         const fetchPopularSidebar = async () => {
             try {
                 const response = await axios.get('/api/posts/popular?board=FORUM&days=7');
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const posts: ForumPostType[] = (response.data.data || []).slice(0, 5).map((post: any) => ({
-                    id: post.id || post.postId,
-                    brand: tagNameToBrand[post.tagNames?.[0]] ?? '',
-                    boardType: 'Q&A',
-                    title: post.title,
-                    author: post.authorName || post.author || '익명',
-                    date: post.createdAt ? new Date(post.createdAt).toLocaleDateString() : '방금 전',
-                    views: post.view || 0,
-                    commentCount: post.commentCount || 0,
-                }));
-                setPopularSidebar(posts);
+                const postsData: ForumPostType[] = (response.data.data || []).slice(0, 5).map(formatPost);
+                setPopularSidebar(postsData);
             } catch (error) {
-                console.error('인기 포럼 불러오기 실패:', error);
+                console.error('포럼 인기 게시글 사이드바 불러오기 실패:', error);
             }
         };
         fetchPopularSidebar();
@@ -149,12 +127,13 @@ export default function Forum() {
                 });
                 const brandTagId = brandTagIdMap[activeBrand];
 
-                if (brandTagId) {
+                if (activeBrand !== '전체' && brandTagId) {
                     params.set('tagIds', String(brandTagId));
                 }
 
                 if (searchTerm.trim()) {
-                    params.set('title', searchTerm.trim());
+                    params.set('searchType', searchType);
+                    params.set('keyword', searchTerm.trim());
                 }
 
                 const response = await axios.get(`/api/posts?${params.toString()}`);
@@ -174,7 +153,7 @@ export default function Forum() {
         };
 
         fetchForumPosts();
-    }, [currentPage, activeBrand, searchTerm]);
+    }, [currentPage, activeBrand, searchTerm, searchType]);
 
     const handleBrandChange = (brand: string) => {
         setActiveBrand(brand);
@@ -189,8 +168,8 @@ export default function Forum() {
     };
 
     const brands: string[] = [
-        'Canon', 'Sony', 'Nikon', 'Leica', 'Film',
-        'Fujifilm', 'Hasselblad', 'Olympus', 'Panasonic', '기타(etc)'
+        '전체', 'Canon', 'Sony', 'Nikon', 'Leica', 'Film',
+        'Fujifilm', 'Hasselblad', 'Olympus', 'Panasonic'
     ];
 
     const filteredList = useMemo(() => {
@@ -216,8 +195,16 @@ export default function Forum() {
                     </div>
 
                     <div className="comm-search-bar">
-                        <select className="comm-search-select" defaultValue="title">
-                            <option value="title">제목</option>
+                        <select
+                            className="comm-search-select"
+                            value={searchType}
+                            onChange={(e) => {
+                                setSearchType(e.target.value as SearchType);
+                                setCurrentPage(0);
+                            }}
+                        >
+                            <option value="title_content">제목+본문</option>
+                            <option value="author">작성자</option>
                         </select>
                         <input
                             type="text"
@@ -344,7 +331,9 @@ export default function Forum() {
                                     style={{ cursor: 'pointer' }}
                                 >
                                     <span className="popular-rank">{index + 1}</span>
-                                    <span className="popular-title">{post.title}</span>
+                                    <span className="popular-title" title={post.title}>
+                                        {truncateWithPeriods(post.title, 17)}
+                                    </span>
                                     <span className="popular-views">{post.views}</span>
                                 </div>
                             ))}

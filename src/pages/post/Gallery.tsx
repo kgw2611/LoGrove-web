@@ -189,7 +189,7 @@ function ChevronIcon({ open = false }: { open?: boolean }) {
 const EXCLUDED_TAGS = [
     '일상', '거래', '정보', '질문', '사진', '출사지', '이벤트', '리뷰',
     '캐논', '소니', '니콘', '후지필름', '라이카', '핫셀블라드', '파나소닉', '올림푸스', '기타', '필름',
-    'Canon', 'Sony', 'Nikon', 'Leica', 'Film', 'Fujifilm', 'Hasselblad', 'Olympus', 'Panasonic', '기타(etc)'
+    'Canon', 'Sony', 'Nikon', 'Leica', 'Film', 'Fujifilm', 'Hasselblad', 'Olympus', 'Panasonic', '기타(etc)', '전체'
 ];
 
 type PostLikeOverrideMap = Record<number, { isLiked: boolean; likeCount: number }>;

@@ -8,9 +8,11 @@
 
 /* --- 상단 프로필 영역 --- */
 .profile-section {
-    display: flex;
+    display: grid;
+    grid-template-columns: 160px minmax(0, 1fr);
     align-items: center;
-    gap: 40px;
+    column-gap: 40px;
+    row-gap: 12px;
     margin-bottom: 50px;
 }
 
@@ -21,6 +23,7 @@
     border-radius: 50%;
     overflow: hidden;
     flex-shrink: 0;
+    justify-self: center;
 }
 
 .profile-image {
@@ -32,13 +35,21 @@
 .profile-info {
     display: flex;
     flex-direction: column;
+    align-items: flex-start !important;
+    justify-self: start;
+    width: 100%;
+    text-align: left;
     gap: 12px;
 }
 
 .profile-nickname-row {
     display: flex;
     align-items: center;
+    justify-content: flex-start;
+    align-self: flex-start;
     gap: 10px;
+    margin-left: 0;
+    text-align: left;
 }
 
 .profile-level-badge {
@@ -63,7 +74,11 @@
 .profile-xp-bar-wrapper {
     display: flex;
     align-items: center;
+    justify-content: flex-start;
+    align-self: flex-start;
     gap: 10px;
+    margin-left: 0;
+    text-align: left;
 }
 
 .profile-xp-bar-track {
@@ -91,6 +106,70 @@
     font-size: 16px;
     color: #666666;
     margin: 0;
+}
+
+.profile-image-edit-btn {
+    justify-self: center;
+    padding: 6px 14px;
+    background: none;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #555;
+}
+
+.profile-image-edit-btn:hover {
+    border-color: #999;
+    color: #333;
+}
+
+.profile-bio-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.profile-bio-edit-btn {
+    padding: 6px 12px;
+    background: none;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    color: #888;
+    cursor: pointer;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.profile-bio-edit-btn:hover {
+    border-color: #999;
+    color: #333;
+}
+
+.profile-bio-input {
+    width: 200px;
+    padding: 6px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+.profile-bio-save-btn,
+.profile-bio-cancel-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.profile-bio-save-btn {
+    background: #00bfa5;
+    color: #fff;
+}
+
+.profile-bio-cancel-btn {
+    background: #eee;
+    color: #333;
 }
 
 /* --- 구분선 --- */
@@ -415,7 +494,8 @@
     }
 
     .profile-section {
-        gap: 32px;
+        grid-template-columns: 140px minmax(0, 1fr);
+        column-gap: 32px;
     }
 
     .profile-image-wrapper {
@@ -443,10 +523,10 @@
     }
 
     .profile-section {
-        flex-direction: column;
+        grid-template-columns: 1fr;
         align-items: center;
-        text-align: center;
-        gap: 22px;
+        text-align: left;
+        row-gap: 14px;
         margin-bottom: 36px;
     }
 
@@ -457,12 +537,17 @@
     }
 
     .profile-info {
-        align-items: center;
+        align-items: flex-start;
         width: 100%;
     }
 
+    .profile-bio-row {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+
     .profile-nickname-row {
-        justify-content: center;
+        justify-content: flex-start;
         flex-wrap: wrap;
         gap: 8px;
     }
@@ -478,7 +563,7 @@
 
     .profile-xp-bar-wrapper {
         width: 100%;
-        justify-content: center;
+        justify-content: flex-start;
         flex-wrap: wrap;
         gap: 8px;
     }
@@ -601,7 +686,7 @@
     }
 
     .profile-section {
-        gap: 18px;
+        row-gap: 12px;
         margin-bottom: 30px;
     }
 
@@ -624,6 +709,10 @@
 
     .profile-status {
         font-size: 13px;
+    }
+
+    .profile-bio-input {
+        width: min(200px, 100%);
     }
 
     .mypage-tabs {

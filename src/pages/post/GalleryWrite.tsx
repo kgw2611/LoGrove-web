@@ -114,8 +114,6 @@ export default function GalleryWrite() {
     const [selectedTags, setSelectedTags] = useState<TagItem[]>([]);
     const [recommendedTags, setRecommendedTags] = useState<TagItem[]>([]);
     const [tagSearch, setTagSearch] = useState('');
-    const [allowComments, setAllowComments] = useState(true);
-    const [allowShare, setAllowShare] = useState(true);
     const [isLoadingTags, setIsLoadingTags] = useState(false);
     const [isRecommending, setIsRecommending] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -281,8 +279,6 @@ export default function GalleryWrite() {
                 description: description.trim(),
                 imageFiles: [fileToSubmit],
                 tagIds: selectedTags.map((tag) => tag.id),
-                commentEnabled: allowComments,
-                shareEnabled: allowShare,
             });
 
             alert('갤러리 글이 등록되었습니다.');
@@ -502,30 +498,6 @@ export default function GalleryWrite() {
                                     ))}
                                 </div>
                             )}
-
-                            <div className="gallery-option-list">
-                                <div className="gallery-option-row">
-                                    <span>댓글달기 허용</span>
-                                    <button
-                                        type="button"
-                                        className={`gallery-toggle ${allowComments ? 'on' : ''}`}
-                                        onClick={() => setAllowComments((prev) => !prev)}
-                                    >
-                                        <span className="gallery-toggle-thumb" />
-                                    </button>
-                                </div>
-
-                                <div className="gallery-option-row">
-                                    <span>공유 허용</span>
-                                    <button
-                                        type="button"
-                                        className={`gallery-toggle ${allowShare ? 'on' : ''}`}
-                                        onClick={() => setAllowShare((prev) => !prev)}
-                                    >
-                                        <span className="gallery-toggle-thumb" />
-                                    </button>
-                                </div>
-                            </div>
 
                             <button
                                 type="button"

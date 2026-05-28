@@ -41,16 +41,6 @@
     gap: 20px;
 }
 
-.temp-save {
-    font-size: 14px;
-    color: #555;
-    cursor: pointer;
-}
-
-.temp-count {
-    font-weight: bold;
-}
-
 .submit-post-btn {
     background-color: #c7e5d3;
     color: #2f6b4a;
@@ -397,10 +387,6 @@ input:checked + .slider:before {
         gap: 12px;
     }
 
-    .temp-save {
-        font-size: 13px;
-    }
-
     .submit-post-btn {
         padding: 8px 18px;
         border-radius: 16px;
@@ -556,10 +542,6 @@ input:checked + .slider:before {
         flex-direction: column;
         align-items: stretch;
         gap: 10px;
-    }
-
-    .temp-save {
-        text-align: right;
     }
 
     .submit-post-btn {

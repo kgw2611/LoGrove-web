@@ -7,6 +7,7 @@ import './CommunityDetail.css';
 import RichPostEditor from '../../widgets/editor/RichPostEditor';
 import PostContentRenderer from '../../widgets/editor/PostContentRenderer';
 import { getLevelColor } from '../../shared/utils/levelColor';
+import { truncateWithPeriods } from '../../shared/utils/text';
 
 const getImageUrl = (path?: string) => {
     if (!path) return '';
@@ -625,7 +626,9 @@ export default function CommunityDetail() {
                                     style={{ cursor: 'pointer' }}
                                 >
                                     <span className="popular-rank">{index + 1}</span>
-                                    <span className="popular-title">{post.title}</span>
+                                    <span className="popular-title" title={post.title}>
+                                        {truncateWithPeriods(post.title, 17)}
+                                    </span>
                                     <span className="popular-views">{post.views}</span>
                                 </div>
                             ))}
