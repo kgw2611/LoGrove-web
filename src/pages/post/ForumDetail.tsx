@@ -26,7 +26,8 @@ const tagNameToBrand: Record<string, string> = {
     '핫셀블라드': 'Hasselblad',
     '파나소닉': 'Panasonic',
     '올림푸스': 'Olympus',
-    '기타': '기타(etc)',
+    '기타': '전체',
+    '전체': '전체',
     '필름': 'Film',
 };
 

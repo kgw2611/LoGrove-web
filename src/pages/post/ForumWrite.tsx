@@ -15,7 +15,6 @@ const brandTagIdMap: Record<string, number> = {
     Hasselblad: 14,
     Panasonic: 15,
     Olympus: 16,
-    '기타(etc)': 17,
     Film: 76,
 };
 
@@ -71,7 +70,6 @@ export default function ForumWrite() {
                     <span className="write-header-title">LoGrove 글쓰기</span>
                 </div>
                 <div className="write-header-right">
-                    <span className="temp-save">임시등록 <span className="temp-count">0</span></span>
                     <button className="submit-post-btn" onClick={handleSubmit}>등록</button>
                 </div>
             </div>
@@ -94,7 +92,6 @@ export default function ForumWrite() {
                             <option value="Olympus">Olympus</option>
                             <option value="Panasonic">Panasonic</option>
                             <option value="Film">Film</option>
-                            <option value="기타(etc)">기타(etc)</option>
                         </select>
                         <input
                             type="text"

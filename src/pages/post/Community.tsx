@@ -17,6 +17,8 @@ type Board = {
     commentCount: number
 }
 
+type SearchType = 'title_content' | 'author'
+
 const tagNameToCategory: Record<string, string> = {
     '일상': '일상',
     '거래': '거래',
@@ -59,6 +61,7 @@ export default function Community() {
 
     const [inputTerm, setInputTerm] = useState<string>('')
     const [searchTerm, setSearchTerm] = useState<string>('')
+    const [searchType, setSearchType] = useState<SearchType>('title_content')
 
     useEffect(() => {
         const fetchMyInfo = async () => {
@@ -124,7 +127,8 @@ export default function Community() {
                 }
 
                 if (searchTerm.trim()) {
-                    params.set('title', searchTerm.trim());
+                    params.set('searchType', searchType);
+                    params.set('keyword', searchTerm.trim());
                 }
 
                 const response = await axios.get(`/api/posts?${params.toString()}`);
@@ -143,7 +147,7 @@ export default function Community() {
         };
 
         fetchPosts();
-    }, [currentPage, activeTag, searchTerm])
+    }, [currentPage, activeTag, searchTerm, searchType])
 
     const handleTagChange = (tag: string) => {
         setActiveTag(tag)
@@ -194,9 +198,14 @@ export default function Community() {
                     <div className="comm-search-bar">
                         <select
                             className="comm-search-select"
-                            defaultValue="title"
+                            value={searchType}
+                            onChange={(e) => {
+                                setSearchType(e.target.value as SearchType)
+                                setCurrentPage(0)
+                            }}
                         >
-                            <option value="title">제목</option>
+                            <option value="title_content">제목+본문</option>
+                            <option value="author">작성자</option>
                         </select>
                         <input
                             type="text"

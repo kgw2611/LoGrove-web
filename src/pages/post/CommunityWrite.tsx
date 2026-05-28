@@ -69,7 +69,6 @@ export default function CommunityWrite() {
                     <span className="write-header-title">LoGrove 글쓰기</span>
                 </div>
                 <div className="write-header-right">
-                    <span className="temp-save">임시등록 <span className="temp-count">0</span></span>
                     <button className="submit-post-btn" onClick={handleSubmit}>등록</button>
                 </div>
             </div>
