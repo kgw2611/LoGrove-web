@@ -294,7 +294,13 @@ export default function Forum() {
                             {isLoggedIn ? (
                                 <div className="profile-avatar" style={{ overflow: 'hidden' }}>
                                     {myProfileUrl ? (
-                                        <img src={myProfileUrl} alt="프로필" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        <img
+                                            src={myProfileUrl}
+                                            alt=""
+                                            onError={(e) => {
+                                                e.currentTarget.style.display = 'none';
+                                            }}
+                                        />
                                     ) : (
                                         <span style={{ fontSize: '28px', lineHeight: 1 }}>👤</span>
                                     )}
