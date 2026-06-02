@@ -126,27 +126,6 @@ function EyeIcon() {
     );
 }
 
-function ShareIcon() {
-    return (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M12 16V4" stroke="#2D2D2D" strokeWidth="1.8" strokeLinecap="round" />
-            <path
-                d="M8 8L12 4L16 8"
-                stroke="#2D2D2D"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-            <path
-                d="M5 14.5V17.2C5 18.2 5.8 19 6.8 19H17.2C18.2 19 19 18.2 19 17.2V14.5"
-                stroke="#2D2D2D"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-            />
-        </svg>
-    );
-}
-
 function SendIcon({ active = false }: { active?: boolean }) {
     return (
         <svg width="30" height="30" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -1096,16 +1075,6 @@ export default function Gallery() {
                                     onClick={handleScrollToComment}
                                 >
                                     <CommentIcon />
-                                </button>
-
-                                <button
-                                    type="button"
-                                    className="detail-icon-btn"
-                                    onClick={() => {
-                                        requireLogin('공유는 로그인 후 이용할 수 있습니다.');
-                                    }}
-                                >
-                                    <ShareIcon />
                                 </button>
                             </div>
                         </div>
