@@ -122,7 +122,7 @@ export default function CasualPhotoModal({ onClose }: CasualPhotoModalProps) {
                             </button>
                         )}
                         <p className="casual-modal-hint">
-                            AI 코멘트는 결과 화면에서만 확인할 수 있고, 사진은 마이페이지 갤러리에 저장됩니다.
+                            AI 코멘트는 결과 화면에서 확인할 수 있고, 사진은 마이페이지 갤러리에 저장됩니다.
                         </p>
                         <div className="casual-modal-actions">
                             <button type="button" className="casual-btn-cancel" onClick={onClose}>
@@ -143,7 +143,7 @@ export default function CasualPhotoModal({ onClose }: CasualPhotoModalProps) {
                 {step === 'evaluating' && (
                     <div className="casual-loading">
                         <div className="casual-spinner" />
-                        <p>AI가 구도와 피사체를 살펴보는 중입니다.</p>
+                        <p>AI가 구도와 사진 기법을 살펴보는 중입니다.</p>
                     </div>
                 )}
 
@@ -169,7 +169,8 @@ export default function CasualPhotoModal({ onClose }: CasualPhotoModalProps) {
                             </div>
                             <div className="casual-result-saved">마이페이지 갤러리에 저장됨</div>
                             <div className="casual-result-comment">
-                                <span>AI 코멘트</span>
+                                <span>AI 평가</span>
+                                <p>{result.scoreReason}</p>
                                 <p>{result.reason}</p>
                             </div>
                         </div>
