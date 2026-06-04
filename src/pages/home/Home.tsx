@@ -21,15 +21,8 @@ const CARD_GAP = 56
 const CARD_PITCH = CARD_WIDTH + CARD_GAP
 
 const HAND_SCROLL_SENSITIVITY = 1800
-const STEP_TWO_DELAY_MS = 7000
-
-const DOUBLE_CLICK_DELAY_MS = 360
-const PINCH_DISTANCE = 0.055
-const PINCH_RELEASE_DISTANCE = 0.085
-const PINCH_COOLDOWN_MS = 900
 
 type CameraStatus = 'loading' | 'ready' | 'blocked'
-type GuideStep = 1 | 2
 
 interface HandLandmark {
     x: number
@@ -85,27 +78,16 @@ export default function Home() {
     const trackOffsetRef = useRef<number>(0)
 
     const isGuideOpenRef = useRef<boolean>(true)
-    const zoomPhotoRef = useRef<string | null>(null)
-    const guideTimerRef = useRef<number | null>(null)
-
     const selectedLoopIndexRef = useRef<number>(HAND_GALLERY_PHOTOS.length + 2)
-
-    const lastClickAtRef = useRef<number>(0)
-    const lastClickedPhotoRef = useRef<string | null>(null)
-
-    const isPinchingRef = useRef<boolean>(false)
-    const lastPinchAtRef = useRef<number>(0)
 
     const [isLoggedIn] = useState<boolean>(!!getValidToken())
     const [isGuideOpen, setIsGuideOpen] = useState(true)
-    const [guideStep, setGuideStep] = useState<GuideStep>(1)
     const [cameraStatus, setCameraStatus] = useState<CameraStatus>('loading')
     const [handStatus, setHandStatus] = useState('손을 카메라 안에 보여주세요')
     const [trackOffset, setTrackOffset] = useState(0)
     const [selectedLoopIndex, setSelectedLoopIndex] = useState(
         HAND_GALLERY_PHOTOS.length + 2
     )
-    const [zoomPhoto, setZoomPhoto] = useState<string | null>(null)
 
     const photos = useMemo(() => HAND_GALLERY_PHOTOS, [])
 
@@ -121,16 +103,8 @@ export default function Home() {
         setSelectedLoopIndex(index)
     }, [])
 
-    const clearGuideTimer = useCallback(() => {
-        if (guideTimerRef.current !== null) {
-            window.clearTimeout(guideTimerRef.current)
-            guideTimerRef.current = null
-        }
-    }, [])
-
     const resetHandState = useCallback(() => {
         lastPalmXRef.current = null
-        isPinchingRef.current = false
     }, [])
 
     const normalizeTrackOffset = useCallback(
@@ -164,35 +138,9 @@ export default function Home() {
         return Math.min(Math.max(rawIndex, 0), maxIndex)
     }, [loopedPhotos.length])
 
-    const getSelectedPhoto = useCallback(() => {
-        const normalizedIndex =
-            ((selectedLoopIndexRef.current % photos.length) + photos.length) %
-            photos.length
-
-        return photos[normalizedIndex]
-    }, [photos])
-
-    const scheduleStepTwoGuide = useCallback(() => {
-        clearGuideTimer()
-
-        guideTimerRef.current = window.setTimeout(() => {
-            if (!isGuideOpenRef.current) return
-            if (zoomPhotoRef.current) return
-
-            setGuideStep(2)
-            setHandStatus(
-                '선택 중인 사진은 두 번 누르거나 손가락을 모아 크게 볼 수 있어요'
-            )
-        }, STEP_TWO_DELAY_MS)
-    }, [clearGuideTimer])
-
     useEffect(() => {
         isGuideOpenRef.current = isGuideOpen
     }, [isGuideOpen])
-
-    useEffect(() => {
-        zoomPhotoRef.current = zoomPhoto
-    }, [zoomPhoto])
 
     useEffect(() => {
         const initialOffset = -oneSetWidth - CARD_PITCH * 2
@@ -204,14 +152,6 @@ export default function Home() {
             updateSelectedLoopIndex(getCenterLoopIndex())
         })
     }, [oneSetWidth, getCenterLoopIndex, updateSelectedLoopIndex])
-
-    useEffect(() => {
-        scheduleStepTwoGuide()
-
-        return () => {
-            clearGuideTimer()
-        }
-    }, [scheduleStepTwoGuide, clearGuideTimer])
 
     const moveGalleryByHand = useCallback(
         (palmX: number) => {
@@ -237,48 +177,11 @@ export default function Home() {
         [normalizeTrackOffset, getCenterLoopIndex, updateSelectedLoopIndex]
     )
 
-    const openZoomPhoto = useCallback(
-        (photo: string) => {
-            setZoomPhoto(photo)
-            zoomPhotoRef.current = photo
-
-            resetHandState()
-            clearGuideTimer()
-
-            setGuideStep(2)
-            setHandStatus('확대 화면입니다. X를 누르면 다시 돌아갑니다')
-        },
-        [clearGuideTimer, resetHandState]
-    )
-
-    const closeZoomPhoto = useCallback(() => {
-        setZoomPhoto(null)
-        zoomPhotoRef.current = null
-
-        resetHandState()
-        setGuideStep(1)
-        setHandStatus('다시 손바닥을 좌우로 움직여 사진을 넘겨보세요')
-        scheduleStepTwoGuide()
-    }, [resetHandState, scheduleStepTwoGuide])
-
-    const handlePhotoClick = (photo: string, loopIndex: number) => {
+    const handlePhotoClick = (loopIndex: number) => {
         updateSelectedLoopIndex(loopIndex)
-
-        const now = Date.now()
-        const isSamePhoto = lastClickedPhotoRef.current === photo
-        const isDoubleClick =
-            isSamePhoto && now - lastClickAtRef.current < DOUBLE_CLICK_DELAY_MS
-
-        if (isDoubleClick) {
-            openZoomPhoto(photo)
-            lastClickAtRef.current = 0
-            lastClickedPhotoRef.current = null
-            return
-        }
-
-        lastClickAtRef.current = now
-        lastClickedPhotoRef.current = photo
-        setHandStatus('선택되었습니다. 한 번 더 누르면 확대됩니다')
+        setHandStatus(
+            '사진이 선택되었습니다. 손바닥을 좌우로 움직여 다른 사진도 확인해보세요.'
+        )
     }
 
     const handleStartClick = () => {
@@ -293,21 +196,18 @@ export default function Home() {
         setIsGuideOpen(false)
         isGuideOpenRef.current = false
 
-        clearGuideTimer()
         resetHandState()
 
         setHandStatus('핸드트래킹이 일시정지되었습니다')
-    }, [clearGuideTimer, resetHandState])
+    }, [resetHandState])
 
     const openGuidePanel = useCallback(() => {
         setIsGuideOpen(true)
         isGuideOpenRef.current = true
 
         resetHandState()
-        setGuideStep(1)
         setHandStatus('손바닥을 좌우로 움직여 사진을 넘겨보세요')
-        scheduleStepTwoGuide()
-    }, [resetHandState, scheduleStepTwoGuide])
+    }, [resetHandState])
 
     useEffect(() => {
         let cancelled = false
@@ -328,46 +228,12 @@ export default function Home() {
             }
         }
 
-        const handlePinchGesture = (landmarks: HandLandmark[]) => {
-            const thumbTip = landmarks[4]
-            const indexTip = landmarks[8]
-
-            if (!thumbTip || !indexTip) return false
-
-            const pinchDistance = Math.hypot(
-                thumbTip.x - indexTip.x,
-                thumbTip.y - indexTip.y
-            )
-
-            const now = Date.now()
-            const canPinch =
-                !isPinchingRef.current &&
-                now - lastPinchAtRef.current > PINCH_COOLDOWN_MS
-
-            if (pinchDistance < PINCH_DISTANCE && canPinch) {
-                const selectedPhoto = getSelectedPhoto()
-
-                openZoomPhoto(selectedPhoto)
-
-                isPinchingRef.current = true
-                lastPinchAtRef.current = now
-
-                return true
-            }
-
-            if (pinchDistance > PINCH_RELEASE_DISTANCE) {
-                isPinchingRef.current = false
-            }
-
-            return false
-        }
-
         const startDetectionLoop = () => {
             const detect = () => {
                 const video = videoRef.current
                 const handLandmarker = handLandmarkerRef.current
 
-                if (!isGuideOpenRef.current || zoomPhotoRef.current !== null) {
+                if (!isGuideOpenRef.current) {
                     resetHandState()
                     rafRef.current = requestAnimationFrame(detect)
                     return
@@ -382,14 +248,10 @@ export default function Home() {
                     const landmarks = result.landmarks?.[0]
 
                     if (landmarks) {
-                        const didPinch = handlePinchGesture(landmarks)
+                        const palmCenter = getPalmCenter(landmarks)
 
-                        if (!didPinch) {
-                            const palmCenter = getPalmCenter(landmarks)
-
-                            if (palmCenter) {
-                                moveGalleryByHand(palmCenter.x)
-                            }
+                        if (palmCenter) {
+                            moveGalleryByHand(palmCenter.x)
                         }
                     } else {
                         resetHandState()
@@ -468,12 +330,7 @@ export default function Home() {
             cancelled = true
             stopCamera()
         }
-    }, [
-        getSelectedPhoto,
-        moveGalleryByHand,
-        openZoomPhoto,
-        resetHandState,
-    ])
+    }, [moveGalleryByHand, resetHandState])
 
     return (
         <div className="home-container">
@@ -511,7 +368,7 @@ export default function Home() {
                                             isSelected ? 'selected' : ''
                                         }`}
                                         onClick={() =>
-                                            handlePhotoClick(photo, index)
+                                            handlePhotoClick(index)
                                         }
                                     >
                                         <img
@@ -553,28 +410,15 @@ export default function Home() {
 
                     <div className="hand-guide-info">
                         <div className="hand-guide-icon">
-                            {guideStep === 1 ? '👋' : '👆'}
+                            👋
                         </div>
 
                         <div>
-                            {guideStep === 1 ? (
-                                <>
-                                    <p className="hand-guide-step">Step 1/2</p>
-                                    <strong>사진 넘기기</strong>
-                                    <span>
-                                        손바닥을 좌우로 움직여 사진을 넘겨보세요.
-                                    </span>
-                                </>
-                            ) : (
-                                <>
-                                    <p className="hand-guide-step">Step 2/2</p>
-                                    <strong>사진 확대하기</strong>
-                                    <span>
-                                        선택 중인 사진을 두 번 누르거나
-                                        손가락을 모아 크게 보세요.
-                                    </span>
-                                </>
-                            )}
+                            <p className="hand-guide-step">Step 1/1</p>
+                            <strong>사진 넘기기</strong>
+                            <span>
+                                손바닥을 좌우로 움직여 사진을 넘겨보세요.
+                            </span>
 
                             <em>{handStatus}</em>
                         </div>
@@ -609,26 +453,6 @@ export default function Home() {
                         <br />
                         화면보기
                     </button>
-                )}
-
-                {zoomPhoto && (
-                    <div className="photo-zoom-overlay">
-                        <div className="photo-zoom-modal">
-                            <button
-                                type="button"
-                                className="photo-zoom-close"
-                                onClick={closeZoomPhoto}
-                                aria-label="확대 사진 닫기"
-                            >
-                                ×
-                            </button>
-
-                            <img
-                                src={zoomPhoto}
-                                alt="확대된 러브버그 갤러리 사진"
-                            />
-                        </div>
-                    </div>
                 )}
             </main>
 
